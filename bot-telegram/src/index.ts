@@ -1,16 +1,15 @@
-import {Markup, Telegraf} from 'telegraf';
+import {Context, Telegraf} from 'telegraf';
 import 'dotenv/config';
 import http from 'http';
 
 const token = process.env.TG_BOT_TOKEN;
-const webAppUrl = process.env.MINI_APP_URL || 'https://max-dobro.vercel.app';
+const rawUrl = process.env.MINI_APP_URL || 'https://max-dobro.vercel.app';
+const webAppUrl = rawUrl.startsWith('https://') ? rawUrl : rawUrl.replace('http://', 'https://');
 const PORT = process.env.PORT || 10000;
 
 if (!token) throw new Error('TG_BOT_TOKEN is missing');
 
 const bot = new Telegraf(token);
-
-// --- Тексты ---
 
 const dailyDeeds = [
   '🌱 *Идея:* Откажись от пластикового пакета сегодня.',
@@ -24,11 +23,8 @@ const authorsText = `👨‍💻 *Команда MAX Добро*
 
 Мы создали этот проект, чтобы технологии помогали делать добрые дела проще и интереснее.
 
-🛠 *Backend (NestJS):*
 • Михаил Данилов ([GitHub](https://github.com/seaG7))
 • Кирилл Корнилов ([GitHub](https://github.com/krl76))
-
-🎨 *Frontend (React):*
 • Шутов Кирилл ([GitHub](https://github.com/ShutovKS))
 
 Сделано с любовью к коду и людям ❤️`;
@@ -37,101 +33,127 @@ const helpText = '🆘 *Помощь*\n\n' +
   'Я бот-проводник. Основной функционал находится в Мини-приложении.\n' +
   'Там ты найдешь карту событий, профиль волонтера и курсы.';
 
-// --- Клавиатура (Меню) ---
-const getMainMenu = () => {
-  return Markup.inlineKeyboard([
-    // 1 ряд: Большая кнопка запуска
-    [Markup.button.webApp('🚀 Запустить MAX Добро', webAppUrl)],
-    // 2 ряд: Идея и Авторы
-    [
-      Markup.button.callback('💡 Идея дела', 'btn_idea'),
-      Markup.button.callback('👨‍💻 Авторы', 'btn_authors')
+const getPrivateMenuKeyboard = () => {
+  return {
+    keyboard: [
+      [
+        {text: '🚀 Запустить MAX Добро', web_app: {url: webAppUrl}}
+      ],
+      [
+        {text: '💡 Идея дела'},
+        {text: '👨‍💻 Авторы'}
+      ],
+      [
+        {text: '❓ Справка'}
+      ]
     ],
-    // 3 ряд: Справка
-    [Markup.button.callback('❓ Справка', 'btn_help')]
-  ]);
+    resize_keyboard: true,
+    input_field_placeholder: 'Меню навигации 👇'
+  };
 };
 
-// --- Команды (через /) ---
+const getGroupKeyboard = (botUsername: string) => {
+  return {
+    inline_keyboard: [
+      [
+        {text: '🚀 Запустить MAX Добро', url: `https://t.me/${botUsername}?startapp`}
+      ]
+    ]
+  };
+};
 
-bot.start((ctx) => {
-  const userName = ctx.from.first_name;
-  ctx.reply(
+const getStartInlineButton = () => {
+  return {
+    inline_keyboard: [
+      [
+        {text: '🚀 Запустить MAX Добро', web_app: {url: webAppUrl}}
+      ]
+    ]
+  };
+};
+
+const replyWithMenu = async (ctx: Context, text: string, options: any = {}) => {
+  const isPrivate = ctx.chat?.type === 'private';
+
+  if (isPrivate) {
+    return ctx.reply(text, {
+      parse_mode: 'Markdown',
+      reply_markup: getPrivateMenuKeyboard(),
+      ...options
+    });
+  }
+
+  const botUsername = ctx.botInfo?.username || 'max_dobro_bot';
+
+  return ctx.reply(text, {
+    parse_mode: 'Markdown',
+    reply_markup: getGroupKeyboard(botUsername),
+    ...options
+  });
+};
+
+bot.start(async (ctx) => {
+  const userName = ctx.from?.first_name.replace(/[*_`\[\]]/g, '') || 'Герой';
+  const isPrivate = ctx.chat?.type === 'private';
+
+  await ctx.reply(
     `Привет, *${userName}*! 🌍\n\n` +
     `Добро пожаловать в *MAX Добро* (Telegram Edition).\n` +
-    `Это экосистема добрых дел, волонтерства и саморазвития.\n\n` +
-    `Жми кнопки ниже для навигации 👇`,
+    `Это экосистема добрых дел, волонтерства и саморазвития.`,
     {
       parse_mode: 'Markdown',
-      ...getMainMenu()
+      reply_markup: isPrivate ? getStartInlineButton() : undefined
     }
   );
+
+  if (isPrivate) {
+    await ctx.reply('Жми кнопки ниже для навигации 👇', {
+      reply_markup: getPrivateMenuKeyboard()
+    });
+  } else {
+    const botUsername = ctx.botInfo?.username;
+    await ctx.reply('Чтобы начать, нажмите кнопку ниже:', {
+      reply_markup: getGroupKeyboard(botUsername)
+    });
+  }
 });
 
 bot.command('help', (ctx) => {
-  ctx.reply(helpText, {
-    parse_mode: 'Markdown',
-    ...getMainMenu()
-  });
+  replyWithMenu(ctx, helpText);
 });
 
 bot.command('authors', (ctx) => {
-  ctx.reply(authorsText, {
-    parse_mode: 'Markdown',
-    link_preview_options: {is_disabled: true},
-    ...getMainMenu()
-  });
+  replyWithMenu(ctx, authorsText, {link_preview_options: {is_disabled: true}});
 });
 
 bot.command('idea', (ctx) => {
   const randomDeed = dailyDeeds[Math.floor(Math.random() * dailyDeeds.length)];
-  ctx.reply(randomDeed, {
-    parse_mode: 'Markdown',
-    ...getMainMenu()
-  });
+  replyWithMenu(ctx, randomDeed);
 });
 
-// --- Обработчики кнопок (Actions) ---
-
-bot.action('btn_idea', async (ctx) => {
+bot.hears('💡 Идея дела', (ctx) => {
   const randomDeed = dailyDeeds[Math.floor(Math.random() * dailyDeeds.length)];
-  await ctx.reply(randomDeed, {parse_mode: 'Markdown', ...getMainMenu()});
-  await ctx.answerCbQuery();
+  replyWithMenu(ctx, randomDeed);
 });
 
-bot.action('btn_authors', async (ctx) => {
-  await ctx.reply(authorsText, {
-    parse_mode: 'Markdown',
-    link_preview_options: {is_disabled: true},
-    ...getMainMenu()
-  });
-  await ctx.answerCbQuery();
+bot.hears('👨‍💻 Авторы', (ctx) => {
+  replyWithMenu(ctx, authorsText, {link_preview_options: {is_disabled: true}});
 });
 
-bot.action('btn_help', async (ctx) => {
-  await ctx.reply(helpText, {
-    parse_mode: 'Markdown',
-    ...getMainMenu()
-  });
-  await ctx.answerCbQuery();
+bot.hears('❓ Справка', (ctx) => {
+  replyWithMenu(ctx, helpText);
 });
-
-// --- Системные обработчики ---
 
 bot.on('message', (ctx: any) => {
   if (ctx.message.web_app_data) {
-    ctx.reply(`Получены данные из приложения: ${ctx.message.web_app_data.data}`);
-  } else if (ctx.message.text && !ctx.message.text.startsWith('/')) {
-    ctx.reply('Используй меню для навигации 👇', getMainMenu());
+    ctx.reply(`Получены данные: ${ctx.message.web_app_data.data}`);
   }
 });
-
-// --- Запуск ---
 
 async function startBot() {
   try {
     await bot.telegram.setMyCommands([
-      {command: 'start', description: '🚀 Главное меню'},
+      {command: 'start', description: '🔄 Перезапустить бота'},
       {command: 'idea', description: '💡 Идея доброго дела'},
       {command: 'authors', description: '👨‍💻 О разработчиках'},
       {command: 'help', description: '❓ Справка'}
@@ -147,11 +169,9 @@ async function startBot() {
 
 startBot();
 
-// Graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
-// Server for Render
 const server = http.createServer((req, res) => {
   res.writeHead(200);
   res.end('Telegram Bot is alive');
