@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Модель пользователя
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Связи
+  participations EventParticipant[]
+
+  // Аутентификация через Supabase
+  supabaseUserId String @unique @map("supabase_user_id") // ID из Supabase Auth
+}
+
+// Модель организации
+model Organization {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Связи
+  events Event[]
+}
+
+// Модель события (мероприятия)
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  date        DateTime
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Связи
+  organizationId Int
+  organization   Organization       @relation(fields: [organizationId], references: [id])
+  participants   EventParticipant[]
+
+  @@map("events") // Явно указываем имя таблицы
+}
+
+// Связующая таблица для участников событий (многие-ко-многим)
+model EventParticipant {
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  eventId   Int
+  event     Event    @relation(fields: [eventId], references: [id])
+  status    String   @default("pending") // e.g., pending, approved, rejected
+  createdAt DateTime @default(now())
+
+  @@id([userId, eventId]) // Составной первичный ключ
+  @@map("event_participants")
+}
