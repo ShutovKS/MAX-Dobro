@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Supabase Token Retriever</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h1>Check the developer console for your JWT token.</h1>
+
+  <script>
+    // --- 1. Замени на свои значения ---
+    const SUPABASE_URL = 'https://mvqcvuhuhngolsewmlob.supabase.co'; // <-- Вставь свой URL из .env
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12cWN2dWh1aG5nb2xzZXdtbG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NjI1MTksImV4cCI6MjA3ODAzODUxOX0.0yPWEV1KyzJku2drDr1sEGhtgpzGWZqAWysypchpT7I'; // <-- Вставь свой ANON KEY из .env
+
+    const userEmail = 'test@example.com'; // <-- Email твоего тестового пользователя
+    const userPassword = 'q6RStEOYB7Ms7PfavsFDjGa673m-Dd'; // <-- Пароль твоего тестового пользователя
+    // ------------------------------------
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function getToken() {
+      console.log('Attempting to sign in...');
+      // Обращаемся к нашему созданному клиенту
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: userEmail,
+        password: userPassword,
+      });
+
+      if (error) {
+        console.error('Sign-in failed:', error.message);
+        return;
+      }
+      
+      if (data.session) {
+        console.log('✅ SUCCESS! Your JWT token is:');
+        console.log(data.session.access_token);
+        // Этот токен теперь можно скопировать и использовать в Swagger/Postman
+      } else {
+        console.error('Sign-in successful, but no session data received.');
+      }
+    }
+
+    getToken();
+  </script>
+</body>
+</html>
