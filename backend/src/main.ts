@@ -1,9 +1,18 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Отбрасывать свойства, которых нет в DTO
+      transform: true, // Автоматически преобразовывать типы (например, строку в число)
+      forbidNonWhitelisted: true, // Выдавать ошибку, если есть лишние свойства
+    }),
+  );
 
   // --- Начало конфигурации Swagger ---
   const config = new DocumentBuilder()
