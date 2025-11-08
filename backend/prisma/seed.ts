@@ -1,3 +1,4 @@
+// prisma/seed.ts
 import { Prisma, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -72,6 +73,7 @@ async function main() {
     const isOnline = Math.random() > 0.7;
     const eventDate = new Date();
     eventDate.setDate(eventDate.getDate() + Math.floor(Math.random() * 60) - 15);
+    const hasLimit = Math.random() > 0.3; // 70% событий будут с лимитом
 
     eventsData.push({
       title: eventTitles[i],
@@ -79,6 +81,9 @@ async function main() {
       date: eventDate,
       location: isOnline ? null : `г. Москва, ул. Примерная, д. ${i + 1}`,
       organizationId: randomOrg.id,
+      maxParticipants: hasLimit
+        ? Math.floor(Math.random() * (100 - 10 + 1)) + 10 // Случайный лимит от 10 до 100
+        : null,
     });
   }
 

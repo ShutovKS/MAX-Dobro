@@ -1,5 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
+// src/events/entities/event.entity.ts
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Event } from '@prisma/client';
+
+// Вспомогательный класс для Swagger
+class EventCount {
+  @ApiProperty()
+  participants: number;
+}
 
 export class EventEntity implements Event {
   @ApiProperty()
@@ -22,7 +29,7 @@ export class EventEntity implements Event {
     nullable: true,
     description: 'Maximum number of participants. Null means unlimited.',
   })
-  maxParticipants: number | null; // <-- Добавь это поле
+  maxParticipants: number | null;
 
   @ApiProperty()
   createdAt: Date;
@@ -32,4 +39,7 @@ export class EventEntity implements Event {
 
   @ApiProperty()
   organizationId: number;
+
+  @ApiPropertyOptional({ type: EventCount })
+  _count?: EventCount;
 }

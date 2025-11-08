@@ -3,7 +3,8 @@ import {
   IsDateString,
   IsInt,
   IsNotEmpty,
-  IsOptional, // <-- Импортируй IsOptional
+  IsOptional,
+  IsPositive,
   IsString,
 } from 'class-validator';
 
@@ -22,13 +23,11 @@ export class CreateEventDto {
   @IsDateString()
   date: string;
 
-  // --- Начало изменений ---
   @ApiPropertyOptional({ example: 'Парк Горького, центральный вход' })
   @IsOptional()
   @IsString()
-  @IsNotEmpty() // Убедимся, что если поле передано, то оно не пустое
+  @IsNotEmpty()
   location?: string;
-  // --- Конец изменений ---
 
   @ApiPropertyOptional({
     description: 'Maximum number of participants. If null, unlimited.',
@@ -36,7 +35,7 @@ export class CreateEventDto {
   })
   @IsOptional()
   @IsInt()
-  @IsPositive() // Участников не может быть 0 или меньше
+  @IsPositive()
   maxParticipants?: number;
 
   @ApiProperty({ example: 1 })
