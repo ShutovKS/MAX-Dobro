@@ -35,13 +35,10 @@ async function main() {
   const organizations = await prisma.organization.findMany();
   console.log(`Created ${organizations.length} organizations.`);
 
-  // --- Начало изменений ---
-  // Добавляем проверку, что организации существуют, прежде чем создавать события
   if (organizations.length === 0) {
     console.log('No organizations found, skipping event creation.');
     return;
   }
-  // --- Конец изменений ---
 
   // 3. Создаем события
   console.log('Creating events...');

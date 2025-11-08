@@ -45,6 +45,7 @@ model Event {
   description String
   date        DateTime
   location    String?
+  maxParticipants Int?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

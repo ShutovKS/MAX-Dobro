@@ -17,6 +17,13 @@ export class EventEntity implements Event {
   @ApiProperty({ required: false, nullable: true })
   location: string | null;
 
+  @ApiProperty({
+    required: false,
+    nullable: true,
+    description: 'Maximum number of participants. Null means unlimited.',
+  })
+  maxParticipants: number | null; // <-- Добавь это поле
+
   @ApiProperty()
   createdAt: Date;
 

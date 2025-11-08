@@ -30,6 +30,15 @@ export class CreateEventDto {
   location?: string;
   // --- Конец изменений ---
 
+  @ApiPropertyOptional({
+    description: 'Maximum number of participants. If null, unlimited.',
+    example: 50,
+  })
+  @IsOptional()
+  @IsInt()
+  @IsPositive() // Участников не может быть 0 или меньше
+  maxParticipants?: number;
+
   @ApiProperty({ example: 1 })
   @IsInt()
   organizationId: number;

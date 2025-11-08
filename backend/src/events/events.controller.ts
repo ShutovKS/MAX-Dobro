@@ -18,10 +18,13 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import type { User } from '@prisma/client';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateEventDto } from './dto/create-event.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { EventParticipantEntity } from './entities/event-participant.entity';
 import { EventEntity } from './entities/event.entity';
 import { EventsService } from './events.service';
 
@@ -31,7 +34,7 @@ export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Post()
-  @UseGuards(AuthGuard) // Защищаем роут
+  @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new event (admin only)' })
   @ApiResponse({
@@ -87,7 +90,7 @@ export class EventsController {
   @Delete(':id')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @HttpCode(204) // Стандартный код ответа для успешного удаления без тела ответа
+  @HttpCode(204)
   @ApiOperation({ summary: 'Delete an event (admin only)' })
   @ApiResponse({
     status: 204,
@@ -96,5 +99,61 @@ export class EventsController {
   @ApiResponse({ status: 404, description: 'Event not found.' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.eventsService.remove(id);
+  }
+
+  @Post(':id/participate')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Participate in an event' })
+  @ApiResponse({
+    status: 201,
+    description: 'Successfully registered for the event.',
+    type: EventParticipantEntity,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 404, description: 'Event not found.' })
+  @ApiResponse({
+    status: 409,
+    description: 'User is already participating in this event.',
+  })
+  participate(
+    @Param('id', ParseIntPipe) eventId: number,
+    @CurrentUser() user: User,
+  ) {
+    return this.eventsService.participate(eventId, user.id);
+  }
+
+  @Delete(':id/participate')
+  @UseGuards(AuthGuard)
+  @HttpCode(204)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cancel participation in an event' })
+  @ApiResponse({
+    status: 204,
+    description: 'Successfully canceled participation.',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 404, description: 'Participation record not found.' })
+  cancelParticipation(
+    @Param('id', ParseIntPipe) eventId: number,
+    @CurrentUser() user: User,
+  ) {
+    return this.eventsService.cancelParticipation(eventId, user.id);
+  }
+
+  @Patch(':eventId/participants/:userId')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update participant status (organization admin only)' })
+  updateParticipantStatus(
+    @Param('eventId', ParseIntPipe) eventId: number,
+    @Param('userId', ParseIntPipe) userId: number,
+    @Body() body: { status: string },
+  ) {
+    return this.eventsService.updateParticipantStatus(
+      eventId,
+      userId,
+      body.status,
+    );
   }
 }

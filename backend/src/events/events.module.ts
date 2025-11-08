@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from '../auth/auth.module'; // <-- Добавь этот импорт
-import { SupabaseModule } from '../supabase/supabase.module'; // <-- И этот
+import { AuthModule } from '../auth/auth.module';
+import { SupabaseModule } from '../supabase/supabase.module';
 import { EventsController } from './events.controller';
 import { EventsService } from './events.service';
 
 @Module({
-  imports: [AuthModule, SupabaseModule], // <-- Добавь модули сюда
+  imports: [AuthModule, SupabaseModule],
   controllers: [EventsController],
   providers: [EventsService],
 })
