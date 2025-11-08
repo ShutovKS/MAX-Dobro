@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { EventEntity } from '../events/entities/event.entity';
 import { PrismaService } from '../prisma/prisma.service';
 
-// Тип для данных, приходящих от Supabase (например, через webhook)
 interface SupabaseUserPayload {
   id: string;
   email?: string;
@@ -14,8 +14,6 @@ interface SupabaseUserPayload {
 export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Этот метод будет вызываться (например, вебхуком),
-  // когда в Supabase Auth создается новый пользователь.
   async createLocalUserAfterSignUp(payload: SupabaseUserPayload) {
     if (!payload.email) {
       throw new InternalServerErrorException('Email is required');
@@ -30,9 +28,44 @@ export class AuthService {
         },
       });
     } catch (error) {
-      // Обработка возможных ошибок, например, если пользователь уже существует
       console.error('Error creating local user:', error);
       throw new InternalServerErrorException('Could not create local user.');
     }
+  }
+
+  async getUserEvents(userId: number, supabaseUserId: string) {
+    return this.prisma.fromUser(supabaseUserId, async (prisma) => {
+      const participations = await prisma.eventParticipant.findMany({
+        where: { userId },
+        include: {
+          event: {
+            include: {
+              _count: {
+                select: { participants: true },
+              },
+            },
+          },
+        },
+        orderBy: {
+          event: {
+            date: 'asc',
+          },
+        },
+      });
+
+      const now = new Date();
+      const upcoming: EventEntity[] = [];
+      const past: EventEntity[] = [];
+
+      for (const p of participations) {
+        if (p.event.date >= now) {
+          upcoming.push(p.event);
+        } else {
+          past.push(p.event);
+        }
+      }
+
+      return { upcoming, past };
+    });
   }
 }
