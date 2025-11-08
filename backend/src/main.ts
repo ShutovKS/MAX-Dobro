@@ -8,23 +8,21 @@ async function bootstrap() {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Отбрасывать свойства, которых нет в DTO
-      transform: true, // Автоматически преобразовывать типы (например, строку в число)
-      forbidNonWhitelisted: true, // Выдавать ошибку, если есть лишние свойства
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
     }),
   );
 
-  // --- Начало конфигурации Swagger ---
   const config = new DocumentBuilder()
     .setTitle('MAX Добро API')
     .setDescription('API для мини-приложения социальной направленности "MAX Добро"')
     .setVersion('1.0')
-    .addBearerAuth() // Добавляем поддержку авторизации по JWT
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
-  // --- Конец конфигурации Swagger ---
 
   await app.listen(process.env.PORT ?? 3000);
 }

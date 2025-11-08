@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { SupabaseModule } from '../supabase/supabase.module';
-import { AuthController } from './auth.controller';
-import { AuthGuard } from './guards/auth.guard';
 import { AuthService } from './auth.service';
+import { AuthGuard } from './guards/auth.guard';
+import { ProfileController } from './profile.controller';
 
 @Module({
-  imports: [SupabaseModule], // PrismaModule глобальный, его не нужно импортировать
-  controllers: [AuthController],
+  imports: [SupabaseModule],
+  controllers: [ProfileController],
   providers: [AuthService, AuthGuard],
 })
 export class AuthModule {}
