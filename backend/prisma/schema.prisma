@@ -48,6 +48,8 @@ model Event {
   date        DateTime
   location    String?
   maxParticipants Int?
+  durationHours Int?
+  status      String @default("PLANNED")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

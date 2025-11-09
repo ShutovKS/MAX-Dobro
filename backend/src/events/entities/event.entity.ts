@@ -31,6 +31,19 @@ export class EventEntity implements Event {
   })
   maxParticipants: number | null;
 
+  @ApiProperty({
+    required: false,
+    nullable: true,
+    description: 'Duration of the event in hours.',
+  })
+  durationHours: number | null;
+
+  @ApiProperty({
+    description: 'Status of the event (e.g., PLANNED, COMPLETED)',
+    example: 'PLANNED',
+  })
+  status: string;
+
   @ApiProperty()
   createdAt: Date;
 

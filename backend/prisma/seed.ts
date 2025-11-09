@@ -1,96 +1,60 @@
 // prisma/seed.ts
-import { Prisma, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Start seeding...');
 
-  // 1. Очищаем старые данные
+  // 1. Очистка
   console.log('Deleting old data...');
   await prisma.eventParticipant.deleteMany();
   await prisma.event.deleteMany();
   await prisma.organization.deleteMany();
+  await prisma.user.deleteMany();
 
-  // 2. Создаем организации
-  console.log('Creating organizations...');
-  const organizationsData = [
-    {
-      name: 'Чистый Город',
-      description: 'Волонтерская организация по уборке городских парков.',
+  // 2. Создание организации
+  const org = await prisma.organization.create({
+    data: { name: 'Тестовая Организация для Шедулера' },
+  });
+
+  // 3. Создание пользователя
+  const user = await prisma.user.create({
+    data: {
+      email: 'scheduler-test@example.com',
+      supabaseUserId: 'supabase-scheduler-test-id',
+      name: 'Тестер Шедулера',
+      totalHours: 0,
     },
-    {
-      name: 'Фонд "Лапа Помощи"',
-      description: 'Помощь бездомным животным, организация приютов.',
-    },
-    { name: 'IT Volunteers', description: 'Цифровое волонтерство и IT-проекты.' },
-    { name: 'Красный Полумесяц', description: 'Медицинская и гуманитарная помощь.' },
-    {
-      name: 'Культурное Наследие',
-      description: 'Сохранение памятников архитектуры и истории.',
-    },
-    { name: 'Лига Спорта', description: 'Организация спортивных мероприятий.' },
-  ];
+  });
 
-  await prisma.organization.createMany({ data: organizationsData });
-  const organizations = await prisma.organization.findMany();
-  console.log(`Created ${organizations.length} organizations.`);
+  // 4. Создание события, которое завершится через 15 секунд после старта приложения
+  const eventDate = new Date();
+  eventDate.setSeconds(eventDate.getSeconds() + 40);
 
-  if (organizations.length === 0) {
-    console.log('No organizations found, skipping event creation.');
-    return;
-  }
-
-  // 3. Создаем события
-  console.log('Creating events...');
-  const eventsData: Prisma.EventCreateManyInput[] = [];
-  const eventTitles = [
-    'Эко-марафон "Зеленая Планета"',
-    'День донора',
-    'Хакатон для НКО',
-    'Помощь ветеранам на дому',
-    'Субботник в парке "Сокольники"',
-    'Мастер-класс по программированию для детей',
-    'Выгул собак из приюта',
-    'Сбор гуманитарной помощи',
-    'Реставрация старинной усадьбы',
-    'Организация благотворительного забега',
-    'Онлайн-лекция по кибербезопасности',
-    'Сбор макулатуры и пластика',
-    'Уход за лошадьми на конюшне',
-    'Посадка деревьев в пригороде',
-    'Проведение IT-аудита для фонда',
-    'Вебинар по первой помощи',
-    'Концерт в доме престарелых',
-    'Помощь в сборе урожая на ферме',
-    'Создание сайта для приюта',
-    'Уборка берега озера',
-  ];
-
-  for (let i = 0; i < eventTitles.length; i++) {
-    const randomOrg =
-      organizations[Math.floor(Math.random() * organizations.length)];
-    const isOnline = Math.random() > 0.7;
-    const eventDate = new Date();
-    eventDate.setDate(eventDate.getDate() + Math.floor(Math.random() * 60) - 15);
-    const hasLimit = Math.random() > 0.3; // 70% событий будут с лимитом
-
-    eventsData.push({
-      title: eventTitles[i],
-      description: `Подробное описание для события "${eventTitles[i]}". Требуются волонтеры для выполнения различных задач.`,
+  const eventToSchedule = await prisma.event.create({
+    data: {
+      title: 'Событие для теста шедулера',
+      description: 'Должно завершиться через 15 секунд',
       date: eventDate,
-      location: isOnline ? null : `г. Москва, ул. Примерная, д. ${i + 1}`,
-      organizationId: randomOrg.id,
-      maxParticipants: hasLimit
-        ? Math.floor(Math.random() * (100 - 10 + 1)) + 10 // Случайный лимит от 10 до 100
-        : null,
-    });
-  }
+      organizationId: org.id,
+      durationHours: 0, // Завершится почти мгновенно после начала
+      status: 'PLANNED',
+    },
+  });
 
-  await prisma.event.createMany({ data: eventsData });
-  console.log(`Created ${eventsData.length} events.`);
+  // 5. Регистрация пользователя на это событие
+  await prisma.eventParticipant.create({
+    data: {
+      userId: user.id,
+      eventId: eventToSchedule.id,
+      status: 'approved',
+    },
+  });
 
-  console.log('Seeding finished.');
+  console.log(
+    `Seeding finished. Event ${eventToSchedule.id} is set to start at ${eventDate.toISOString()}`,
+  );
 }
 
 main()
