@@ -1,0 +1,111 @@
+import React, {useEffect, useState} from 'react';
+import type {User} from '../../../lib/types';
+import {CameraIcon} from '../../../components/ui/icons';
+
+const EditProfilePage: React.FC<{
+  user: User;
+  onCancel: () => void;
+  onSave: (updatedUser: User) => void;
+}> = ({user, onCancel, onSave}) => {
+  const [formData, setFormData] = useState({
+    firstName: user.firstName,
+    lastName: user.lastName,
+    about: user.about,
+  });
+  const [avatar, setAvatar] = useState(user.avatarUrl);
+  const [isChanged, setIsChanged] = useState(false);
+
+  useEffect(() => {
+    const hasChanged = formData.firstName !== user.firstName ||
+      formData.lastName !== user.lastName ||
+      formData.about !== user.about ||
+      avatar !== user.avatarUrl;
+    setIsChanged(hasChanged);
+  }, [formData, avatar, user]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const {name, value} = e.target;
+    setFormData(prev => ({...prev, [name]: value}));
+  };
+
+  const handleSave = () => {
+    if (isChanged) {
+      onSave({...user, ...formData, avatarUrl: avatar});
+    }
+  };
+
+  const handleChangePhoto = () => {
+    const newImgId = Math.floor(Math.random() * 70);
+    setAvatar(`https://i.pravatar.cc/150?img=${newImgId}`);
+  }
+
+  return (
+    <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
+      <header
+        className="flex-shrink-0 p-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center justify-between">
+        <button onClick={onCancel} className="text-lg font-medium text-[#007AFF]">Отмена</button>
+        <h1 className="text-lg font-bold text-[#0C0D0E]">Редактирование</h1>
+        <button
+          onClick={handleSave}
+          disabled={!isChanged}
+          className={`text-lg font-bold ${isChanged ? 'text-[#007AFF]' : 'text-gray-400'}`}
+        >
+          Готово
+        </button>
+      </header>
+
+      <main className="flex-grow overflow-y-auto pt-8 space-y-8 pb-8">
+        <section className="flex flex-col items-center">
+          <div className="relative mb-2">
+            <img src={avatar} alt="User Avatar" className="w-28 h-28 rounded-full shadow-lg"/>
+          </div>
+          <button onClick={handleChangePhoto}
+                  className="flex items-center space-x-2 text-lg font-medium text-[#007AFF]">
+            <CameraIcon className="w-5 h-5"/>
+            <span>Изменить фото</span>
+          </button>
+        </section>
+
+        <section>
+          <div className="bg-white rounded-2xl shadow-sm divide-y divide-gray-100 mx-4">
+            <div className="p-4">
+              <label htmlFor="firstName" className="text-xs text-gray-500">Имя</label>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                className="w-full bg-transparent text-lg text-[#0C0D0E] focus:outline-none"
+              />
+            </div>
+            <div className="p-4">
+              <label htmlFor="lastName" className="text-xs text-gray-500">Фамилия</label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                className="w-full bg-transparent text-lg text-[#0C0D0E] focus:outline-none"
+              />
+            </div>
+            <div className="p-4">
+              <label htmlFor="about" className="text-xs text-gray-500">О себе</label>
+              <textarea
+                id="about"
+                name="about"
+                value={formData.about}
+                onChange={handleChange}
+                rows={4}
+                className="w-full bg-transparent text-lg text-[#0C0D0E] focus:outline-none resize-none"
+              />
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+};
+
+export default EditProfilePage;
