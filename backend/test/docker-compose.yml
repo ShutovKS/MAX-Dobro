@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  test-db:
+    image: postgres:15
+    container_name: max-dobro-test-db
+    restart: always
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
+      POSTGRES_DB: testdb
+    ports:
+      - '5433:5432'
+    volumes:
+      - test-db-volume:/var/lib/postgresql/data
+
+volumes:
+  test-db-volume:
