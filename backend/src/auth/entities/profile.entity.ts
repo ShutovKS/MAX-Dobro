@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '@prisma/client';
+import { UserAchievementEntity } from './user-achievement.entity';
 
 export class ProfileEntity implements Omit<User, 'supabaseUserId'> {
   @ApiProperty()
@@ -22,4 +23,10 @@ export class ProfileEntity implements Omit<User, 'supabaseUserId'> {
 
   @ApiProperty({ default: 0 })
   karmaPoints: number;
+
+  @ApiProperty({ type: [UserAchievementEntity] })
+  achievements: UserAchievementEntity[];
+
+  @ApiProperty({ example: 'Новичок', description: 'User level name' })
+  levelName: string;
 }

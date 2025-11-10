@@ -6,13 +6,17 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { TasksService } from '../tasks/tasks.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tasksService: TasksService,
+  ) {}
 
   private readonly eventWithParticipantCount = {
     include: {
@@ -22,10 +26,17 @@ export class EventsService {
     },
   };
 
-  create(createEventDto: CreateEventDto) {
-    return this.prisma.event.create({
-      data: createEventDto,
+  async create(createEventDto: CreateEventDto) {
+    const newEvent = await this.prisma.event.create({
+      data: {
+        ...createEventDto,
+        date: new Date(createEventDto.date),
+        status: 'PLANNED',
+      },
     });
+    this.tasksService.scheduleEventCompletion(newEvent);
+
+    return newEvent;
   }
 
   findAll(paginationQuery: PaginationQueryDto) {

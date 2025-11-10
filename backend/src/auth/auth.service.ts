@@ -9,10 +9,30 @@ interface SupabaseUserPayload {
     name?: string;
   };
 }
-
 @Injectable()
 export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getProfile(userId: number) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        achievements: {
+          include: {
+            achievement: true,
+          },
+        },
+      },
+    });
+  }
+
+  calculateLevel(karmaPoints: number): string {
+    if (karmaPoints <= 100) return 'Новичок';
+    if (karmaPoints <= 500) return 'Активист';
+    if (karmaPoints <= 1500) return 'Лидер';
+    if (karmaPoints <= 5000) return 'Мастер';
+    return 'Амбассадор';
+  }
 
   async createLocalUserAfterSignUp(payload: SupabaseUserPayload) {
     if (!payload.email) {
@@ -66,6 +86,18 @@ export class AuthService {
       }
 
       return { upcoming, past };
+    });
+  }
+
+   async getUserCertificates(userId: number) {
+    return this.prisma.userCertificate.findMany({
+      where: { userId },
+      include: {
+        course: true,
+      },
+      orderBy: {
+        completedAt: 'desc',
+      },
     });
   }
 }
