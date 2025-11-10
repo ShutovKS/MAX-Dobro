@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AchievementsModule } from './achievements/achievements.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -22,6 +23,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     SupabaseModule,
     WebhooksModule,
     TasksModule,
+    AchievementsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

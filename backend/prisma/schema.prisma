@@ -6,26 +6,26 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 // Модель пользователя
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  totalHours  Int @default(0)
-  karmaPoints Int @default(0)
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  name           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  totalHours     Int      @default(0)
+  karmaPoints    Int      @default(0)
 
   // Связи
   participations EventParticipant[]
+  achievements   UserAchievement[]
 
-  // Аутентификация через Supabase
-  supabaseUserId String @unique @map("supabase_user_id") // ID из Supabase Auth
+  supabaseUserId String @unique @map("supabase_user_id")
 }
 
 // Модель организации
@@ -35,30 +35,26 @@ model Organization {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  // Связи
-  events Event[]
+  events      Event[]
 }
 
 // Модель события (мероприятия)
 model Event {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  date        DateTime
-  location    String?
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String
+  date            DateTime
+  location        String?
   maxParticipants Int?
-  durationHours Int?
-  status      String @default("PLANNED")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  durationHours   Int?
+  status          String   @default("PLANNED")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  organizationId  Int
+  organization    Organization       @relation(fields: [organizationId], references: [id])
+  participants    EventParticipant[]
 
-  // Связи
-  organizationId Int
-  organization   Organization       @relation(fields: [organizationId], references: [id])
-  participants   EventParticipant[]
-
-  @@map("events") // Явно указываем имя таблицы
+  @@map("events")
 }
 
 // Связующая таблица для участников событий (многие-ко-многим)
@@ -67,9 +63,35 @@ model EventParticipant {
   user      User     @relation(fields: [userId], references: [id])
   eventId   Int
   event     Event    @relation(fields: [eventId], references: [id])
-  status    String   @default("pending") // e.g., pending, approved, rejected
+  status    String   @default("pending")
   createdAt DateTime @default(now())
 
-  @@id([userId, eventId]) // Составной первичный ключ
+  @@id([userId, eventId])
   @@map("event_participants")
+}
+
+// Модель достижения
+model Achievement {
+  id             Int      @id @default(autoincrement())
+  name           String   @unique
+  description    String
+  icon           String?
+  criteriaType   String
+  criteriaValue  Int
+  createdAt      DateTime @default(now())
+  users          UserAchievement[]
+
+  @@map("achievements")
+}
+
+// Связующая таблица для полученных пользователем достижений
+model UserAchievement {
+  userId        Int
+  user          User        @relation(fields: [userId], references: [id])
+  achievementId Int
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt    DateTime    @default(now())
+
+  @@id([userId, achievementId])
+  @@map("user_achievements")
 }

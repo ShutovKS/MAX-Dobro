@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { Event } from '@prisma/client';
+import { AchievementsService } from '../achievements/achievements.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -10,6 +11,7 @@ export class TasksService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly schedulerRegistry: SchedulerRegistry,
+    private readonly achievementsService: AchievementsService,
   ) {}
 
   async onModuleInit() {
@@ -20,9 +22,9 @@ export class TasksService implements OnModuleInit {
       },
     });
 
-    await Promise.all(
-      eventsToSchedule.map((event) => this.scheduleEventCompletion(event)),
-    );
+    for (const event of eventsToSchedule) {
+      this.scheduleEventCompletion(event);
+    }
 
     this.logger.log(
       `Bootstrap finished. Processed ${eventsToSchedule.length} PLANNED events.`,
@@ -31,6 +33,7 @@ export class TasksService implements OnModuleInit {
 
   scheduleEventCompletion(event: Event) {
     if (event.durationHours === null) {
+      this.logger.warn(`[DEBUG] Event ${event.id} has null duration. Skipping.`);
       return;
     }
 
@@ -40,11 +43,18 @@ export class TasksService implements OnModuleInit {
       event.date.getTime() + event.durationHours * 60 * 60 * 1000,
     );
 
-    if (completionTime < now) {
+    this.logger.log(`[DEBUG] Event ID: ${event.id}`);
+    this.logger.log(`[DEBUG] Event Date (from DB): ${event.date.toISOString()}`);
+    this.logger.log(`[DEBUG] Event Duration (hours): ${event.durationHours}`);
+    this.logger.log(`[DEBUG] Calculated Completion Time: ${completionTime.toISOString()}`);
+    this.logger.log(`[DEBUG] Current Time (Now): ${now.toISOString()}`);
+    this.logger.log(`[DEBUG] Condition (completionTime <= now): ${completionTime <= now}`);
+
+    if (completionTime <= now) {
       this.logger.warn(
         `Event ${event.id} completion time is in the past. Processing immediately.`,
       );
-      this.handleEventCompletion(event.id);
+      setTimeout(() => this.handleEventCompletion(event.id), 0);
       return;
     }
 
@@ -58,28 +68,27 @@ export class TasksService implements OnModuleInit {
       const MAX_TIMEOUT = 2147483647;
       if (timeout > MAX_TIMEOUT) {
         this.logger.warn(
-          `Event ${event.id} is too far in the future to be scheduled with setTimeout. It will be picked up on next restart.`,
+          `Event ${event.id} is too far in the future to be scheduled. It will be picked up on next restart.`,
         );
         return;
+      }
+      if (this.schedulerRegistry.doesExist('timeout', jobName)) {
+        this.schedulerRegistry.deleteTimeout(jobName);
       }
       this.schedulerRegistry.addTimeout(jobName, setTimeout(callback, timeout));
       this.logger.log(
         `Scheduled job for event ${event.id} to run at ${completionTime.toISOString()}`,
       );
     } catch (error) {
-      if (error.message.includes('already exists')) {
-        this.logger.warn(`Job ${jobName} already exists. Skipping.`);
-      } else {
-        throw error;
-      }
+      this.logger.error(`Failed to schedule job ${jobName}: ${error.message}`);
     }
   }
-
+  
   async handleEventCompletion(eventId: number) {
     this.logger.log(`Processing event completion for ID: ${eventId}`);
 
     try {
-      await this.prisma.$transaction(async (tx) => {
+      const completedEvent = await this.prisma.$transaction(async (tx) => {
         const event = await tx.event.findFirst({
           where: { id: eventId, status: 'PLANNED' },
           include: {
@@ -91,7 +100,7 @@ export class TasksService implements OnModuleInit {
           this.logger.warn(
             `Event ${eventId} not found or already processed. Skipping transaction.`,
           );
-          return;
+          return null;
         }
 
         const userIds = event.participants.map((p) => p.userId);
@@ -111,7 +120,23 @@ export class TasksService implements OnModuleInit {
         this.logger.log(
           `Successfully processed event ${eventId} and awarded ${event.durationHours} hours to ${userIds.length} users.`,
         );
+        return { userIds };
       });
+
+      if (completedEvent?.userIds) {
+        this.logger.log(
+          `Triggering achievement checks for ${completedEvent.userIds.length} users.`,
+        );
+        for (const userId of completedEvent.userIds) {
+          try {
+            await this.achievementsService.checkAndAwardAchievements(userId);
+          } catch (e) {
+            this.logger.error(
+              `Failed to check achievements for user ${userId}: ${e.message}`,
+            );
+          }
+        }
+      }
     } catch (error) {
       this.logger.error(
         `Transaction failed for event ${eventId}: ${error.message}`,

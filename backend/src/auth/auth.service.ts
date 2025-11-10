@@ -9,10 +9,22 @@ interface SupabaseUserPayload {
     name?: string;
   };
 }
-
 @Injectable()
 export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getProfile(userId: number) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        achievements: {
+          include: {
+            achievement: true,
+          },
+        },
+      },
+    });
+  }
 
   async createLocalUserAfterSignUp(payload: SupabaseUserPayload) {
     if (!payload.email) {

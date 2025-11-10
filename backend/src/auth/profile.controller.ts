@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, NotFoundException, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -20,17 +20,24 @@ export class ProfileController {
   constructor(private readonly authService: AuthService) {}
 
   @Get('me')
-  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiOperation({ summary: 'Get current user profile with achievements' })
   @ApiResponse({
     status: 200,
-    description: 'Returns the current user data with statistics.',
+    description: 'Returns the current user data with statistics & achievements.',
     type: ProfileEntity,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  getMe(@CurrentUser() user: User): ProfileEntity {
+  @ApiResponse({ status: 404, description: 'User profile not found.' })
+  async getMe(@CurrentUser() user: User): Promise<ProfileEntity> {
+    const fullProfile = await this.authService.getProfile(user.id);
+
+    if (!fullProfile) {
+      throw new NotFoundException('User profile could not be found.');
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { supabaseUserId, ...profile } = user;
-    return profile;
+    const { supabaseUserId, ...profileData } = fullProfile;
+    return profileData;
   }
 
   @Get('me/events')
