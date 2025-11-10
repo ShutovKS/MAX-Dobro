@@ -33,7 +33,6 @@ export class TasksService implements OnModuleInit {
 
   scheduleEventCompletion(event: Event) {
     if (event.durationHours === null) {
-      this.logger.warn(`[DEBUG] Event ${event.id} has null duration. Skipping.`);
       return;
     }
 
@@ -42,13 +41,6 @@ export class TasksService implements OnModuleInit {
     const completionTime = new Date(
       event.date.getTime() + event.durationHours * 60 * 60 * 1000,
     );
-
-    this.logger.log(`[DEBUG] Event ID: ${event.id}`);
-    this.logger.log(`[DEBUG] Event Date (from DB): ${event.date.toISOString()}`);
-    this.logger.log(`[DEBUG] Event Duration (hours): ${event.durationHours}`);
-    this.logger.log(`[DEBUG] Calculated Completion Time: ${completionTime.toISOString()}`);
-    this.logger.log(`[DEBUG] Current Time (Now): ${now.toISOString()}`);
-    this.logger.log(`[DEBUG] Condition (completionTime <= now): ${completionTime <= now}`);
 
     if (completionTime <= now) {
       this.logger.warn(
@@ -83,7 +75,7 @@ export class TasksService implements OnModuleInit {
       this.logger.error(`Failed to schedule job ${jobName}: ${error.message}`);
     }
   }
-  
+
   async handleEventCompletion(eventId: number) {
     this.logger.log(`Processing event completion for ID: ${eventId}`);
 
@@ -106,9 +98,13 @@ export class TasksService implements OnModuleInit {
         const userIds = event.participants.map((p) => p.userId);
 
         if (userIds.length > 0) {
+          // --- ИЗМЕНЕНИЕ: Начисляем часы И карму ---
           await tx.user.updateMany({
             where: { id: { in: userIds } },
-            data: { totalHours: { increment: event.durationHours } },
+            data: {
+              totalHours: { increment: event.durationHours },
+              karmaPoints: { increment: event.karmaPoints },
+            },
           });
         }
 
@@ -118,7 +114,7 @@ export class TasksService implements OnModuleInit {
         });
 
         this.logger.log(
-          `Successfully processed event ${eventId} and awarded ${event.durationHours} hours to ${userIds.length} users.`,
+          `Successfully processed event ${eventId}. Awarded ${event.durationHours} hours and ${event.karmaPoints} karma to ${userIds.length} users.`,
         );
         return { userIds };
       });

@@ -20,8 +20,6 @@ model User {
   updatedAt      DateTime @updatedAt
   totalHours     Int      @default(0)
   karmaPoints    Int      @default(0)
-
-  // Связи
   participations EventParticipant[]
   achievements   UserAchievement[]
 
@@ -48,6 +46,7 @@ model Event {
   maxParticipants Int?
   durationHours   Int?
   status          String   @default("PLANNED")
+  karmaPoints     Int      @default(10)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   organizationId  Int
@@ -72,14 +71,14 @@ model EventParticipant {
 
 // Модель достижения
 model Achievement {
-  id             Int      @id @default(autoincrement())
-  name           String   @unique
-  description    String
-  icon           String?
-  criteriaType   String
-  criteriaValue  Int
-  createdAt      DateTime @default(now())
-  users          UserAchievement[]
+  id            Int               @id @default(autoincrement())
+  name          String            @unique
+  description   String
+  icon          String?
+  criteriaType  String
+  criteriaValue Int
+  createdAt     DateTime          @default(now())
+  users         UserAchievement[]
 
   @@map("achievements")
 }

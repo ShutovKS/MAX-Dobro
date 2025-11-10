@@ -26,4 +26,7 @@ export class ProfileEntity implements Omit<User, 'supabaseUserId'> {
 
   @ApiProperty({ type: [UserAchievementEntity] })
   achievements: UserAchievementEntity[];
+
+  @ApiProperty({ example: 'Новичок', description: 'User level name' })
+  levelName: string;
 }

@@ -26,6 +26,14 @@ export class AuthService {
     });
   }
 
+  calculateLevel(karmaPoints: number): string {
+    if (karmaPoints <= 100) return 'Новичок';
+    if (karmaPoints <= 500) return 'Активист';
+    if (karmaPoints <= 1500) return 'Лидер';
+    if (karmaPoints <= 5000) return 'Мастер';
+    return 'Амбассадор';
+  }
+
   async createLocalUserAfterSignUp(payload: SupabaseUserPayload) {
     if (!payload.email) {
       throw new InternalServerErrorException('Email is required');

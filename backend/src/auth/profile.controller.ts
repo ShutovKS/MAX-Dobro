@@ -34,10 +34,12 @@ export class ProfileController {
     if (!fullProfile) {
       throw new NotFoundException('User profile could not be found.');
     }
+    const levelName = this.authService.calculateLevel(fullProfile.karmaPoints);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { supabaseUserId, ...profileData } = fullProfile;
-    return profileData;
+
+    return { ...profileData, levelName };
   }
 
   @Get('me/events')

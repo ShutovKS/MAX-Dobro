@@ -1,8 +1,6 @@
-// src/events/entities/event.entity.ts
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Event } from '@prisma/client';
 
-// Вспомогательный класс для Swagger
 class EventCount {
   @ApiProperty()
   participants: number;
@@ -43,6 +41,12 @@ export class EventEntity implements Event {
     example: 'PLANNED',
   })
   status: string;
+
+  @ApiProperty({
+    description: 'Karma points awarded for completing the event.',
+    default: 10,
+  })
+  karmaPoints: number;
 
   @ApiProperty()
   createdAt: Date;
