@@ -11,6 +11,7 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { LearningModule } from './learning/learning.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     WebhooksModule,
     TasksModule,
     AchievementsModule,
+    LearningModule,
   ],
   controllers: [AppController],
   providers: [AppService],

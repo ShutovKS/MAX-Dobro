@@ -2,9 +2,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// --- ВАЖНО: Вставь сюда ID своего реального тестового пользователя из Supabase Auth ---
 const TEST_USER_SUPABASE_ID = '3eec394c-a786-44f6-b29d-3b201d540502';
-// ------------------------------------------------------------------------------------
 
 async function main() {
 
@@ -64,7 +62,7 @@ async function main() {
       date: pastEventDate,
       organizationId: org.id,
       durationHours: 1,
-      karmaPoints: 100, // <-- ДОБАВИЛИ КАРМУ ДЛЯ ТЕСТА
+      karmaPoints: 100,
       status: 'PLANNED',
     },
   });
@@ -81,6 +79,38 @@ async function main() {
   console.log(
     'Seeding finished. A past event with karma has been created.',
   );
+
+  // 6. Создание курсов
+  console.log('Creating courses...');
+  await prisma.course.create({
+    data: {
+      title: 'Основы Первой Помощи',
+      description: 'Курс, который научит вас базовым действиям в экстренных ситуациях.',
+      lessons: {
+        create: [
+          {
+            title: 'Урок 1: Оценка ситуации',
+            content: 'Первое, что нужно сделать - убедиться в собственной безопасности...',
+            questions: {
+              create: [
+                {
+                  question: 'Что является первым шагом при оказании первой помощи?',
+                  answers: {
+                    create: [
+                      { answer: 'Начать сердечно-легочную реанимацию', isCorrect: false },
+                      { answer: 'Убедиться в безопасности места происшествия', isCorrect: true },
+                      { answer: 'Позвонить в скорую помощь', isCorrect: false },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  });
+  console.log('Courses created.');
 }
 
 main()

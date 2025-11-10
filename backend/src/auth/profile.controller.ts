@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { ProfileEntity } from './entities/profile.entity';
 import { UserEventsEntity } from './entities/user-events.entity';
+import { UserCertificateEntity } from './entities/user-certificate.entity';
 import { AuthGuard } from './guards/auth.guard';
 
 @ApiTags('Profile')
@@ -52,5 +53,12 @@ export class ProfileController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   getMyEvents(@CurrentUser() user: User) {
     return this.authService.getUserEvents(user.id, user.supabaseUserId);
+  }
+
+  @Get('me/certificates')
+  @ApiOperation({ summary: "Get current user's certificates" })
+  @ApiResponse({ status: 200, type: [UserCertificateEntity] })
+  getMyCertificates(@CurrentUser() user: User) {
+    return this.authService.getUserCertificates(user.id);
   }
 }

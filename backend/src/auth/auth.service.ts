@@ -88,4 +88,16 @@ export class AuthService {
       return { upcoming, past };
     });
   }
+
+   async getUserCertificates(userId: number) {
+    return this.prisma.userCertificate.findMany({
+      where: { userId },
+      include: {
+        course: true,
+      },
+      orderBy: {
+        completedAt: 'desc',
+      },
+    });
+  }
 }

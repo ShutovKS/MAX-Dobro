@@ -22,6 +22,7 @@ model User {
   karmaPoints    Int      @default(0)
   participations EventParticipant[]
   achievements   UserAchievement[]
+  certificates   UserCertificate[]
 
   supabaseUserId String @unique @map("supabase_user_id")
 }
@@ -93,4 +94,59 @@ model UserAchievement {
 
   @@id([userId, achievementId])
   @@map("user_achievements")
+}
+
+model Course {
+  id          Int      @id @default(autoincrement())
+  title       String   @unique
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lessons      Lesson[]
+  certificates UserCertificate[]
+
+  @@map("courses")
+}
+
+model Lesson {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String   @db.Text // Используем Text для длинного контента
+  courseId  Int
+  course    Course   @relation(fields: [courseId], references: [id])
+  questions QuizQuestion[]
+
+  @@map("lessons")
+}
+
+model QuizQuestion {
+  id       Int    @id @default(autoincrement())
+  question String
+  lessonId Int
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
+  answers  QuizAnswer[]
+
+  @@map("quiz_questions")
+}
+
+model QuizAnswer {
+  id         Int     @id @default(autoincrement())
+  answer     String
+  isCorrect  Boolean @default(false)
+  questionId Int
+  question   QuizQuestion @relation(fields: [questionId], references: [id])
+
+  @@map("quiz_answers")
+}
+
+model UserCertificate {
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  courseId    Int
+  course      Course   @relation(fields: [courseId], references: [id])
+  completedAt DateTime @default(now())
+
+  @@id([userId, courseId])
+  @@map("user_certificates")
 }
