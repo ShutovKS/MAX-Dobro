@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "karmaPoints" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "totalHours" INTEGER NOT NULL DEFAULT 0;

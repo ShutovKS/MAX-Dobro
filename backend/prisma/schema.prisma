@@ -6,24 +6,25 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 // Модель пользователя
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Связи
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  name           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  totalHours     Int      @default(0)
+  karmaPoints    Int      @default(0)
   participations EventParticipant[]
+  achievements   UserAchievement[]
+  certificates   UserCertificate[]
 
-  // Аутентификация через Supabase
-  supabaseUserId String @unique @map("supabase_user_id") // ID из Supabase Auth
+  supabaseUserId String @unique @map("supabase_user_id")
 }
 
 // Модель организации
@@ -33,27 +34,27 @@ model Organization {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  // Связи
-  events Event[]
+  events      Event[]
 }
 
 // Модель события (мероприятия)
 model Event {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  date        DateTime
-  location    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String
+  date            DateTime
+  location        String?
+  maxParticipants Int?
+  durationHours   Int?
+  status          String   @default("PLANNED")
+  karmaPoints     Int      @default(10)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  organizationId  Int
+  organization    Organization       @relation(fields: [organizationId], references: [id])
+  participants    EventParticipant[]
 
-  // Связи
-  organizationId Int
-  organization   Organization       @relation(fields: [organizationId], references: [id])
-  participants   EventParticipant[]
-
-  @@map("events") // Явно указываем имя таблицы
+  @@map("events")
 }
 
 // Связующая таблица для участников событий (многие-ко-многим)
@@ -62,9 +63,90 @@ model EventParticipant {
   user      User     @relation(fields: [userId], references: [id])
   eventId   Int
   event     Event    @relation(fields: [eventId], references: [id])
-  status    String   @default("pending") // e.g., pending, approved, rejected
+  status    String   @default("pending")
   createdAt DateTime @default(now())
 
-  @@id([userId, eventId]) // Составной первичный ключ
+  @@id([userId, eventId])
   @@map("event_participants")
+}
+
+// Модель достижения
+model Achievement {
+  id            Int               @id @default(autoincrement())
+  name          String            @unique
+  description   String
+  icon          String?
+  criteriaType  String
+  criteriaValue Int
+  createdAt     DateTime          @default(now())
+  users         UserAchievement[]
+
+  @@map("achievements")
+}
+
+// Связующая таблица для полученных пользователем достижений
+model UserAchievement {
+  userId        Int
+  user          User        @relation(fields: [userId], references: [id])
+  achievementId Int
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt    DateTime    @default(now())
+
+  @@id([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model Course {
+  id          Int      @id @default(autoincrement())
+  title       String   @unique
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lessons      Lesson[]
+  certificates UserCertificate[]
+
+  @@map("courses")
+}
+
+model Lesson {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String   @db.Text // Используем Text для длинного контента
+  courseId  Int
+  course    Course   @relation(fields: [courseId], references: [id])
+  questions QuizQuestion[]
+
+  @@map("lessons")
+}
+
+model QuizQuestion {
+  id       Int    @id @default(autoincrement())
+  question String
+  lessonId Int
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
+  answers  QuizAnswer[]
+
+  @@map("quiz_questions")
+}
+
+model QuizAnswer {
+  id         Int     @id @default(autoincrement())
+  answer     String
+  isCorrect  Boolean @default(false)
+  questionId Int
+  question   QuizQuestion @relation(fields: [questionId], references: [id])
+
+  @@map("quiz_answers")
+}
+
+model UserCertificate {
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  courseId    Int
+  course      Course   @relation(fields: [courseId], references: [id])
+  completedAt DateTime @default(now())
+
+  @@id([userId, courseId])
+  @@map("user_certificates")
 }
