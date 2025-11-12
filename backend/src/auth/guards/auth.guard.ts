@@ -40,7 +40,7 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException('User not found in local database');
       }
 
-      request['user'] = user; // Прикрепляем нашего пользователя к запросу
+      request['user'] = user;
     } catch (e) {
       throw new UnauthorizedException(e.message);
     }
@@ -48,7 +48,7 @@ export class AuthGuard implements CanActivate {
     return true;
   }
 
-  private extractTokenFromHeader(request: any): string | undefined {
+  protected extractTokenFromHeader(request: any): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }

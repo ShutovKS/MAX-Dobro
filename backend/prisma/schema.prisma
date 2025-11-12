@@ -23,6 +23,7 @@ model User {
   participations EventParticipant[]
   achievements   UserAchievement[]
   certificates   UserCertificate[]
+  subscriptions  UserOrganizationSubscription[]
 
   supabaseUserId String @unique @map("supabase_user_id")
 }
@@ -35,6 +36,19 @@ model Organization {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   events      Event[]
+  subscribers UserOrganizationSubscription[]
+}
+
+// Модель для подписок
+model UserOrganizationSubscription {
+  userId         Int
+  user           User         @relation(fields: [userId], references: [id])
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@id([userId, organizationId])
+  @@map("user_organization_subscriptions")
 }
 
 // Модель события (мероприятия)
