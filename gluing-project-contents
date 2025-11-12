@@ -21,10 +21,10 @@ EXCLUDE_PATTERNS=(
   #  ".github/.*"
   #  ".husky/.*"
   ".idea/.*"
-  "certs/.*"
-  #  "packages/backend/.*"
-  #  "packages/frontend/.*"
-  #  "^[^.\/][^/]*$|^\.[^/]*$" # Корневые файлы и скрытые файлы
+  "docs/.*"
+  "backend/.*"\
+  #  "frontend/.*"
+  "^[^.\/][^/]*$|^\.[^/]*$" # Корневые файлы и скрытые файлы
 
   "package-lock\.json"
   "yarn\.lock"

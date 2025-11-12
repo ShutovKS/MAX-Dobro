@@ -1,13 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {fetchStoryById} from '../../../../lib/api';
 import type {Comment, Story} from '../../../../lib/types';
-import {
-  ArrowLeftIcon,
-  ChatBubbleLeftRightIcon,
-  DotsHorizontalIcon,
-  HeartIcon,
-  ShareIcon
-} from '../../../../components/ui/icons';
+import {ArrowLeft, Heart, MessageSquare, MoreHorizontal, Upload} from 'lucide-react';
 
 
 const CommentView: React.FC<{ comment: Comment }> = ({comment}) => (
@@ -73,12 +67,12 @@ const StoryDetailPage: React.FC<{
         className="flex-shrink-0 p-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center justify-between sticky top-0 z-20">
         <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                 aria-label="Назад">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+          <ArrowLeft className="w-6 h-6 text-gray-700"/>
         </button>
         <h1 className="text-lg font-bold text-[#0C0D0E]">История</h1>
         <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                 aria-label="Действия">
-          <DotsHorizontalIcon className="w-6 h-6 text-gray-700"/>
+          <MoreHorizontal className="w-6 h-6 text-gray-700"/>
         </button>
       </header>
 
@@ -115,16 +109,16 @@ const StoryDetailPage: React.FC<{
         <div className="flex justify-between items-center text-[rgb(12,13,14,0.52)] p-4 border-y border-gray-100">
           <div className="flex items-center space-x-6">
             <button className="flex items-center space-x-1.5 hover:text-[#FF303C]">
-              <HeartIcon className="w-6 h-6"/>
+              <Heart className="w-6 h-6"/>
               <span className="font-semibold text-sm">{story.likes}</span>
             </button>
             <div className="flex items-center space-x-1.5">
-              <ChatBubbleLeftRightIcon className="w-6 h-6"/>
+              <MessageSquare className="w-6 h-6"/>
               <span className="font-semibold text-sm">{comments.length}</span>
             </div>
           </div>
           <button className="hover:text-[#007AFF]">
-            <ShareIcon className="w-6 h-6"/>
+            <Upload className="w-6 h-6"/>
           </button>
         </div>
 

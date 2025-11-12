@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import type {HistoryEvent} from '../../../lib/types';
 import {fetchActivityHistoryEvents} from '../../../lib/api';
-import {PlusIcon, XIcon} from '../../../components/ui/icons';
+import {Plus, X} from 'lucide-react';
 import SelectEventModal from './SelectEventModal';
 
 interface CreateStoryPageProps {
@@ -88,13 +88,13 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
                   <button onClick={() => handleRemovePhoto(index)}
                           className="absolute -top-1 -right-1 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center"
                           aria-label="Удалить фото">
-                    <XIcon className="w-4 h-4"/>
+                    <X className="w-4 h-4"/>
                   </button>
                 </div>
               ))}
               <button onClick={handleAddPhoto}
                       className="flex-shrink-0 w-28 h-28 bg-gray-100 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors">
-                <PlusIcon className="w-8 h-8"/>
+                <Plus className="w-8 h-8" strokeWidth={3}/>
                 <span className="text-xs font-semibold mt-1">Добавить фото</span>
               </button>
             </div>

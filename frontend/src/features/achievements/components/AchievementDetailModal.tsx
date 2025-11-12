@@ -1,6 +1,6 @@
 import React from 'react';
 import type {Achievement} from '../../../lib/types';
-import {LockClosedIcon} from '../../../components/ui/icons';
+import {Lock} from 'lucide-react';
 
 const AchievementDetailModal: React.FC<{
   achievement: Achievement | null;
@@ -46,7 +46,7 @@ const AchievementDetailModal: React.FC<{
           <>
             <div
               className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center -mt-20 mb-2 animate-pop-in">
-              <LockClosedIcon className="w-20 h-20 text-gray-400"/>
+              <Lock className="w-20 h-20 text-gray-400"/>
             </div>
             <h2 className="text-2xl font-bold text-[rgb(12,13,14,0.52)]">{achievement.name}</h2>
             <p className="text-[#0C0D0E] font-medium max-w-sm">{achievement.description}</p>

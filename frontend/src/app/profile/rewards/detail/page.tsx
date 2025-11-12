@@ -1,6 +1,6 @@
 import React, {useMemo, useState} from 'react';
 import type {RewardItem, User} from '../../../../lib/types';
-import {ArrowLeftIcon, CheckCircleIcon, SparklesIcon} from '../../../../components/ui/icons';
+import {ArrowLeft, CheckCircle, Sparkles} from 'lucide-react';
 import PurchaseConfirmationModal from '../../../../components/ui/PurchaseConfirmationModal';
 
 interface RewardsDetailPageProps {
@@ -43,7 +43,7 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
     if (reward.isPurchased) {
       return (
         <div className="flex items-center justify-center space-x-2 font-semibold text-lg text-green-600 h-[52px]">
-          <CheckCircleIcon className="w-6 h-6"/>
+          <CheckCircle className="w-6 h-6"/>
           <span>Уже в коллекции</span>
         </div>
       );
@@ -72,7 +72,7 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
           <button onClick={onBack}
                   className="w-10 h-10 flex items-center justify-center rounded-full bg-white/50 hover:bg-white/90 shadow-sm"
                   aria-label="Назад">
-            <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+            <ArrowLeft className="w-6 h-6 text-gray-700"/>
           </button>
           <h1 className="text-lg font-bold text-[#0C0D0E] mx-auto">Награда</h1>
           <div className="w-10"></div>
@@ -102,7 +102,7 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
             <div className="text-left">
               <p className="text-sm text-gray-500">Цена:</p>
               <div className="flex items-center space-x-1 font-bold text-lg text-[#0C0D0E]">
-                <SparklesIcon className="w-5 h-5 text-[#007AFF]"/>
+                <Sparkles className="w-5 h-5 text-[#007AFF]"/>
                 <span>{reward.price.toLocaleString('ru-RU')}</span>
               </div>
             </div>

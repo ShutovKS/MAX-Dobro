@@ -1,6 +1,6 @@
 import React from 'react';
 import type {ProfileSubScreen, User} from '../../../lib/types';
-import {AnimalFriendIcon, ChevronRightIcon, SettingsIcon} from '../../../components/ui/icons';
+import {ChevronRight, Dog, Settings} from 'lucide-react';
 import WeeklyChallengeWidget from '../../../features/challenges/components/WeeklyChallengeWidget';
 
 const StatCard: React.FC<{
@@ -37,7 +37,7 @@ const mockChallenge = {
   title: "Челлендж недели",
   description: "Помогите животным 1 раз",
   reward: "Награда: +100 баллов кармы ✨",
-  Icon: AnimalFriendIcon,
+  Icon: Dog,
   progress: 0,
   target: 1,
   filterCategory: "Животные",
@@ -80,7 +80,7 @@ const ProfilePage: React.FC<{ user: User; onSwitchToOrganizationMode: () => void
       <header className="p-6 flex justify-between items-center">
         <h1 className="text-[28px] font-bold text-[#0C0D0E]">Мой путь</h1>
         <button onClick={() => onNavigate('settings')} className="text-gray-500 hover:text-[#007AFF]">
-          <SettingsIcon className="w-6 h-6"/>
+          <Settings className="w-6 h-6"/>
         </button>
       </header>
 
@@ -164,7 +164,7 @@ const ProfilePage: React.FC<{ user: User; onSwitchToOrganizationMode: () => void
                   <item.Icon className="w-6 h-6 text-gray-500"/>
                   <span className="font-semibold text-[#0C0D0E]">{item.label}</span>
                 </div>
-                <ChevronRightIcon className="w-5 h-5 text-gray-400"/>
+                <ChevronRight className="w-5 h-5 text-gray-400"/>
               </button>
             );
           })}

@@ -2,7 +2,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {defaultOrganizationFilters, organizationCategories} from '../../../lib/mockData';
 import {fetchAllOrganizations, updateOrganizationSubscription} from '../../../lib/api';
 import type {Organization, OrganizationFilters} from '../../../lib/types';
-import {CheckIcon, EmptySearchIcon, FilterIcon, SearchIcon, VerifiedIcon} from '../../../components/ui/icons';
+import {BadgeCheck, Check, Filter, Search, SearchX} from 'lucide-react';
 import SubscribeModal from '../../../components/ui/SubscribeModal';
 import Toast from '../../../components/ui/Toast';
 import EmptyState from '../../../components/ui/EmptyState';
@@ -30,7 +30,7 @@ const OrganizationCell: React.FC<{
       <div className="flex-1">
         <div className="flex items-center space-x-1.5">
           <h3 className="font-bold text-md text-[#0C0D0E]">{organization.name}</h3>
-          {organization.isVerified && <VerifiedIcon className="w-5 h-5 text-[#007AFF]"/>}
+          {organization.isVerified && <BadgeCheck className="w-5 h-5 text-[#007AFF] fill-current"/>}
         </div>
         <p className="text-sm text-[rgb(12,13,14,0.52)]">{organization.description}</p>
       </div>
@@ -45,7 +45,7 @@ const OrganizationCell: React.FC<{
     >
       {organization.isSubscribed ? (
         <>
-          <CheckIcon className="w-4 h-4"/>
+          <Check className="w-4 h-4"/>
           <span>Вы подписаны</span>
         </>
       ) : (
@@ -245,7 +245,7 @@ const OrganizationsPage: React.FC = () => {
         </header>
         <div className="px-6 pb-4 flex items-center space-x-2">
           <div className="relative flex-grow">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><SearchIcon
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><Search
               className="w-5 h-5 text-gray-400"/></span>
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                    placeholder="Найти по названию"
@@ -254,7 +254,7 @@ const OrganizationsPage: React.FC = () => {
           </div>
           <button onClick={() => setIsFilterPanelOpen(true)} aria-label="Фильтры"
                   className="flex-shrink-0 p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
-            <FilterIcon className="w-6 h-6 text-gray-600"/>
+            <Filter className="w-6 h-6 text-gray-600"/>
           </button>
         </div>
         <main className="flex-grow">
@@ -267,7 +267,7 @@ const OrganizationsPage: React.FC = () => {
                                                                  onSubscribe={handleSubscribeClick}
                                                                  onSelect={onSelectOrganization}/>)
             ) : (
-              <div className="pt-10"><EmptyState Icon={EmptySearchIcon} title="Организации не найдены"
+              <div className="pt-10"><EmptyState Icon={SearchX} title="Организации не найдены"
                                                  subtitle="По вашим фильтрам ничего не найдено. Попробуйте изменить параметры."/>
               </div>
             )}

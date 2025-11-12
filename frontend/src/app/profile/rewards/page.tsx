@@ -1,6 +1,7 @@
 import React, {useMemo, useState} from 'react';
 import type {RewardItem, User} from '../../../lib/types';
-import {ArrowLeftIcon, CheckCircleIcon, EmptyShelfIllustrationIcon, SparklesIcon} from '../../../components/ui/icons';
+import {ArrowLeft, CheckCircle, Sparkles} from 'lucide-react';
+import {EmptyShelfIllustrationIcon} from '../../../components/ui/icons';
 import EmptyState from '../../../components/ui/EmptyState';
 
 // Reward Card Skeleton
@@ -21,13 +22,13 @@ const RewardCard: React.FC<{ reward: RewardItem; onSelect: () => void; }> = ({re
         <img src={reward.imageUrl} alt={reward.name} className="w-full h-full object-cover rounded-xl"/>
         {reward.isPurchased && (
           <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
-            <CheckCircleIcon className="w-12 h-12 text-white/80"/>
+            <CheckCircle className="w-12 h-12 text-white/80"/>
           </div>
         )}
       </div>
       <h3 className="font-bold text-[#0C0D0E] truncate">{reward.name}</h3>
       <div className="flex items-center space-x-1 font-bold text-[#007AFF]">
-        <SparklesIcon className="w-5 h-5"/>
+        <Sparkles className="w-5 h-5"/>
         <span>{reward.price.toLocaleString('ru-RU')}</span>
       </div>
     </button>
@@ -67,7 +68,7 @@ const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBac
         className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center">
         <button onClick={onBack}
                 className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-gray-100">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+          <ArrowLeft className="w-6 h-6 text-gray-700"/>
         </button>
         <h1 className="text-2xl font-bold text-[#0C0D0E] mx-auto">Магазин наград</h1>
         <div className="w-8"></div>
@@ -79,7 +80,7 @@ const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBac
           className="bg-[linear-gradient(155deg,#BF97FF_6.6%,#526EFF_84.12%)] text-white rounded-2xl shadow-lg p-6 text-center">
           <p className="font-semibold opacity-80">Ваш баланс:</p>
           <div className="flex items-center justify-center space-x-2 mt-1">
-            <SparklesIcon className="w-8 h-8 text-yellow-300"/>
+            <Sparkles className="w-8 h-8 text-yellow-300"/>
             <span className="text-4xl font-bold">{karmaBalance.toLocaleString('ru-RU')}</span>
           </div>
         </section>

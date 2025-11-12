@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import type {OrganizationEvent} from '../../../../lib/types';
 import {allCategories} from '../../../../lib/mockData';
 import {fetchOrganizationEvents} from '../../../../lib/api';
-import {ArrowLeftIcon, CameraIcon, MapPinIcon, UserGroupIcon} from '../../../../components/ui/icons';
+import {ArrowLeft, Camera, MapPin, Users} from 'lucide-react';
 
 const toDateTimeLocal = (dateString?: string): string => {
   if (!dateString) return '';
@@ -151,7 +151,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
           <button onClick={onBack}
                   className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 -ml-2"
                   aria-label="Назад">
-            <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+            <ArrowLeft className="w-6 h-6 text-gray-700"/>
           </button>
         </div>
         <h1 className="text-lg font-bold text-[#0C0D0E]">{event ? 'Редактирование события' : 'Новое событие'}</h1>
@@ -169,7 +169,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
           <InputField label="Обложка">
             <button
               className="w-full aspect-[16/9] bg-gray-100 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-200 border-2 border-dashed border-gray-300">
-              <CameraIcon className="w-8 h-8 mb-2"/>
+              <Camera className="w-8 h-8 mb-2"/>
               <span className="font-semibold">Загрузить фото</span>
             </button>
           </InputField>
@@ -207,7 +207,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
           {format === 'Офлайн' && (
             <InputField label="Адрес*">
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><MapPinIcon
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><MapPin
                   className="w-5 h-5 text-gray-400"/></span>
                 <input type="text" value={address} onChange={e => setAddress(e.target.value)}
                        placeholder="Укажите место на карте"
@@ -220,7 +220,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
         <FormSection title="Требования к волонтерам">
           <InputField label="Количество волонтеров">
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><UserGroupIcon
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><Users
                 className="w-5 h-5 text-gray-400"/></span>
               <input type="number" value={volunteerCount} onChange={e => setVolunteerCount(e.target.value)}
                      placeholder="10"

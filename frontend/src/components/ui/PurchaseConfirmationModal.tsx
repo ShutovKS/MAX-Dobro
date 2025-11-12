@@ -1,5 +1,5 @@
 import React from 'react';
-import {SparklesIcon} from './icons';
+import {Sparkles} from 'lucide-react';
 
 interface PurchaseConfirmationModalProps {
   isOpen: boolean;
@@ -39,21 +39,21 @@ const PurchaseConfirmationModal: React.FC<PurchaseConfirmationModalProps> = ({
           <div className="flex justify-between items-center">
             <span className="text-gray-500">Стоимость:</span>
             <div className="flex items-center space-x-1 font-semibold text-[#0C0D0E]">
-              <SparklesIcon className="w-4 h-4 text-gray-500"/>
+              <Sparkles className="w-4 h-4 text-gray-500"/>
               <span>{rewardPrice.toLocaleString('ru-RU')}</span>
             </div>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-500">Ваш баланс:</span>
             <div className="flex items-center space-x-1 font-semibold text-[#0C0D0E]">
-              <SparklesIcon className="w-4 h-4 text-gray-500"/>
+              <Sparkles className="w-4 h-4 text-gray-500"/>
               <span>{userKarma.toLocaleString('ru-RU')}</span>
             </div>
           </div>
           <div className="flex justify-between items-center border-t border-gray-200 pt-3 mt-3">
             <span className="text-gray-500">Останется:</span>
             <div className="flex items-center space-x-1 font-bold text-[#0C0D0E]">
-              <SparklesIcon className="w-4 h-4 text-gray-500"/>
+              <Sparkles className="w-4 h-4 text-gray-500"/>
               <span>{remainingKarma.toLocaleString('ru-RU')}</span>
             </div>
           </div>

@@ -1,22 +1,12 @@
 import React, {useMemo, useState} from 'react';
-import {
-  ArrowLeftIcon,
-  CheckCircleIcon,
-  EnvelopeIcon,
-  EyeIcon,
-  EyeOffIcon,
-  HeartHandIcon,
-  LockIcon,
-  MaxIcon,
-  RefreshIcon,
-  UserIcon
-} from '../../components/ui/icons';
+import {ArrowLeft, CheckCircle, Eye, EyeOff, Lock, Mail, RefreshCw, User as UserIcon} from 'lucide-react';
+import {HeartHandIcon, MaxIcon} from '../../components/ui/icons';
 import {login, register} from '../../lib/auth';
 import type {User} from '../../lib/types';
 import {defaultUserData} from '../../lib/mockData';
 
 const Spinner: React.FC = () => (
-  <RefreshIcon className="w-5 h-5 text-white animate-spin"/>
+  <RefreshCw className="w-5 h-5 text-white animate-spin"/>
 );
 
 // --- Login View ---
@@ -106,7 +96,7 @@ const LoginView: React.FC<{
           <div className="w-full">
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <EnvelopeIcon className="w-5 h-5 text-gray-400"/>
+                <Mail className="w-5 h-5 text-gray-400"/>
               </span>
               <input type="email" value={email} onChange={handleEmailChange} placeholder="Ваш email"
                      className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-900 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
@@ -117,7 +107,7 @@ const LoginView: React.FC<{
           <div className="w-full">
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <LockIcon className="w-5 h-5 text-gray-400"/>
+                <Lock className="w-5 h-5 text-gray-400"/>
               </span>
               <input type={showPassword ? 'text' : 'password'} value={password} onChange={handlePasswordChange}
                      placeholder="Пароль"
@@ -126,7 +116,7 @@ const LoginView: React.FC<{
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                       aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}>
-                {showPassword ? <EyeOffIcon className="w-5 h-5"/> : <EyeIcon className="w-5 h-5"/>}
+                {showPassword ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
               </button>
             </div>
             {passwordError && <p id="password-error" className="text-red-600 text-xs mt-1 ml-1">{passwordError}</p>}
@@ -227,7 +217,7 @@ const RegisterView: React.FC<{
           </div>
           <div className="w-full">
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><EnvelopeIcon
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><Mail
                 className="w-5 h-5 text-gray-400"/></span>
               <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email"
                      className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-900 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"/>
@@ -236,28 +226,28 @@ const RegisterView: React.FC<{
           </div>
           <div className="w-full">
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><LockIcon
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><Lock
                 className="w-5 h-5 text-gray-400"/></span>
               <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password}
                      onChange={handleChange} placeholder="Пароль"
                      className="w-full pl-10 pr-10 py-3 bg-gray-100 text-gray-900 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"/>
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
-                {showPassword ? <EyeOffIcon className="w-5 h-5"/> : <EyeIcon className="w-5 h-5"/>}
+                {showPassword ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
               </button>
             </div>
             {errors.password && <p className="text-red-600 text-xs mt-1 ml-1">{errors.password}</p>}
           </div>
           <div className="w-full">
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><LockIcon
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><Lock
                 className="w-5 h-5 text-gray-400"/></span>
               <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword"
                      value={formData.confirmPassword} onChange={handleChange} placeholder="Повторите пароль"
                      className="w-full pl-10 pr-10 py-3 bg-gray-100 text-gray-900 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"/>
               <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
-                {showConfirmPassword ? <EyeOffIcon className="w-5 h-5"/> : <EyeIcon className="w-5 h-5"/>}
+                {showConfirmPassword ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
               </button>
             </div>
             {errors.confirmPassword && <p className="text-red-600 text-xs mt-1 ml-1">{errors.confirmPassword}</p>}
@@ -303,7 +293,7 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLo
       <div
         className="bg-white w-full h-screen flex flex-col items-center justify-center p-6 font-sans antialiased text-center">
         <div className="w-full max-w-sm flex flex-col items-center">
-          <CheckCircleIcon className="w-24 h-24 text-green-500 mb-6"/>
+          <CheckCircle className="w-24 h-24 text-green-500 mb-6"/>
           <h1 className="text-[28px] font-bold text-[#0C0D0E] mb-4">Письмо отправлено!</h1>
           <p className="text-[rgb(12,13,14,0.52)] mb-8">
             Мы отправили ссылку для восстановления пароля на <span
@@ -330,7 +320,7 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLo
           <div className="w-full">
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <EnvelopeIcon className="w-5 h-5 text-gray-400"/>
+                <Mail className="w-5 h-5 text-gray-400"/>
               </span>
               <input type="email" value={email} onChange={handleEmailChange} placeholder="Ваш email"
                      className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-900 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
@@ -344,7 +334,7 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLo
           </button>
           <button onClick={onBackToLogin}
                   className="flex items-center space-x-2 text-sm text-[#007AFF] hover:underline font-semibold pt-4">
-            <ArrowLeftIcon className="w-4 h-4"/>
+            <ArrowLeft className="w-4 h-4"/>
             <span>Вернуться ко входу</span>
           </button>
         </div>

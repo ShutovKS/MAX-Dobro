@@ -3,16 +3,7 @@ import {useNavigate, useParams} from 'react-router';
 import type {Achievement, AppEvent, ProfileSubScreen} from '../../../lib/types';
 import {fetchEventById} from '../../../lib/api';
 import {allAchievements} from '../../../lib/mockData';
-import {
-  ArrowLeftIcon,
-  CalendarIcon,
-  ChatBubbleLeftRightIcon,
-  CheckIcon,
-  ListIcon,
-  LocationMarkerIcon,
-  ShareIcon,
-  StarIcon
-} from '../../../components/ui/icons';
+import {ArrowLeft, Calendar, Check, List, MapPin, MessageSquare, Share2, Star} from 'lucide-react';
 import InviteFriendModal from '../../../features/invites/components/InviteFriendModal';
 import Toast from '../../../components/ui/Toast';
 import NewAchievementModal from '../../../components/ui/NewAchievementModal';
@@ -42,15 +33,15 @@ const ConfirmationModal: React.FC<{
         <h2 id="confirm-title" className="text-xl font-bold text-[#0C0D0E] text-center mb-6">Подтвердите участие</h2>
         <div className="space-y-3 mb-6 bg-gray-50 p-4 rounded-xl">
           <div className="flex items-center space-x-4">
-            <ListIcon className="w-6 h-6 text-gray-500 flex-shrink-0"/>
+            <List className="w-6 h-6 text-gray-500 flex-shrink-0"/>
             <span className="font-semibold text-[#0C0D0E]">{event.title}</span>
           </div>
           <div className="flex items-center space-x-4">
-            <CalendarIcon className="w-6 h-6 text-gray-500 flex-shrink-0"/>
+            <Calendar className="w-6 h-6 text-gray-500 flex-shrink-0"/>
             <span className="text-[rgb(12,13,14,0.52)]">{event.date}</span>
           </div>
           <div className="flex items-center space-x-4">
-            <LocationMarkerIcon className="w-6 h-6 text-gray-500 flex-shrink-0"/>
+            <MapPin className="w-6 h-6 text-gray-500 flex-shrink-0"/>
             <span className="text-[rgb(12,13,14,0.52)]">{event.location}</span>
           </div>
         </div>
@@ -215,9 +206,9 @@ const EventDetailPage: React.FC = () => {
       <div className="relative w-full h-screen font-sans antialiased bg-white overflow-y-auto">
         <header className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4">
           <button onClick={onBack} className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
-                  aria-label="Назад"><ArrowLeftIcon className="w-6 h-6 text-white"/></button>
+                  aria-label="Назад"><ArrowLeft className="w-6 h-6 text-white"/></button>
           <button className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
-                  aria-label="Поделиться"><ShareIcon className="w-5 h-5 text-white"/></button>
+                  aria-label="Поделиться"><Share2 className="w-5 h-5 text-white"/></button>
         </header>
         <div
           className="h-[40vh] w-full bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] flex items-center justify-center">
@@ -230,9 +221,9 @@ const EventDetailPage: React.FC = () => {
             </div>
             <h1 className="text-[28px] font-bold text-[#0C0D0E]">{event.title}</h1>
             <div className="mt-4 space-y-2 text-[rgb(12,13,14,0.52)]">
-              <div className="flex items-center space-x-3"><CalendarIcon
+              <div className="flex items-center space-x-3"><Calendar
                 className="w-5 h-5 text-gray-400"/><span>{event.date}</span></div>
-              <div className="flex items-center space-x-3"><LocationMarkerIcon
+              <div className="flex items-center space-x-3"><MapPin
                 className="w-5 h-5 text-gray-400"/><span>{event.location}</span></div>
             </div>
           </section>
@@ -240,7 +231,7 @@ const EventDetailPage: React.FC = () => {
             {isSignedUp ? (
               <button onClick={() => onOpenChat(event)}
                       className="w-full flex items-center justify-center space-x-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors relative">
-                <ChatBubbleLeftRightIcon className="w-6 h-6 text-[#007AFF]"/>
+                <MessageSquare className="w-6 h-6 text-[#007AFF]"/>
                 <span className="font-semibold text-lg text-[#0C0D0E]">Чат мероприятия</span>
                 <span
                   className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">3</span>
@@ -248,7 +239,7 @@ const EventDetailPage: React.FC = () => {
             ) : (
               <div
                 className="w-full flex items-center justify-center space-x-3 p-4 bg-gray-50 rounded-2xl relative text-center">
-                <ChatBubbleLeftRightIcon className="w-6 h-6 text-gray-400"/>
+                <MessageSquare className="w-6 h-6 text-gray-400"/>
                 <span className="font-semibold text-lg text-gray-400">Чат доступен после записи</span>
               </div>
             )}
@@ -260,8 +251,8 @@ const EventDetailPage: React.FC = () => {
                    className="w-12 h-12 rounded-full"/>
               <div className="text-left">
                 <h3 className="font-semibold text-[#0C0D0E]">Организатор "{event.organizationName}"</h3>
-                <div className="flex items-center text-sm text-[rgb(12,13,14,0.52)]"><StarIcon
-                  className="w-4 h-4 text-yellow-400 mr-1"/><span>4.9 (120 отзывов)</span></div>
+                <div className="flex items-center text-sm text-[rgb(12,13,14,0.52)]"><Star
+                  className="w-4 h-4 text-yellow-400 fill-current mr-1"/><span>4.9 (120 отзывов)</span></div>
               </div>
             </button>
           </section>
@@ -279,7 +270,7 @@ const EventDetailPage: React.FC = () => {
                   <li key={index} className="flex items-start space-x-3">
                     <div
                       className="w-6 h-6 flex-shrink-0 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
-                      <CheckIcon className="w-4 h-4 text-[#007AFF]"/></div>
+                      <Check className="w-4 h-4 text-[#007AFF]" strokeWidth={3}/></div>
                     <span className="text-[rgb(12,13,14,0.52)] leading-relaxed">{req}</span>
                   </li>
                 ))}
@@ -316,7 +307,7 @@ const EventDetailPage: React.FC = () => {
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100">
           <button onClick={mainButtonAction}
                   className={`w-full py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg ${isSignedUp ? 'bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300' : 'bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] text-white font-bold hover:opacity-90'}`}>
-            {isSignedUp ? (<><CheckIcon className="w-5 h-5 mr-2"/>Вы участвуете</>) : ('Я помогу!')}
+            {isSignedUp ? (<><Check className="w-5 h-5 mr-2"/>Вы участвуете</>) : ('Я помогу!')}
           </button>
         </div>
       </div>

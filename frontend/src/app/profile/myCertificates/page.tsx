@@ -1,7 +1,9 @@
 import React, {useMemo} from 'react';
 import {allCourses} from '../../../lib/mockData';
 import type {Course, User} from '../../../lib/types';
-import {ArrowLeftIcon, DiplomaStandIllustrationIcon, HeartHandIcon} from '../../../components/ui/icons';
+// FIX: Replaced ArrowLeftIcon import with ArrowLeft from lucide-react to fix export error and improve consistency.
+import {DiplomaStandIllustrationIcon, HeartHandIcon} from '../../../components/ui/icons';
+import {ArrowLeft} from 'lucide-react';
 import EmptyState from '../../../components/ui/EmptyState';
 
 const CertificatePreviewCard: React.FC<{ course: Course; userName: string; onSelect: () => void; }> = ({
@@ -45,7 +47,7 @@ const MyCertificatesPage: React.FC<{
         className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center">
         <button onClick={onBack}
                 className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-gray-100">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+          <ArrowLeft className="w-6 h-6 text-gray-700"/>
         </button>
         <h1 className="text-2xl font-bold text-[#0C0D0E] mx-auto">Мои сертификаты</h1>
         <div className="w-8"></div>

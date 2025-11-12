@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {fetchActivityHistoryEvents} from '../../../lib/api';
 import type {HistoryEvent} from '../../../lib/types';
-import {ArrowLeftIcon, CalendarEmptyIcon, ChevronRightIcon} from '../../../components/ui/icons';
+import {ArrowLeft, CalendarDays, ChevronLeft, ChevronRight} from 'lucide-react';
 
 const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
@@ -117,18 +117,18 @@ const CalendarPage: React.FC = () => {
       <header className="flex-shrink-0 p-6 pb-4 bg-white flex items-center">
         <button onClick={onBack}
                 className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-gray-100">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+          <ArrowLeft className="w-6 h-6 text-gray-700"/>
         </button>
       </header>
 
       <main className="flex-grow overflow-y-auto">
         <div className="bg-white p-6 rounded-b-2xl shadow-sm">
           <div className="flex justify-between items-center mb-4">
-            <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-gray-100"><ChevronRightIcon
-              className="w-6 h-6 text-gray-500 transform rotate-180"/></button>
+            <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-gray-100"><ChevronLeft
+              className="w-6 h-6 text-gray-500"/></button>
             <h2
               className="text-xl font-bold text-[#0C0D0E]">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</h2>
-            <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-gray-100"><ChevronRightIcon
+            <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-gray-100"><ChevronRight
               className="w-6 h-6 text-gray-500"/></button>
           </div>
           <div className="grid grid-cols-7 gap-y-2 text-center">
@@ -162,7 +162,7 @@ const CalendarPage: React.FC = () => {
           {loading ? <p className="text-center text-gray-500">Загрузка событий...</p> : (
             upcomingEvents.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center p-8">
-                <CalendarEmptyIcon className="w-24 h-24 text-gray-300 mb-4"/>
+                <CalendarDays className="w-24 h-24 text-gray-300 mb-4"/>
                 <h3 className="font-bold text-xl text-[#0C0D0E]">Ваш календарь пока пуст</h3>
                 <p className="text-[rgb(12,13,14,0.52)] max-w-xs mt-1 mb-6">Как только вы запишетесь на событие, оно
                   появится здесь.</p>

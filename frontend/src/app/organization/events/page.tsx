@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {fetchOrganizationEvents} from '../../../lib/api';
 import type {OrganizationEvent} from '../../../lib/types';
-import {ArrowLeftIcon, ListIcon, PlusIcon} from '../../../components/ui/icons';
+import {ArrowLeft, List, Plus} from 'lucide-react';
 import EventManagementCard from '../../../features/organization/components/EventManagementCard';
 import EmptyState from '../../../components/ui/EmptyState';
 
@@ -54,7 +54,7 @@ const EventManagementPage: React.FC<{
       case 'active':
         return (
           <EmptyState
-            Icon={ListIcon}
+            Icon={List}
             title="У вас пока нет активных событий"
             subtitle="Создайте ваше первое событие, чтобы привлечь волонтеров и сделать доброе дело."
             action={{text: 'Создать событие', onClick: handleCreate, type: 'primary'}}
@@ -63,7 +63,7 @@ const EventManagementPage: React.FC<{
       case 'past':
         return (
           <EmptyState
-            Icon={ListIcon}
+            Icon={List}
             title="Здесь будет архив"
             subtitle="Ваши завершенные мероприятия появятся в этом разделе."
           />
@@ -71,7 +71,7 @@ const EventManagementPage: React.FC<{
       case 'drafts':
         return (
           <EmptyState
-            Icon={ListIcon}
+            Icon={List}
             title="Нет черновиков"
             subtitle="Здесь будут сохраняться ваши незаконченные события."
           />
@@ -85,12 +85,12 @@ const EventManagementPage: React.FC<{
         className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center justify-between">
         <button onClick={onBack}
                 className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-gray-100">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+          <ArrowLeft className="w-6 h-6 text-gray-700"/>
         </button>
         <h1 className="text-2xl font-bold text-[#0C0D0E]">Мои события</h1>
         <button onClick={handleCreate}
                 className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100">
-          <PlusIcon className="w-6 h-6 text-gray-700"/>
+          <Plus className="w-6 h-6 text-gray-700"/>
         </button>
       </header>
 

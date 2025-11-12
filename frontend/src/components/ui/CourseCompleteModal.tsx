@@ -1,5 +1,5 @@
 import React from 'react';
-import {AcademicCapIcon} from './icons';
+import {GraduationCap} from 'lucide-react';
 
 interface CourseCompleteModalProps {
   isOpen: boolean;
@@ -26,7 +26,7 @@ const CourseCompleteModal: React.FC<CourseCompleteModalProps> = ({
         className="bg-white rounded-2xl shadow-xl p-8 m-4 w-full max-w-sm text-center flex flex-col items-center space-y-4 animate-scale-in">
         {/* Element 1: Animated Icon */}
         <div className="w-32 h-32 flex items-center justify-center animate-pop-in">
-          <AcademicCapIcon className="w-24 h-24 text-[#007AFF]"/>
+          <GraduationCap className="w-24 h-24 text-[#007AFF]"/>
         </div>
 
         {/* Element 2: Title */}

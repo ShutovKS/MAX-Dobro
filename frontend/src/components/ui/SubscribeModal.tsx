@@ -1,5 +1,5 @@
 import React from 'react';
-import {BellIcon} from './icons';
+import {Bell} from 'lucide-react';
 
 const SubscribeModal: React.FC<{
   isOpen: boolean;
@@ -16,7 +16,7 @@ const SubscribeModal: React.FC<{
         className="bg-white rounded-2xl shadow-xl p-8 m-4 w-full max-w-sm text-center flex flex-col items-center space-y-4 animate-scale-in">
         {/* Element 1: Icon */}
         <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-          <BellIcon className="w-12 h-12 text-[#007AFF]"/>
+          <Bell className="w-12 h-12 text-[#007AFF]"/>
         </div>
 
         {/* Element 2: Title */}

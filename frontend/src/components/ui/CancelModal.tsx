@@ -1,4 +1,5 @@
 import React from 'react';
+import {HelpCircle} from 'lucide-react';
 
 const CancelModal: React.FC<{
   isOpen: boolean;
@@ -13,11 +14,7 @@ const CancelModal: React.FC<{
       <div
         className="bg-white rounded-2xl shadow-xl p-8 m-4 w-full max-w-sm text-center flex flex-col items-center space-y-4 animate-scale-in">
         {/* Element 1: Icon */}
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"
-             className="w-20 h-20 text-blue-400">
-          <path strokeLinecap="round" strokeLinejoin="round"
-                d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/>
-        </svg>
+        <HelpCircle className="w-20 h-20 text-blue-400" strokeWidth={1.5}/>
 
         {/* Element 2: Title */}
         <h2 className="text-2xl font-bold text-[#0C0D0E]">Отменить участие?</h2>

@@ -1,16 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {fetchCourseById} from '../../../lib/api';
 import type {Course, CourseLesson} from '../../../lib/types';
-import {
-  AcademicCapIcon,
-  ArrowLeftIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  LockClosedIcon,
-  PlayCircleIcon,
-  ShareIcon,
-  UserIcon
-} from '../../../components/ui/icons';
+import {ArrowLeft, CheckCircle, Clock, GraduationCap, Lock, PlayCircle, Share2, User} from 'lucide-react';
 
 const LessonRow: React.FC<{ lesson: CourseLesson; index: number; onSelect: () => void }> = ({
                                                                                               lesson,
@@ -20,11 +11,11 @@ const LessonRow: React.FC<{ lesson: CourseLesson; index: number; onSelect: () =>
   const getIcon = () => {
     switch (lesson.status) {
       case 'completed':
-        return <CheckCircleIcon className="w-6 h-6 text-green-500"/>;
+        return <CheckCircle className="w-6 h-6 text-green-500"/>;
       case 'current':
-        return <PlayCircleIcon className="w-6 h-6 text-[#007AFF]"/>;
+        return <PlayCircle className="w-6 h-6 text-[#007AFF]"/>;
       case 'locked':
-        return <LockClosedIcon className="w-6 h-6 text-gray-400"/>;
+        return <Lock className="w-6 h-6 text-gray-400"/>;
       default:
         return null;
     }
@@ -108,10 +99,10 @@ const CourseDetailPage: React.FC<{
       <header className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4">
         <button onClick={onBack} className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
                 aria-label="Назад">
-          <ArrowLeftIcon className="w-6 h-6 text-white"/>
+          <ArrowLeft className="w-6 h-6 text-white"/>
         </button>
         <button className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center" aria-label="Поделиться">
-          <ShareIcon className="w-5 h-5 text-white"/>
+          <Share2 className="w-5 h-5 text-white"/>
         </button>
       </header>
 
@@ -126,16 +117,16 @@ const CourseDetailPage: React.FC<{
         {/* Meta-information */}
         <section className="flex justify-around items-center bg-gray-50 rounded-xl p-3 text-sm text-center">
           <div className="flex flex-col items-center space-y-1">
-            <ClockIcon className="w-5 h-5 text-gray-500"/>
+            <Clock className="w-5 h-5 text-gray-500"/>
             <span className="font-semibold text-[rgb(12,13,14,0.52)]">{course.duration}</span>
           </div>
           <div className="flex flex-col items-center space-y-1">
-            <AcademicCapIcon className="w-5 h-5 text-gray-500"/>
+            <GraduationCap className="w-5 h-5 text-gray-500"/>
             <span
               className="font-semibold text-[rgb(12,13,14,0.52)]">{course.hasCertificate ? 'Сертификат' : 'Без сертификата'}</span>
           </div>
           <div className="flex flex-col items-center space-y-1">
-            <UserIcon className="w-5 h-5 text-gray-500"/>
+            <User className="w-5 h-5 text-gray-500"/>
             <span className="font-semibold text-[rgb(12,13,14,0.52)]">{course.level}</span>
           </div>
         </section>

@@ -1,11 +1,7 @@
 import React, {useState} from 'react';
-import {
-  AnimalFriendIcon,
-  ArtVolunteerIcon,
-  CheckCircleIcon,
-  ElderlyHelperIcon,
-  NatureProtectorIcon
-} from '../../components/ui/icons';
+// FIX: Replaced import for CheckCircleIcon from local icons with CheckCircle from lucide-react to resolve export error and improve consistency.
+import {AnimalFriendIcon, ArtVolunteerIcon, ElderlyHelperIcon, NatureProtectorIcon} from '../../components/ui/icons';
+import {CheckCircle} from 'lucide-react';
 
 const interests = [
   {id: 'nature', title: 'Защитник природы', Icon: NatureProtectorIcon},
@@ -29,8 +25,9 @@ const InterestCard: React.FC<InterestCardProps> = ({title, Icon, isSelected, onC
       aria-pressed={isSelected}
     >
       {isSelected && (
-        <div className="absolute top-3 right-3 text-white bg-[#007AFF] rounded-full">
-          <CheckCircleIcon className="w-6 h-6"/>
+        <div className="absolute top-3 right-3 text-[#007AFF]">
+          {/* FIX: Use CheckCircle from lucide-react */}
+          <CheckCircle className="w-6 h-6 fill-white"/>
         </div>
       )}
       <div className="flex-grow flex items-center justify-center">

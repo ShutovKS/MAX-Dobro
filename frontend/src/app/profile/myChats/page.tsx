@@ -1,7 +1,8 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {fetchMyChats} from '../../../lib/api';
 import type {MyChatItem} from '../../../lib/types';
-import {ArrowLeftIcon, EmptyChatIllustrationIcon, SearchIcon, XIcon} from '../../../components/ui/icons';
+import {ArrowLeft, Search, X} from 'lucide-react';
+import {EmptyChatIllustrationIcon} from '../../../components/ui/icons';
 import EmptyState from '../../../components/ui/EmptyState';
 
 const ChatCell: React.FC<{ chat: MyChatItem; onSelect: () => void }> = ({chat, onSelect}) => (
@@ -110,12 +111,12 @@ const MyChatsPage: React.FC = () => {
         <button onClick={onBack}
                 className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 -ml-2"
                 aria-label="Назад">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+          <ArrowLeft className="w-6 h-6 text-gray-700"/>
         </button>
         {isSearchVisible ? (
           <div className="relative flex-grow flex items-center mx-2">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <SearchIcon className="w-5 h-5 text-gray-400"/>
+                            <Search className="w-5 h-5 text-gray-400"/>
                         </span>
             <input
               type="text"
@@ -132,8 +133,7 @@ const MyChatsPage: React.FC = () => {
         <button onClick={handleSearchToggle}
                 className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                 aria-label={isSearchVisible ? "Закрыть поиск" : "Поиск"}>
-          {isSearchVisible ? <XIcon className="w-6 h-6 text-gray-700"/> :
-            <SearchIcon className="w-6 h-6 text-gray-700"/>}
+          {isSearchVisible ? <X className="w-6 h-6 text-gray-700"/> : <Search className="w-6 h-6 text-gray-700"/>}
         </button>
       </header>
 

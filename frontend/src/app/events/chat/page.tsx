@@ -1,14 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import type {AppEvent, EventChatMessage, User} from '../../../lib/types';
 import {fetchEventById} from '../../../lib/api';
-import {
-  ArrowLeftIcon,
-  DotsHorizontalIcon,
-  PaperAirplaneIcon,
-  PaperclipIcon,
-  PinIcon,
-  XIcon
-} from '../../../components/ui/icons';
+import {ArrowLeft, MoreHorizontal, Paperclip, Pin, Send, X} from 'lucide-react';
 import {CURRENT_USER_ID} from '../../../lib/mockData';
 
 const MOCK_MESSAGES: EventChatMessage[] = [
@@ -81,13 +74,13 @@ const MessageBubble: React.FC<{ message: EventChatMessage; isOutgoing: boolean; 
 
 const PinnedMessage: React.FC<{ onDismiss: () => void }> = ({onDismiss}) => (
   <div className="flex-shrink-0 bg-blue-50/70 backdrop-blur-sm p-3 flex items-start space-x-3">
-    <PinIcon className="w-5 h-5 text-[#007AFF] mt-0.5 flex-shrink-0"/>
+    <Pin className="w-5 h-5 text-[#007AFF] mt-0.5 flex-shrink-0"/>
     <div className="flex-1 text-sm text-blue-900">
       <span className="font-semibold">Организатор:</span> Встречаемся у главного входа в 10:00. Мой телефон: +7 (999)
       123-45-67
     </div>
     <button onClick={onDismiss} className="text-blue-500 hover:text-blue-700">
-      <XIcon className="w-5 h-5"/>
+      <X className="w-5 h-5"/>
     </button>
   </div>
 );
@@ -147,7 +140,7 @@ const EventChatPage: React.FC<{
         className="flex-shrink-0 p-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center justify-between sticky top-0 z-20">
         <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                 aria-label="Назад">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+          <ArrowLeft className="w-6 h-6 text-gray-700"/>
         </button>
         <div className="flex flex-col items-center">
           <h1 className="text-lg font-bold text-[#0C0D0E] text-center leading-tight">{event.title}</h1>
@@ -155,7 +148,7 @@ const EventChatPage: React.FC<{
         </div>
         <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                 aria-label="Действия">
-          <DotsHorizontalIcon className="w-6 h-6 text-gray-700"/>
+          <MoreHorizontal className="w-6 h-6 text-gray-700"/>
         </button>
       </header>
 
@@ -179,7 +172,7 @@ const EventChatPage: React.FC<{
       <footer className="flex-shrink-0 p-3 bg-white/90 backdrop-blur-sm border-t border-gray-200 sticky bottom-0 z-20">
         <form onSubmit={handleFormSubmit} className="flex items-center space-x-3">
           <button type="button" className="p-2 text-gray-500 hover:text-[#007AFF]">
-            <PaperclipIcon className="w-6 h-6"/>
+            <Paperclip className="w-6 h-6"/>
           </button>
           <input
             type="text"
@@ -190,7 +183,7 @@ const EventChatPage: React.FC<{
           />
           <button type="submit" disabled={!input.trim()}
                   className="w-12 h-12 bg-[#007AFF] rounded-full flex items-center justify-center text-white disabled:bg-gray-300 transition-colors">
-            <PaperAirplaneIcon className="w-6 h-6"/>
+            <Send className="w-6 h-6"/>
           </button>
         </form>
       </footer>

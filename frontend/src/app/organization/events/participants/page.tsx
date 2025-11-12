@@ -1,13 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {fetchEventParticipants} from '../../../../lib/api';
 import type {EventParticipant, OrganizationEvent} from '../../../../lib/types';
-import {
-  ArrowLeftIcon,
-  ChatBubbleLeftRightIcon,
-  DotsHorizontalIcon,
-  StarIcon,
-  UserGroupIcon
-} from '../../../../components/ui/icons';
+import {ArrowLeft, MessageSquare, MoreHorizontal, Star, Users} from 'lucide-react';
 import EmptyState from '../../../../components/ui/EmptyState';
 
 type ParticipantTab = 'new' | 'confirmed' | 'rejected';
@@ -24,7 +18,7 @@ const ParticipantCell: React.FC<{
       <div className="flex-1">
         <p className="font-bold text-md text-[#0C0D0E]">{participant.name}</p>
         <div className="flex items-center text-sm text-[rgb(12,13,14,0.52)]">
-          <StarIcon className="w-4 h-4 text-yellow-400 mr-1"/>
+          <Star className="w-4 h-4 text-yellow-400 fill-current mr-1"/>
           <span>{participant.rating}</span>
         </div>
       </div>
@@ -41,9 +35,9 @@ const ParticipantCell: React.FC<{
       )}
       {tab === 'confirmed' && (
         <div className="flex space-x-2">
-          <button className="p-2 rounded-lg hover:bg-gray-200"><ChatBubbleLeftRightIcon
-            className="w-6 h-6 text-gray-600"/></button>
-          <button className="p-2 rounded-lg hover:bg-gray-200"><DotsHorizontalIcon className="w-6 h-6 text-gray-600"/>
+          <button className="p-2 rounded-lg hover:bg-gray-200"><MessageSquare className="w-6 h-6 text-gray-600"/>
+          </button>
+          <button className="p-2 rounded-lg hover:bg-gray-200"><MoreHorizontal className="w-6 h-6 text-gray-600"/>
           </button>
         </div>
       )}
@@ -114,7 +108,7 @@ const EventParticipantsPage: React.FC<{
     };
     const {title, subtitle} = emptyStates[activeTab];
 
-    return <EmptyState Icon={UserGroupIcon} title={title} subtitle={subtitle}/>;
+    return <EmptyState Icon={Users} title={title} subtitle={subtitle}/>;
   };
 
   const isTotallyEmpty = !loading && participants.length === 0;
@@ -126,7 +120,7 @@ const EventParticipantsPage: React.FC<{
         <button onClick={onBack}
                 className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 -ml-2"
                 aria-label="Назад">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+          <ArrowLeft className="w-6 h-6 text-gray-700"/>
         </button>
         <h1 className="text-lg font-bold text-[#0C0D0E] text-center truncate px-2">Участники: {event.title}</h1>
         <div className="w-8"></div>
@@ -170,7 +164,7 @@ const EventParticipantsPage: React.FC<{
         {isTotallyEmpty ? (
           <div className="pt-10">
             <EmptyState
-              Icon={UserGroupIcon}
+              Icon={Users}
               title="Пока никто не записался"
               subtitle="Поделитесь событием, чтобы привлечь больше волонтеров!"
               action={{

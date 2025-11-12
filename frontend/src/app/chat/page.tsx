@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import type {ChatMessage, User} from '../../lib/types';
 import {GoogleGenAI, Type} from '@google/genai';
 import {allEvents} from '../../lib/mockData';
-import {ArrowLeftIcon, PaperAirplaneIcon, SparklesIcon} from '../../components/ui/icons';
+import {ArrowLeft, Send, Sparkles} from 'lucide-react';
 import EventCard from '../../components/ui/EventCard';
 
 const ai = new GoogleGenAI({apiKey: process.env.API_KEY as string});
@@ -153,11 +153,11 @@ const AssistantChatPage: React.FC<{
         className="flex-shrink-0 p-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center justify-between sticky top-0 z-20">
         <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                 aria-label="Назад">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+          <ArrowLeft className="w-6 h-6 text-gray-700"/>
         </button>
         <div className="flex flex-col items-center">
           <div className="flex items-center space-x-2">
-            <SparklesIcon className="w-6 h-6 text-[#007AFF]"/>
+            <Sparkles className="w-6 h-6 text-[#007AFF]"/>
             <h1 className="text-lg font-bold text-[#0C0D0E]">Помощник</h1>
           </div>
           <p className="text-sm text-green-500 font-semibold">онлайн</p>
@@ -225,7 +225,7 @@ const AssistantChatPage: React.FC<{
           />
           <button type="submit" disabled={!input.trim() || isLoading}
                   className="w-12 h-12 bg-[#007AFF] rounded-full flex items-center justify-center text-white disabled:bg-gray-300 transition-colors">
-            <PaperAirplaneIcon className="w-6 h-6"/>
+            <Send className="w-6 h-6"/>
           </button>
         </form>
       </footer>

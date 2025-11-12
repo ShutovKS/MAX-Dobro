@@ -1,6 +1,7 @@
 import React from 'react';
 import type {Course, User} from '../../../lib/types';
-import {ArrowLeftIcon, DownloadIcon, HeartHandIcon, ShareIcon} from '../../../components/ui/icons';
+import {ArrowLeft, Download, Share2} from 'lucide-react';
+import {HeartHandIcon} from '../../../components/ui/icons';
 
 const CertificatePage: React.FC<{
   courseId: number;
@@ -26,7 +27,7 @@ const CertificatePage: React.FC<{
         <div className="flex items-center">
           <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                   aria-label="Назад">
-            <ArrowLeftIcon className="w-6 h-6 text-gray-600"/>
+            <ArrowLeft className="w-6 h-6 text-gray-600"/>
           </button>
           <h1 className="text-lg font-bold text-[#0C0D0E] mx-auto">Ваш сертификат</h1>
           <div className="w-10"></div>
@@ -70,12 +71,12 @@ const CertificatePage: React.FC<{
         <div className="mt-8 w-full max-w-sm flex space-x-4">
           <button
             className="flex-1 flex items-center justify-center space-x-2 bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-colors">
-            <ShareIcon className="w-5 h-5"/>
+            <Share2 className="w-5 h-5"/>
             <span>Поделиться</span>
           </button>
           <button
             className="flex-1 flex items-center justify-center space-x-2 bg-white border-2 border-[#007AFF] text-[#007AFF] font-semibold py-3 px-4 rounded-xl hover:bg-blue-50 transition-colors">
-            <DownloadIcon className="w-5 h-5"/>
+            <Download className="w-5 h-5"/>
             <span>Сохранить в PDF</span>
           </button>
         </div>

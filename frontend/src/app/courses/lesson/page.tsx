@@ -1,6 +1,6 @@
 import React, {useMemo, useState} from 'react';
 import type {Course} from '../../../lib/types';
-import {CheckIcon, PuzzleIcon, TrophyIcon, XIcon} from '../../../components/ui/icons';
+import {Check, Puzzle, Trophy, X} from 'lucide-react';
 import CourseCompleteModal from '../../../components/ui/CourseCompleteModal';
 
 const TestResultModal: React.FC<{
@@ -26,7 +26,7 @@ const TestResultModal: React.FC<{
         className="bg-white rounded-2xl shadow-xl p-8 m-4 w-full max-w-sm text-center flex flex-col items-center space-y-4 animate-scale-in">
         {isSuccess ? (
           <>
-            <TrophyIcon className="w-24 h-24 text-yellow-400"/>
+            <Trophy className="w-24 h-24 text-yellow-400"/>
             <h2 className="text-2xl font-bold text-[#1ABE43]">Отлично! Тест пройден!</h2>
             <p className="text-[rgb(12,13,14,0.52)]">
               Вы набрали {score}/{totalQuestions} баллов. Теперь вы готовы помогать еще эффективнее!
@@ -43,7 +43,7 @@ const TestResultModal: React.FC<{
           </>
         ) : (
           <>
-            <PuzzleIcon className="w-24 h-24 text-[#FF9315]"/>
+            <Puzzle className="w-24 h-24 text-[#FF9315]"/>
             <h2 className="text-2xl font-bold text-[#0C0D0E]">Почти у цели!</h2>
             <p className="text-[rgb(12,13,14,0.52)]">
               {`Ваш результат: ${score} из ${totalQuestions}. Повторение — мать учения. Попробуйте еще раз, чтобы закрепить знания!`}
@@ -179,7 +179,7 @@ const LessonPage: React.FC<{
           <button onClick={onClose}
                   className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                   aria-label="Закрыть">
-            <XIcon className="w-6 h-6 text-gray-600"/>
+            <X className="w-6 h-6 text-gray-600"/>
           </button>
         </header>
 
@@ -224,11 +224,11 @@ const LessonPage: React.FC<{
                             className={`w-5 h-5 flex-shrink-0 rounded-full border-2 flex items-center justify-center mr-3 ${
                               isChecked ? 'border-blue-500 bg-blue-500' : 'border-gray-400'
                             }`}>
-                            {isChecked && <CheckIcon className="w-3 h-3 text-white"/>}
+                            {isChecked && <Check className="w-3 h-3 text-white" strokeWidth={3}/>}
                           </div>
                           <span className="flex-1">{option}</span>
-                          {isSubmitted && isCorrect && <CheckIcon className="w-5 h-5 text-[#1ABE43]"/>}
-                          {isSubmitted && isIncorrect && <XIcon className="w-5 h-5 text-[#FF303C]"/>}
+                          {isSubmitted && isCorrect && <Check className="w-5 h-5 text-[#1ABE43]"/>}
+                          {isSubmitted && isIncorrect && <X className="w-5 h-5 text-[#FF303C]"/>}
                         </button>
                       );
                     })}

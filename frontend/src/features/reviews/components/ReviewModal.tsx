@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import type {HistoryEvent} from '../../../lib/types';
-import {StarIcon, XIcon} from '../../../components/ui/icons';
+import {Star, X} from 'lucide-react';
 
 const quickTags = ["👍 Отличная организация", "🤝 Дружелюбная атмосфера", "😊 Было весело", "👎 Было скучно", "🤔 Непонятные задачи"];
 
@@ -68,7 +68,7 @@ const ReviewModal: React.FC<{
           <button onClick={onClose}
                   className="w-12 h-10 flex items-center justify-center text-gray-500 hover:text-gray-800"
                   aria-label="Закрыть">
-            <XIcon className="w-6 h-6"/>
+            <X className="w-6 h-6"/>
           </button>
         </header>
 
@@ -81,8 +81,8 @@ const ReviewModal: React.FC<{
               {[1, 2, 3, 4, 5].map((star) => (
                 <button key={star} onClick={() => handleRating(star)}
                         className="transform transition-transform active:scale-90">
-                  <StarIcon
-                    className={`w-12 h-12 transition-colors ${rating >= star ? 'text-[#FF9315]' : 'text-gray-300'}`}/>
+                  <Star
+                    className={`w-12 h-12 transition-colors ${rating >= star ? 'text-[#FF9315] fill-current' : 'text-gray-300'}`}/>
                 </button>
               ))}
             </div>

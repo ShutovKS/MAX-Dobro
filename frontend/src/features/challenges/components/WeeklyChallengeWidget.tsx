@@ -1,5 +1,5 @@
 import React from 'react';
-import {CheckCircleIcon} from '../../../components/ui/icons';
+import {CheckCircle} from 'lucide-react';
 
 interface WeeklyChallengeWidgetProps {
   challenge: {
@@ -26,7 +26,7 @@ const WeeklyChallengeWidget: React.FC<WeeklyChallengeWidgetProps> = ({challenge,
           <challenge.Icon className="w-32 h-32 opacity-20 transform rotate-12"/>
         </div>
         <div className="flex-shrink-0 mr-4 z-10">
-          <CheckCircleIcon className="w-16 h-16 text-white"/>
+          <CheckCircle className="w-16 h-16 text-white"/>
         </div>
         <div className="flex-1 z-10">
           <h3 className="font-bold text-lg">Челлендж выполнен!</h3>

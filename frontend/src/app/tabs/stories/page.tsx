@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import {fetchAllStories} from '../../../lib/api';
 import type {Story} from '../../../lib/types';
-import {PhotoAlbumIllustrationIcon, PlusIcon} from '../../../components/ui/icons';
+import {Plus} from 'lucide-react';
+import {PhotoAlbumIllustrationIcon} from '../../../components/ui/icons';
 import EmptyState from '../../../components/ui/EmptyState';
 import StoryCard from './components/StoryCard';
 import StorySkeletonCard from './components/StorySkeletonCard';
@@ -78,7 +79,7 @@ const StoriesPage: React.FC = () => {
           className="w-12 h-12 bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] rounded-full flex items-center justify-center shadow-lg"
           aria-label="Создать историю"
         >
-          <PlusIcon className="w-6 h-6 text-white"/>
+          <Plus className="w-6 h-6 text-white" strokeWidth={3}/>
         </button>
       </header>
 

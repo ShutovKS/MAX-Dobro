@@ -1,6 +1,6 @@
 import React from 'react';
 import type {Story} from '../../../../lib/types';
-import {ChatBubbleLeftRightIcon, HeartIcon, ShareIcon} from '../../../../components/ui/icons';
+import {Heart, MessageSquare, Upload} from 'lucide-react';
 
 const StoryCard: React.FC<{
   story: Story;
@@ -52,16 +52,16 @@ const StoryCard: React.FC<{
            onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center space-x-6">
           <button className="flex items-center space-x-1.5 hover:text-[#FF303C]">
-            <HeartIcon className="w-6 h-6"/>
+            <Heart className="w-6 h-6"/>
             <span className="font-semibold text-sm">{story.likes}</span>
           </button>
           <button className="flex items-center space-x-1.5 hover:text-[#007AFF]">
-            <ChatBubbleLeftRightIcon className="w-6 h-6"/>
+            <MessageSquare className="w-6 h-6"/>
             <span className="font-semibold text-sm">{story.comments}</span>
           </button>
         </div>
         <button className="hover:text-[#007AFF]">
-          <ShareIcon className="w-6 h-6"/>
+          <Upload className="w-6 h-6"/>
         </button>
       </div>
     </div>

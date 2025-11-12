@@ -2,7 +2,8 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {fetchLeaderboardData} from '../../../lib/api';
 import {CURRENT_USER_ID} from '../../../lib/mockData';
 import type {LeaderboardUser, User} from '../../../lib/types';
-import {ArrowLeftIcon, BronzeMedalIcon, GoldMedalIcon, SilverMedalIcon, StarIcon} from '../../../components/ui/icons';
+import {ArrowLeft, Star} from 'lucide-react';
+import {BronzeMedalIcon, GoldMedalIcon, SilverMedalIcon} from '../../../components/ui/icons';
 
 type Period = 'week' | 'month' | 'allTime';
 
@@ -48,7 +49,7 @@ const LeaderboardRow: React.FC<{ user: LeaderboardUser; isCurrentUser: boolean; 
     <span className="font-semibold text-md text-[#0C0D0E] flex-1">{user.name}</span>
     <div className="flex items-center space-x-1">
       <span className="font-bold text-md text-[#0C0D0E]">{user.karma.toLocaleString('ru-RU')}</span>
-      <StarIcon className="w-4 h-4 text-yellow-400"/>
+      <Star className="w-4 h-4 text-yellow-400 fill-current"/>
     </div>
   </div>
 ));
@@ -130,7 +131,7 @@ const LeaderboardPage: React.FC<{ user: User; onBack: () => void; }> = ({user, o
         className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center">
         <button onClick={onBack}
                 className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-gray-100">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+          <ArrowLeft className="w-6 h-6 text-gray-700"/>
         </button>
         <h1 className="text-2xl font-bold text-[#0C0D0E] mx-auto">Рейтинг героев</h1>
         <div className="w-8"></div>

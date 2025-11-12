@@ -4,10 +4,25 @@ import type {User} from './types';
 const JWT_KEY = 'authToken';
 const ONBOARDING_KEY = 'onboardingComplete';
 
+// Helper function to correctly encode Unicode strings to Base64
+const utf8_to_b64 = (str: string) => {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+// Helper function to correctly decode Base64 strings to Unicode
+const b64_to_utf8 = (str: string) => {
+  return decodeURIComponent(escape(atob(str)));
+}
+
+
 // In a real app, this would be a real, signed JWT from the server.
 const createMockToken = (user: User): string => {
-  const header = btoa(JSON.stringify({alg: 'HS256', typ: 'JWT'}));
-  const payload = btoa(JSON.stringify({userId: 1, firstName: user.firstName, exp: Date.now() + 24 * 60 * 60 * 1000})); // 24-hour expiry
+  const header = utf8_to_b64(JSON.stringify({alg: 'HS256', typ: 'JWT'}));
+  const payload = utf8_to_b64(JSON.stringify({
+    userId: 1,
+    firstName: user.firstName,
+    exp: Date.now() + 24 * 60 * 60 * 1000
+  })); // 24-hour expiry
   const signature = 'mock-signature-string-that-is-not-secure'; // Not a real signature
   return `${header}.${payload}.${signature}`;
 };
@@ -60,7 +75,7 @@ export const getCurrentSession = (): Promise<{ user: User; token: string } | nul
         // In a real app, you'd decode and validate the token.
         // Here we just parse the mock payload to get user info.
         try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
+          const payload = JSON.parse(b64_to_utf8(token.split('.')[1]));
           // check expiry
           if (payload.exp > Date.now()) {
             const user = {...defaultUserData, firstName: payload.firstName};
