@@ -1,6 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
@@ -11,14 +11,17 @@ describe('Learning (e2e)', () => {
     datasources: { db: { url: process.env.DATABASE_URL } },
   });
 
-  const mockUser = {
+  const mockUser: Omit<User, 'createdAt' | 'updatedAt'> = {
     id: 2,
     supabaseUserId: 'test-supabase-id-learning',
     email: 'learning-test@example.com',
+    name: 'Learning Tester',
+    totalHours: 0,
+    karmaPoints: 0,
   };
 
   const mockAuthGuard = {
-    canActivate: (context) => {
+    canActivate: (context: any) => {
       const request = context.switchToHttp().getRequest();
       request.user = mockUser;
       return true;
@@ -36,12 +39,6 @@ describe('Learning (e2e)', () => {
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
-
-    await prisma.user.upsert({
-      where: { id: mockUser.id },
-      update: {},
-      create: { ...mockUser, name: 'Learning Tester' },
-    });
   });
 
   beforeEach(async () => {
@@ -50,6 +47,9 @@ describe('Learning (e2e)', () => {
     await prisma.quizQuestion.deleteMany();
     await prisma.lesson.deleteMany();
     await prisma.course.deleteMany();
+    await prisma.eventParticipant.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.user.create({ data: mockUser as User });
   });
 
   afterAll(async () => {
@@ -81,11 +81,15 @@ describe('Learning (e2e)', () => {
             },
           },
         },
-        include: { lessons: { include: { questions: { include: { answers: true } } } } },
+        include: {
+          lessons: { include: { questions: { include: { answers: true } } } },
+        },
       });
 
       const questionId = course.lessons[0].questions[0].id;
-      const correctAnswerId = course.lessons[0].questions[0].answers[1].id;
+      const correctAnswerId = course.lessons[0].questions[0].answers.find(
+        (a) => a.isCorrect,
+      )!.id;
 
       await request(app.getHttpServer())
         .post(`/courses/${course.id}/complete`)
@@ -120,11 +124,15 @@ describe('Learning (e2e)', () => {
             },
           },
         },
-        include: { lessons: { include: { questions: { include: { answers: true } } } } },
+        include: {
+          lessons: { include: { questions: { include: { answers: true } } } },
+        },
       });
 
       const questionId = course.lessons[0].questions[0].id;
-      const wrongAnswerId = course.lessons[0].questions[0].answers[0].id;
+      const wrongAnswerId = course.lessons[0].questions[0].answers.find(
+        (a) => !a.isCorrect,
+      )!.id;
 
       await request(app.getHttpServer())
         .post(`/courses/${course.id}/complete`)
