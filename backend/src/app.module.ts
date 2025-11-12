@@ -12,6 +12,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { LearningModule } from './learning/learning.module';
+import { OrganizationsModule } from './organizations/organizations.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { LearningModule } from './learning/learning.module';
     TasksModule,
     AchievementsModule,
     LearningModule,
+    OrganizationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

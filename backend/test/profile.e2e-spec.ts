@@ -1,6 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
@@ -15,34 +15,24 @@ describe('Profile (e2e)', () => {
     },
   });
 
+  const mockUser: Omit<User, 'createdAt' | 'updatedAt'> = {
+    id: 1,
+    supabaseUserId: 'test-supabase-id-profile',
+    email: 'profile-test@example.com',
+    name: 'Test User',
+    totalHours: 0,
+    karmaPoints: 0,
+  };
+
   const mockAuthGuard = {
-    canActivate: (context) => {
+    canActivate: (context: any) => {
       const request = context.switchToHttp().getRequest();
-      request.user = {
-        id: 1,
-        supabaseUserId: 'test-supabase-id',
-        email: 'test@example.com',
-      };
+      request.user = mockUser;
       return true;
     },
   };
 
   beforeAll(async () => {
-    await new Promise<void>((resolve, reject) => {
-      const { exec } = require('child_process');
-      exec(
-        'dotenv -e ./test/.env -- npx prisma migrate deploy',
-        (error, stdout, stderr) => {
-          if (error) {
-            console.error(stderr);
-            return reject(error);
-          }
-          console.log(stdout);
-          return resolve();
-        },
-      );
-    });
-
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -56,8 +46,19 @@ describe('Profile (e2e)', () => {
   });
 
   beforeEach(async () => {
+    await prisma.userOrganizationSubscription.deleteMany();
+    await prisma.userAchievement.deleteMany();
+    await prisma.userCertificate.deleteMany();
     await prisma.eventParticipant.deleteMany();
+    await prisma.quizAnswer.deleteMany();
+    await prisma.quizQuestion.deleteMany();
+    await prisma.lesson.deleteMany();
+    await prisma.course.deleteMany();
+    await prisma.event.deleteMany();
+    await prisma.organization.deleteMany();
+    await prisma.achievement.deleteMany();
     await prisma.user.deleteMany();
+    await prisma.user.create({ data: mockUser as User });
   });
 
   afterAll(async () => {
@@ -68,21 +69,12 @@ describe('Profile (e2e)', () => {
   });
 
   it('/profile/me (GET) - should return current user profile', async () => {
-    await prisma.user.create({
-      data: {
-        id: 1,
-        supabaseUserId: 'test-supabase-id',
-        email: 'test@example.com',
-        name: 'Test User',
-      },
-    });
-
     return request(app.getHttpServer())
       .get('/profile/me')
       .expect(200)
       .expect((res) => {
-        expect(res.body.id).toBe(1);
-        expect(res.body.email).toBe('test@example.com');
+        expect(res.body.id).toBe(mockUser.id);
+        expect(res.body.email).toBe(mockUser.email);
         expect(res.body).toHaveProperty('levelName');
       });
   });
