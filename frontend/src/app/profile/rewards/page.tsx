@@ -1,10 +1,11 @@
 import React, {useMemo, useState} from 'react';
+import {useNavigate} from 'react-router';
 import type {RewardItem, User} from '../../../lib/types';
 import {ArrowLeft, CheckCircle, Sparkles} from 'lucide-react';
 import {EmptyShelfIllustrationIcon} from '../../../components/ui/icons';
 import EmptyState from '../../../components/ui/EmptyState';
+import {REWARD_CATEGORIES} from '../../../lib/constants';
 
-// Reward Card Skeleton
 const RewardCardSkeleton: React.FC = () => (
   <div className="bg-white rounded-2xl shadow-sm p-3 animate-pulse">
     <div className="aspect-square bg-gray-200 rounded-xl mb-2"></div>
@@ -13,7 +14,6 @@ const RewardCardSkeleton: React.FC = () => (
   </div>
 );
 
-// Reward Card Component
 const RewardCard: React.FC<{ reward: RewardItem; onSelect: () => void; }> = ({reward, onSelect}) => {
   return (
     <button onClick={onSelect}
@@ -35,7 +35,6 @@ const RewardCard: React.FC<{ reward: RewardItem; onSelect: () => void; }> = ({re
   );
 };
 
-// Main Page Component
 interface RewardsStorePageProps {
   user: User;
   rewards: RewardItem[];
@@ -43,10 +42,11 @@ interface RewardsStorePageProps {
 }
 
 const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBack}) => {
-  const [selectedCategory, setSelectedCategory] = useState<'Все' | 'Значки' | 'Темы оформления'>('Все');
+  const navigate = useNavigate();
+  const [selectedCategory, setSelectedCategory] = useState<typeof REWARD_CATEGORIES[number]>('Все');
 
   const onSelectReward = (reward: RewardItem) => {
-    window.location.hash = `#/rewards/${reward.id}`;
+    navigate(`/rewards/${reward.id}`);
   };
 
   const karmaBalance = useMemo(() => {
@@ -59,7 +59,6 @@ const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBac
     return rewards.filter(r => r.category === selectedCategory);
   }, [selectedCategory, rewards]);
 
-  const categories: ('Все' | 'Значки' | 'Темы оформления')[] = ['Все', 'Значки', 'Темы оформления'];
   const loading = rewards.length === 0;
 
   return (
@@ -75,7 +74,6 @@ const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBac
       </header>
 
       <main className="flex-grow overflow-y-auto p-6 space-y-6">
-        {/* User Balance */}
         <section
           className="bg-[linear-gradient(155deg,#BF97FF_6.6%,#526EFF_84.12%)] text-white rounded-2xl shadow-lg p-6 text-center">
           <p className="font-semibold opacity-80">Ваш баланс:</p>
@@ -85,10 +83,9 @@ const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBac
           </div>
         </section>
 
-        {/* Category Filters */}
         <section>
           <div className="flex space-x-2 overflow-x-auto pb-2">
-            {categories.map(cat => (
+            {REWARD_CATEGORIES.map(cat => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
@@ -99,7 +96,6 @@ const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBac
           </div>
         </section>
 
-        {/* Items Grid */}
         <section>
           {loading ? (
             <div className="grid grid-cols-2 gap-4">

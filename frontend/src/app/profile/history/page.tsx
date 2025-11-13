@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router';
 import {fetchActivityHistoryEvents} from '../../../lib/api';
 import type {HistoryEvent} from '../../../lib/types';
 import {ArrowLeft, CheckCircle, Download, List, UserCircle} from 'lucide-react';
@@ -7,6 +8,7 @@ import Toast from '../../../components/ui/Toast';
 import ReviewModal from '../../../features/reviews/components/ReviewModal';
 import EmptyState from '../../../components/ui/EmptyState';
 import CancelModal from '../../../components/ui/CancelModal';
+import {MESSAGES} from '../../../lib/constants';
 
 const UpcomingEventCard: React.FC<{
   event: HistoryEvent;
@@ -83,6 +85,7 @@ const PastEventCard: React.FC<{
 );
 
 const ActivityHistoryPage: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [loading, setLoading] = useState(true);
   const [allEvents, setAllEvents] = useState<HistoryEvent[]>([]);
@@ -100,10 +103,10 @@ const ActivityHistoryPage: React.FC = () => {
   const [lastCancelledEvent, setLastCancelledEvent] = useState<HistoryEvent | null>(null);
   const [reviewingEvent, setReviewingEvent] = useState<HistoryEvent | null>(null);
 
-  const onBack = () => window.location.hash = '#/profile';
-  const onFindEvent = () => window.location.hash = '#/home';
-  const onSelectEvent = (id: number) => window.location.hash = `#/events/${id}`;
-  const onStartCreateStory = (event: HistoryEvent) => window.location.hash = `#/stories/create?eventId=${event.id}`;
+  const onBack = () => navigate('/profile');
+  const onFindEvent = () => navigate('/home');
+  const onSelectEvent = (id: number) => navigate(`/events/${id}`);
+  const onStartCreateStory = (event: HistoryEvent) => navigate(`/stories/create?eventId=${event.id}`);
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -126,7 +129,7 @@ const ActivityHistoryPage: React.FC = () => {
 
     setToast({
       show: true,
-      message: "Ваша запись отменена",
+      message: MESSAGES.TOASTS.SIGNUP_CANCELLED,
       onUndo: handleUndoCancel,
       type: 'info'
     });
@@ -143,7 +146,7 @@ const ActivityHistoryPage: React.FC = () => {
     setReviewingEvent(null);
     setToast({
       show: true,
-      message: "Спасибо за ваш отзыв!",
+      message: MESSAGES.TOASTS.REVIEW_THANKS,
       type: "success",
     });
   };
@@ -255,17 +258,6 @@ const ActivityHistoryPage: React.FC = () => {
         onClose={() => setReviewingEvent(null)}
         onSubmit={handleReviewSubmit}
       />
-      <style>{`
-                @media print {
-                    body * { visibility: hidden; }
-                    #activity-history-screen, #activity-history-screen * { visibility: visible; }
-                    #activity-history-screen { position: absolute; left: 0; top: 0; width: 100%; height: auto; background-color: white !important; font-size: 12px; }
-                    main { overflow: visible; padding: 1rem; }
-                    .print\\:hidden { display: none !important; }
-                    .hidden.print\\:block { display: block !important; }
-                    .event-card-print { box-shadow: none; border: 1px solid #e5e7eb; margin-bottom: 1rem; page-break-inside: avoid; }
-                }
-            `}</style>
     </>
   );
 };

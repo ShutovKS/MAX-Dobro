@@ -1,13 +1,20 @@
-import React from 'react';
-import {ArrowLeft, CheckCircle, Eye, List, Plus, Settings, TrendingUp, User} from 'lucide-react';
+import React, {useEffect, useState} from 'react';
+import {ArrowLeft, List, Plus, Settings} from 'lucide-react';
+import {fetchOrganizationDashboardStats, fetchOrganizationDetails} from '../../../lib/api';
+import type {OrganizationDetails, OrganizationStat} from '../../../lib/types';
 
-// Mock data for the dashboard
-const mockStats = [
-  {id: 'new_volunteers', label: 'Новых волонтеров', value: '12', Icon: User, change: '+5%'},
-  {id: 'total_regs', label: 'Всего регистраций', value: '87', Icon: CheckCircle, change: '+12%'},
-  {id: 'event_views', label: 'Просмотры событий', value: '1.2k', Icon: Eye, change: '-3%'},
-  {id: 'response_rate', label: 'Коэффициент отклика', value: '23%', Icon: TrendingUp, change: '+1.5%'},
-];
+
+const StatCardSkeleton: React.FC = () => (
+  <div className="bg-white rounded-2xl p-4 shadow-sm animate-pulse">
+    <div className="flex justify-between items-start">
+      <div className="bg-gray-200 rounded-lg p-2 w-10 h-10"></div>
+      <div className="h-4 bg-gray-200 rounded w-10 mt-1"></div>
+    </div>
+    <div className="h-8 bg-gray-200 rounded w-16 mt-4"></div>
+    <div className="h-4 bg-gray-200 rounded w-32 mt-1"></div>
+  </div>
+);
+
 
 const StatCard: React.FC<{ label: string; value: string; Icon: React.FC<any>; change: string; }> = ({
                                                                                                       label,
@@ -39,17 +46,39 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
                                                                                onManageEvents,
                                                                                onCreateEvent
                                                                              }) => {
+  const [stats, setStats] = useState<OrganizationStat[]>([]);
+  const [organizationDetails, setOrganizationDetails] = useState<OrganizationDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [statsData, orgData] = await Promise.all([
+          fetchOrganizationDashboardStats(),
+          fetchOrganizationDetails()
+        ]);
+        setStats(statsData);
+        setOrganizationDetails(orgData);
+      } catch (error) {
+        console.error("Failed to load dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
 
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
-      {/* Header */}
       <header className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm flex items-center justify-between">
         <button onClick={onSwitchToVolunteer}
                 className="flex items-center space-x-2 text-sm font-semibold text-[#007AFF]">
           <ArrowLeft className="w-5 h-5"/>
           <span>Режим волонтера</span>
         </button>
-        <h1 className="text-lg font-bold text-[#0C0D0E]">Фонд "Подари жизнь"</h1>
+        <h1 className="text-lg font-bold text-[#0C0D0E]">{loading ? 'Загрузка...' : organizationDetails?.name}</h1>
         <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                 aria-label="Настройки организации">
           <Settings className="w-6 h-6 text-gray-700"/>
@@ -57,21 +86,27 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
       </header>
 
       <main className="flex-grow overflow-y-auto p-6 space-y-6">
-        {/* Primary CTA */}
         <button onClick={onCreateEvent}
                 className="w-full flex items-center justify-center space-x-2 bg-[#007AFF] text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-blue-600 transition-colors">
           <Plus className="w-6 h-6"/>
           <span>Создать новое событие</span>
         </button>
 
-        {/* Statistics */}
         <section>
           <div className="grid grid-cols-2 gap-4">
-            {mockStats.map(stat => <StatCard key={stat.id} {...stat} />)}
+            {loading ? (
+              <>
+                <StatCardSkeleton/>
+                <StatCardSkeleton/>
+                <StatCardSkeleton/>
+                <StatCardSkeleton/>
+              </>
+            ) : (
+              stats.map(stat => <StatCard key={stat.id} {...stat} />)
+            )}
           </div>
         </section>
 
-        {/* Management */}
         <section>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-[#0C0D0E]">Управление</h2>

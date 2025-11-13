@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {fetchLeaderboardData} from '../../../lib/api';
-import {CURRENT_USER_ID} from '../../../lib/mockData';
+import {CURRENT_USER_ID} from '../../../lib/constants';
 import type {LeaderboardUser, User} from '../../../lib/types';
 import {ArrowLeft, Star} from 'lucide-react';
 import {BronzeMedalIcon, GoldMedalIcon, SilverMedalIcon} from '../../../components/ui/icons';

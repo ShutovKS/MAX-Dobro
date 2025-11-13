@@ -1,60 +1,21 @@
 import React, {useEffect, useMemo, useState} from 'react';
+import {useNavigate} from 'react-router';
 import {fetchActivityHistoryEvents} from '../../../lib/api';
 import type {HistoryEvent} from '../../../lib/types';
+import {parseRuDateToDate} from '../../../lib/dateUtils';
 import {ArrowLeft, CalendarDays, ChevronLeft, ChevronRight} from 'lucide-react';
-
-const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-const categoryColors: { [key: string]: string } = {
-  'Спорт': 'bg-[#FF303C]',
-  'Арт': 'bg-purple-500',
-  'Экология': 'bg-[#1ABE43]',
-  'Животные': 'bg-[#FF9315]',
-  'Помощь старшим': 'bg-yellow-500',
-  'Онлайн': 'bg-indigo-500',
-  'default': 'bg-[#007AFF]'
-};
-
-const parseRuDate = (dateString: string): Date | null => {
-  const monthMap: { [key: string]: number } = {
-    'января': 0,
-    'февраля': 1,
-    'марта': 2,
-    'апреля': 3,
-    'мая': 4,
-    'июня': 5,
-    'июля': 6,
-    'августа': 7,
-    'сентября': 8,
-    'октября': 9,
-    'ноября': 10,
-    'декабря': 11
-  };
-  const parts = dateString.replace(',', '').split(' ');
-  if (parts.length < 3) return null;
-
-  const day = parseInt(parts[0], 10);
-  const month = monthMap[parts[1].toLowerCase()];
-  const time = parts[2].split(':');
-  const hour = parseInt(time[0], 10);
-  const minute = parseInt(time[1], 10);
-
-  if (isNaN(day) || month === undefined || isNaN(hour) || isNaN(minute)) return null;
-
-  const year = new Date().getFullYear();
-  return new Date(year, month, day, hour, minute);
-};
-
+import {CATEGORY_COLORS, DAY_NAMES, MONTH_NAMES} from '../../../lib/constants';
 
 const CalendarPage: React.FC = () => {
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [upcomingEvents, setUpcomingEvents] = useState<(HistoryEvent & { parsedDate: Date | null })[]>([]);
 
-  const onBack = () => window.location.hash = '#/profile';
-  const onFindEvent = () => window.location.hash = '#/home';
-  const onSelectEvent = (id: number) => window.location.hash = `#/events/${id}`;
+  const onBack = () => navigate('/profile');
+  const onFindEvent = () => navigate('/home');
+  const onSelectEvent = (id: number) => navigate(`/events/${id}`);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -62,7 +23,7 @@ const CalendarPage: React.FC = () => {
       const events = await fetchActivityHistoryEvents();
       const processedEvents = events
         .filter(e => e.status === 'upcoming')
-        .map(e => ({...e, parsedDate: parseRuDate(e.date)}))
+        .map(e => ({...e, parsedDate: parseRuDateToDate(e.date)}))
         .filter(e => e.parsedDate !== null);
       setUpcomingEvents(processedEvents);
       setLoading(false);
@@ -127,12 +88,12 @@ const CalendarPage: React.FC = () => {
             <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-gray-100"><ChevronLeft
               className="w-6 h-6 text-gray-500"/></button>
             <h2
-              className="text-xl font-bold text-[#0C0D0E]">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</h2>
+              className="text-xl font-bold text-[#0C0D0E]">{MONTH_NAMES[currentDate.getMonth()]} {currentDate.getFullYear()}</h2>
             <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-gray-100"><ChevronRight
               className="w-6 h-6 text-gray-500"/></button>
           </div>
           <div className="grid grid-cols-7 gap-y-2 text-center">
-            {dayNames.map(day => <div key={day} className="text-sm font-semibold text-gray-400">{day}</div>)}
+            {DAY_NAMES.map(day => <div key={day} className="text-sm font-semibold text-gray-400">{day}</div>)}
             {calendarGrid.map((day, index) => {
               if (!day) return <div key={`empty-${index}`}></div>;
               const isToday = day.toDateString() === today.toDateString();
@@ -190,7 +151,7 @@ const CalendarPage: React.FC = () => {
                           })}</p>
                         </div>
                         <div
-                          className={`w-1 flex-shrink-0 h-16 rounded-full ${categoryColors[event.category] || categoryColors.default}`}></div>
+                          className={`w-1 flex-shrink-0 h-16 rounded-full ${CATEGORY_COLORS[event.category] || CATEGORY_COLORS.default}`}></div>
                         <div className="flex-1">
                           <h4 className="font-bold text-[#0C0D0E]">{event.title}</h4>
                           <p className="text-sm text-[rgb(12,13,14,0.52)]">{event.location}</p>

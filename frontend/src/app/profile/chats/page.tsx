@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
+import {useNavigate} from 'react-router';
 import {fetchMyChats} from '../../../lib/api';
 import type {MyChatItem} from '../../../lib/types';
-// FIX: Replaced icon imports with lucide-react for consistency and to fix module export errors.
 import {ArrowLeft, Search, X} from 'lucide-react';
 import {EmptyChatIllustrationIcon} from '../../../components/ui/icons';
 import EmptyState from '../../../components/ui/EmptyState';
@@ -34,15 +34,16 @@ const ChatCell: React.FC<{ chat: MyChatItem; onSelect: () => void }> = ({chat, o
 
 
 const MyChatsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const [loading, setLoading] = useState(true);
   const [allChats, setAllChats] = useState<MyChatItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
 
-  const onBack = () => window.location.hash = '#/profile';
-  const onSelectChat = (id: number) => window.location.hash = `#/events/${id}/chat`;
-  const onFindEvent = () => window.location.hash = '#/home';
+  const onBack = () => navigate('/profile');
+  const onSelectChat = (id: number) => navigate(`/events/${id}/chat`);
+  const onFindEvent = () => navigate('/home');
 
   useEffect(() => {
     const loadChats = async () => {

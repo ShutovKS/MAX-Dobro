@@ -1,9 +1,11 @@
 import React, {useEffect, useRef, useState} from 'react';
-import type {ChatMessage, User} from '../../lib/types';
+import {useNavigate} from 'react-router';
+import type {AppEvent, ChatMessage, User} from '../../lib/types';
 import {GoogleGenAI, Type} from '@google/genai';
-import {allEvents} from '../../lib/mockData';
+import {fetchEventById} from '../../lib/api';
 import {ArrowLeft, Send, Sparkles} from 'lucide-react';
 import EventCard from '../../components/ui/EventCard';
+import {GEMINI_CHAT_PROMPT, GEMINI_MODEL_NAME, MESSAGES, ROUTES} from '../../lib/constants';
 
 const ai = new GoogleGenAI({apiKey: process.env.API_KEY as string});
 
@@ -36,6 +38,7 @@ const AssistantChatPage: React.FC<{
   onClose: () => void;
   user: User;
 }> = ({onClose, user}) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +68,7 @@ const AssistantChatPage: React.FC<{
   }, [messages, isLoading]);
 
   const onSelectEvent = (id: number) => {
-    window.location.hash = `#/events/${id}`;
+    navigate(ROUTES.EVENT_DETAIL(id));
   };
 
   const handleSend = async (messageText?: string) => {
@@ -87,10 +90,10 @@ const AssistantChatPage: React.FC<{
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: GEMINI_MODEL_NAME,
         contents: textToSend,
         config: {
-          systemInstruction: `You are Помощник Добра (Helper of Good), a friendly and helpful AI assistant for a volunteering app called MAXДобро. You help users find volunteering events, answer questions about the app, and encourage them to do good deeds. Your name is Max. Keep your answers concise, friendly and helpful. Respond in Russian. The user's name is ${user.firstName}. If you find an event for the user, include the event object in your response.`,
+          systemInstruction: GEMINI_CHAT_PROMPT(user.firstName),
           responseMimeType: "application/json",
           responseSchema: responseSchema,
         },
@@ -101,7 +104,7 @@ const AssistantChatPage: React.FC<{
       try {
         const jsonResponse = JSON.parse(response.text);
         if (jsonResponse.event && jsonResponse.event.id) {
-          const foundEvent = allEvents.find(e => e.id === jsonResponse.event.id);
+          const foundEvent = await fetchEventById(jsonResponse.event.id) as AppEvent | undefined;
           if (foundEvent) {
             assistantResponse = {
               id: Date.now() + 1,
@@ -115,7 +118,7 @@ const AssistantChatPage: React.FC<{
               id: Date.now() + 1,
               sender: 'assistant',
               type: 'text',
-              text: jsonResponse.text || "Я нашел событие, но не смог загрузить детали."
+              text: jsonResponse.text || MESSAGES.ASSISTANT.EVENT_NOT_FOUND
             };
           }
         } else {
@@ -134,7 +137,7 @@ const AssistantChatPage: React.FC<{
         id: Date.now() + 1,
         sender: 'assistant',
         type: 'text',
-        text: 'К сожалению, у меня возникла небольшая проблема. Попробуйте спросить что-нибудь еще чуть позже.',
+        text: MESSAGES.ASSISTANT.API_ERROR,
       };
       setMessages(prev => [...prev, errorResponse]);
     } finally {

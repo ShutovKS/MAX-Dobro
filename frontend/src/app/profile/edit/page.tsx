@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import type {User} from '../../../lib/types';
 import {Camera} from 'lucide-react';
+import {AVATAR_DEFAULTS} from '../../../lib/constants';
 
 const EditProfilePage: React.FC<{
   user: User;
@@ -35,8 +36,8 @@ const EditProfilePage: React.FC<{
   };
 
   const handleChangePhoto = () => {
-    const newImgId = Math.floor(Math.random() * 70);
-    setAvatar(`https://i.pravatar.cc/150?img=${newImgId}`);
+    const newImgId = Math.floor(Math.random() * AVATAR_DEFAULTS.MAX_PRAVATAR_ID);
+    setAvatar(`https://i.pravatar.cc/${AVATAR_DEFAULTS.SIZE}?img=${newImgId}`);
   }
 
   return (

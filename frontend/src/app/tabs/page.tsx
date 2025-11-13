@@ -1,12 +1,22 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
+import {useNavigate} from 'react-router';
 import {Filter, List, MapPin as MapPinIcon, Search, ServerCrash, Sparkles, X} from 'lucide-react';
 import {BinocularsIllustrationIcon, MagnifyingGlassIllustrationIcon} from '../../components/ui/icons';
 import EmptyState from '../../components/ui/EmptyState';
-import {defaultFilters} from '../../lib/mockData';
-import {fetchAllEvents, fetchAllStories} from '../../lib/api';
-import type {AppEvent, FilterDate, FilterFormat, Filters, Story} from '../../lib/types';
+import {fetchAllEvents, fetchAllStories, fetchMapMarkers} from '../../lib/api';
+import type {AppEvent, FilterDate, FilterFormat, Filters, MapMarker, Story} from '../../lib/types';
 import SkeletonCard from '../../components/ui/SkeletonCard';
 import EventCard from '../../components/ui/EventCard';
+import InteractiveMap from '../../components/ui/InteractiveMap';
+import {UI_TEXT} from '../../lib/constants';
+
+// FIX: Define defaultFilters locally as it is not exported from mockData, and remove the faulty import.
+const defaultFilters: Filters = {
+  format: 'Все',
+  categories: [],
+  date: 'Любая',
+  distance: 5,
+};
 
 const StoryPreviewCard: React.FC<{ story: Story; onSelectStory: (id: number) => void }> = ({story, onSelectStory}) => (
   <div onClick={() => onSelectStory(story.id)} className="flex-shrink-0 w-40 space-y-2 cursor-pointer group">
@@ -87,7 +97,7 @@ const FilterPanel: React.FC<{
           </header>
 
           <div className="flex-grow p-6 overflow-y-auto space-y-6">
-            {/* Filter sections... */}
+
           </div>
 
           <footer className="p-4 border-t border-gray-200 flex-shrink-0">
@@ -114,44 +124,20 @@ const SearchResultsInfo: React.FC<{ count: number; query: string; onReset: () =>
     <button onClick={onReset} className="text-sm font-semibold text-[#007AFF] hover:underline">
       Сбросить
     </button>
-    <style>{`
-          @keyframes fade-in-down { 0% { opacity: 0; transform: translateY(-10px); } 100% { opacity: 1; transform: translateY(0); } }
-          .animate-fade-in-down { animation: fade-in-down 0.3s ease-out; }
-        `}</style>
   </div>
 );
 
 const MapScreen: React.FC<{
-  events: AppEvent[],
+  markers: MapMarker[];
   onSelectEvent: (id: number) => void;
   isSearchActive: boolean;
   onResetSearch: () => void;
   onResetFilters: () => void;
-}> = ({events, onSelectEvent, isSearchActive, onResetSearch, onResetFilters}) => {
-  return (
-    <div className="relative w-full h-full bg-gray-200">
-      <div className="absolute inset-0 bg-cover bg-center opacity-40"
-           style={{backgroundImage: "url('https://i.imgur.com/7i2a4qj.png')"}}></div>
-      {events.length > 0 ? (
-        events.map(event => (
-          <button
-            key={event.id}
-            onClick={() => onSelectEvent(event.id)}
-            className="absolute z-10 transform -translate-x-1/2 -translate-y-full transition-transform hover:scale-110 animate-fade-in-down"
-            style={{top: event.pos.top, left: event.pos.left, animationDelay: `${Math.random() * 0.3}s`}}
-            aria-label={event.title}
-          >
-            <div className="relative group">
-              <MapPinIcon className="w-10 h-10 text-red-500 drop-shadow-lg fill-current"/>
-              <div
-                className="absolute bottom-full mb-2 w-max max-w-xs px-2 py-1 bg-black/70 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                {event.title}
-              </div>
-            </div>
-          </button>
-        ))
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center z-10 p-4 bg-white/80 backdrop-blur-sm">
+}> = ({markers, onSelectEvent, isSearchActive, onResetSearch, onResetFilters}) => {
+  if (markers.length === 0) {
+    return (
+      <div className="relative w-full h-full bg-gray-200">
+        <div className="absolute inset-0 pt-36 flex items-center justify-center z-10 p-4 bg-white/80 backdrop-blur-sm">
           {isSearchActive ? (
             <EmptyState Icon={MagnifyingGlassIllustrationIcon} title="Ничего не найдено"
                         subtitle="Возможно, в запросе опечатка? Попробуйте переформулировать."
@@ -162,7 +148,13 @@ const MapScreen: React.FC<{
                         action={{text: "Сбросить фильтры", onClick: onResetFilters, type: 'secondary'}}/>
           )}
         </div>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-full pt-36">
+      <InteractiveMap markers={markers} onMarkerClick={onSelectEvent}/>
     </div>
   );
 };
@@ -206,40 +198,38 @@ const FeedScreen: React.FC<{
 );
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [view, setView] = useState<'map' | 'feed'>('map');
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<Filters>(defaultFilters);
   const [searchQuery, setSearchQuery] = useState('');
   const [allEvents, setAllEvents] = useState<AppEvent[]>([]);
   const [allStories, setAllStories] = useState<Story[]>([]);
+  const [allMarkers, setAllMarkers] = useState<MapMarker[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadEvents = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const events = await fetchAllEvents();
-      setAllEvents(events);
-    } catch (err) {
-      setError("Не удалось загрузить события. Проверьте ваше интернет-соединение и попробуйте снова.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    loadEvents();
-    const loadStories = async () => {
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const stories = await fetchAllStories();
+        const [events, stories, markers] = await Promise.all([
+          fetchAllEvents(),
+          fetchAllStories(),
+          fetchMapMarkers()
+        ]);
+        setAllEvents(events);
         setAllStories(stories.slice(0, 5));
+        setAllMarkers(markers);
       } catch (err) {
-        console.error("Failed to load stories for carousel");
+        setError("Не удалось загрузить данные. Проверьте ваше интернет-соединение и попробуйте снова.");
+      } finally {
+        setLoading(false);
       }
     };
-    loadStories();
-  }, [loadEvents]);
+    loadData();
+  }, []);
 
   const filteredEvents = useMemo(() => {
     const baseFiltered = allEvents.filter(event => {
@@ -252,21 +242,30 @@ export default function HomePage() {
     return baseFiltered.filter(event => event.title.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [appliedFilters, searchQuery, allEvents]);
 
+  const filteredMarkers = useMemo(() => {
+    const eventIds = new Set(filteredEvents.map(e => e.id));
+    return allMarkers.filter(m => eventIds.has(m.id));
+  }, [filteredEvents, allMarkers]);
+
   const handleApplyFilters = (newFilters: Filters) => {
     setAppliedFilters(newFilters);
     setIsFilterPanelOpen(false);
   };
 
   const handleResetFilters = () => setAppliedFilters(defaultFilters);
-  const onSelectEvent = (id: number) => window.location.hash = `#/events/${id}`;
-  const onSelectStory = (id: number) => window.location.hash = `#/stories/${id}`;
+  const onSelectEvent = (id: number) => navigate(`/events/${id}`);
+  const onSelectStory = (id: number) => navigate(`/stories/${id}`);
   const isSearchActive = searchQuery.length > 0;
 
   if (error && !loading) {
     return (
       <div className="w-full h-full flex items-center justify-center p-4">
         <EmptyState Icon={ServerCrash} title="Что-то пошло не так" subtitle={error}
-                    action={{text: 'Попробовать снова', onClick: loadEvents, type: 'primary'}}/>
+                    action={{
+                      text: 'Попробовать снова', onClick: () => {
+                        window.location.reload();
+                      }, type: 'primary'
+                    }}/>
       </div>
     )
   }
@@ -276,12 +275,12 @@ export default function HomePage() {
       <header className="absolute top-0 left-0 right-0 p-4 z-40 space-y-3">
         <div className="flex justify-between items-center">
           <button
-            onClick={() => window.location.hash = '#/chat'}
+            onClick={() => navigate('/chat')}
             className="bg-blue-100 text-blue-600 font-semibold py-2 px-4 rounded-full flex items-center space-x-2 shadow-sm transition-transform hover:scale-105 active:scale-95"
             aria-label="Открыть Помощника"
           >
             <Sparkles className="w-5 h-5"/>
-            <span>Помощник</span>
+            <span>{UI_TEXT.ASSISTANT_NAME}</span>
           </button>
 
           <div className="bg-gray-100 p-1 rounded-full flex items-center space-x-1 shadow-sm">
@@ -337,7 +336,7 @@ export default function HomePage() {
 
       {view === 'map' ? (
         <MapScreen
-          events={filteredEvents}
+          markers={filteredMarkers}
           onSelectEvent={onSelectEvent}
           isSearchActive={isSearchActive}
           onResetSearch={() => setSearchQuery('')}

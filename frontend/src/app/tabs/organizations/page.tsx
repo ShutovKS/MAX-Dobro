@@ -1,11 +1,12 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {defaultOrganizationFilters, organizationCategories} from '../../../lib/mockData';
+import {useNavigate} from 'react-router';
 import {fetchAllOrganizations, updateOrganizationSubscription} from '../../../lib/api';
 import type {Organization, OrganizationFilters} from '../../../lib/types';
 import {BadgeCheck, Check, Filter, Search, SearchX} from 'lucide-react';
 import SubscribeModal from '../../../components/ui/SubscribeModal';
 import Toast from '../../../components/ui/Toast';
 import EmptyState from '../../../components/ui/EmptyState';
+import {DEFAULT_ORGANIZATION_FILTERS, MESSAGES, ORGANIZATION_CATEGORIES} from '../../../lib/constants';
 
 const OrganizationSkeletonCell: React.FC = () => (
   <div className="flex items-center space-x-4 p-4 animate-pulse">
@@ -74,9 +75,9 @@ const OrganizationFilterPanel: React.FC<{
   };
 
   const handleReset = () => {
-    setCity(defaultOrganizationFilters.city);
-    setSelectedCategories(defaultOrganizationFilters.categories);
-    setVerifiedOnly(defaultOrganizationFilters.verifiedOnly);
+    setCity(DEFAULT_ORGANIZATION_FILTERS.city);
+    setSelectedCategories(DEFAULT_ORGANIZATION_FILTERS.categories);
+    setVerifiedOnly(DEFAULT_ORGANIZATION_FILTERS.verifiedOnly);
   };
 
   const handleApply = () => {
@@ -122,7 +123,7 @@ const OrganizationFilterPanel: React.FC<{
             <section>
               <h3 className="text-lg font-bold text-[#0C0D0E] mb-3">Направления</h3>
               <div className="flex flex-wrap gap-2">
-                {organizationCategories.map(cat => (
+                {ORGANIZATION_CATEGORIES.map(cat => (
                   <button key={cat} onClick={() => toggleCategory(cat)}
                           className={`px-4 py-2 text-sm font-semibold rounded-full border-2 transition-colors ${selectedCategories.includes(cat) ? 'bg-[#007AFF] text-white border-transparent' : 'bg-white text-[#007AFF] border-[#007AFF]/50'}`}>
                     {cat}
@@ -160,11 +161,12 @@ const OrganizationFilterPanel: React.FC<{
 };
 
 const OrganizationsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState<OrganizationFilters>(defaultOrganizationFilters);
+  const [appliedFilters, setAppliedFilters] = useState<OrganizationFilters>(DEFAULT_ORGANIZATION_FILTERS);
   const [subscribingOrg, setSubscribingOrg] = useState<Organization | null>(null);
   const [toast, setToast] = useState<{ show: boolean; message: string; onUndo?: () => void }>({
     show: false,
@@ -189,7 +191,7 @@ const OrganizationsPage: React.FC = () => {
   }, []);
 
   const onSelectOrganization = (id: number) => {
-    window.location.hash = `#/organizations/${id}`;
+    navigate(`/organizations/${id}`);
   };
 
   const filteredOrganizations = useMemo(() => {
@@ -224,7 +226,7 @@ const OrganizationsPage: React.FC = () => {
     setOrganizations(prevOrgs => prevOrgs.map(org => org.id === id ? {...org, isSubscribed: true} : org));
 
     setSubscribingOrg(null);
-    setToast({show: true, message: `Вы подписались на "${name}"`, onUndo: () => handleUndoSubscription(id)});
+    setToast({show: true, message: MESSAGES.TOASTS.SUBSCRIBED(name), onUndo: () => handleUndoSubscription(id)});
   };
 
   const handleUndoSubscription = async (orgId: number) => {

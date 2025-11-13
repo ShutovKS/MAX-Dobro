@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router';
 import {fetchAllStories} from '../../../lib/api';
 import type {Story} from '../../../lib/types';
 import {Plus} from 'lucide-react';
@@ -8,6 +9,7 @@ import StoryCard from './components/StoryCard';
 import StorySkeletonCard from './components/StorySkeletonCard';
 
 const StoriesPage: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stories, setStories] = useState<Story[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +31,7 @@ const StoriesPage: React.FC = () => {
   }, []);
 
   const onStartCreateStory = () => {
-    window.location.hash = '#/stories/create';
+    navigate('/stories/create');
   };
 
   const renderContent = () => {

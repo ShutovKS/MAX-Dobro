@@ -1,7 +1,9 @@
-import React from 'react';
-import type {ProfileSubScreen, User} from '../../../lib/types';
-import {ChevronRight, Dog, Settings} from 'lucide-react';
+import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router';
+import type {ProfileSubScreen, User, WeeklyChallenge} from '../../../lib/types';
+import {ChevronRight, Settings} from 'lucide-react';
 import WeeklyChallengeWidget from '../../../features/challenges/components/WeeklyChallengeWidget';
+import {fetchWeeklyChallenge} from '../../../lib/api';
 
 const StatCard: React.FC<{
   value: string;
@@ -33,29 +35,31 @@ const AchievementBadge: React.FC<{ achievement: User['achievements'][0] }> = Rea
   </div>
 ));
 
-const mockChallenge = {
-  title: "Челлендж недели",
-  description: "Помогите животным 1 раз",
-  reward: "Награда: +100 баллов кармы ✨",
-  Icon: Dog,
-  progress: 0,
-  target: 1,
-  filterCategory: "Животные",
-};
-
 const ProfilePage: React.FC<{ user: User; onSwitchToOrganizationMode: () => void; }> = ({
                                                                                           user,
                                                                                           onSwitchToOrganizationMode
                                                                                         }) => {
+  const navigate = useNavigate();
+  const [challenge, setChallenge] = useState<WeeklyChallenge | null>(null);
+
+  useEffect(() => {
+    const loadChallenge = async () => {
+      try {
+        const challengeData = await fetchWeeklyChallenge();
+        setChallenge(challengeData);
+      } catch (error) {
+        console.error("Failed to fetch weekly challenge", error);
+      }
+    };
+    loadChallenge();
+  }, []);
 
   const onNavigate = (screen: ProfileSubScreen) => {
-    window.location.hash = `#/profile/${screen}`;
+    navigate(`/profile/${screen}`);
   };
 
   const onFindEvent = (category?: string) => {
-    // A more robust solution would involve passing query params
-    // For now, we just navigate to the home page for filtering
-    window.location.hash = '#/home';
+    navigate('/home');
   };
 
   const handleStatClick = (statId: string) => {
@@ -117,13 +121,15 @@ const ProfilePage: React.FC<{ user: User; onSwitchToOrganizationMode: () => void
         </div>
       </section>
 
-      <section className="px-6 mb-6">
-        <WeeklyChallengeWidget
-          challenge={mockChallenge}
-          isCompleted={false}
-          onCtaClick={onFindEvent}
-        />
-      </section>
+      {challenge && (
+        <section className="px-6 mb-6">
+          <WeeklyChallengeWidget
+            challenge={challenge}
+            isCompleted={challenge.isCompleted}
+            onCtaClick={onFindEvent}
+          />
+        </section>
+      )}
 
       <section className="mb-6">
         <div className="flex justify-between items-center px-6 mb-3">

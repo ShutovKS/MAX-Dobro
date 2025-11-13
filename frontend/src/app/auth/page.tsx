@@ -4,12 +4,12 @@ import {HeartHandIcon, MaxIcon} from '../../components/ui/icons';
 import {login, register} from '../../lib/auth';
 import type {User} from '../../lib/types';
 import {defaultUserData} from '../../lib/mockData';
+import {MESSAGES, PASSWORD_MIN_LENGTH} from '../../lib/constants';
 
 const Spinner: React.FC = () => (
   <RefreshCw className="w-5 h-5 text-white animate-spin"/>
 );
 
-// --- Login View ---
 const LoginView: React.FC<{
   onAuthSuccess: (user: User) => void,
   onSwitchToRegister: () => void,
@@ -27,17 +27,17 @@ const LoginView: React.FC<{
     let isValid = true;
     setLoginError('');
     if (!email) {
-      setEmailError('Пожалуйста, введите email');
+      setEmailError(MESSAGES.AUTH.EMAIL_REQUIRED);
       isValid = false;
     } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setEmailError('Пожалуйста, введите корректный email');
+      setEmailError(MESSAGES.AUTH.EMAIL_INVALID);
       isValid = false;
     } else {
       setEmailError('');
     }
 
     if (!password) {
-      setPasswordError('Пожалуйста, введите пароль');
+      setPasswordError(MESSAGES.AUTH.PASSWORD_REQUIRED);
       isValid = false;
     } else {
       setPasswordError('');
@@ -49,15 +49,13 @@ const LoginView: React.FC<{
         const {user} = await login(email, password);
         onAuthSuccess(user);
       } catch (err) {
-        setLoginError('Неверный email или пароль. Попробуйте снова.');
+        setLoginError(MESSAGES.AUTH.LOGIN_ERROR);
         setIsLoading(false);
       }
     }
   };
 
   const handleMaxLogin = () => {
-    // In a real app, this would trigger an OAuth flow.
-    // Here, we just simulate a successful login with default data.
     onAuthSuccess(defaultUserData);
   }
 
@@ -139,7 +137,6 @@ const LoginView: React.FC<{
   );
 };
 
-// --- Register View ---
 const RegisterView: React.FC<{
   onRegisterSuccess: (user: User) => void,
   onSwitchToLogin: () => void
@@ -153,13 +150,13 @@ const RegisterView: React.FC<{
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.firstName) newErrors.firstName = 'Введите имя';
-    if (!formData.lastName) newErrors.lastName = 'Введите фамилию';
-    if (!formData.email) newErrors.email = 'Введите email';
-    else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = 'Неверный формат email';
-    if (!formData.password) newErrors.password = 'Введите пароль';
-    else if (formData.password.length < 6) newErrors.password = 'Пароль должен быть не менее 6 символов';
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Пароли не совпадают';
+    if (!formData.firstName) newErrors.firstName = MESSAGES.AUTH.FIRST_NAME_REQUIRED;
+    if (!formData.lastName) newErrors.lastName = MESSAGES.AUTH.LAST_NAME_REQUIRED;
+    if (!formData.email) newErrors.email = MESSAGES.AUTH.EMAIL_REQUIRED;
+    else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = MESSAGES.AUTH.EMAIL_INVALID;
+    if (!formData.password) newErrors.password = MESSAGES.AUTH.PASSWORD_REQUIRED;
+    else if (formData.password.length < PASSWORD_MIN_LENGTH) newErrors.password = MESSAGES.AUTH.PASSWORD_MIN_LENGTH(PASSWORD_MIN_LENGTH);
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = MESSAGES.AUTH.PASSWORDS_DONT_MATCH;
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -179,14 +176,14 @@ const RegisterView: React.FC<{
         const {user} = await register(formData);
         onRegisterSuccess(user);
       } catch (err) {
-        setRegisterError('Не удалось зарегистрироваться. Попробуйте позже.');
+        setRegisterError(MESSAGES.AUTH.REGISTER_ERROR);
         setIsLoading(false);
       }
     }
   };
 
   const isFormValid = useMemo(() => {
-    return Object.values(formData).every(value => value.length > 0) && formData.password.length >= 6 && formData.password === formData.confirmPassword && /^\S+@\S+\.\S+$/.test(formData.email);
+    return Object.values(formData).every(value => typeof value === 'string' && value.length > 0) && formData.password.length >= PASSWORD_MIN_LENGTH && formData.password === formData.confirmPassword && /^\S+@\S+\.\S+$/.test(formData.email);
   }, [formData]);
 
   return (
@@ -268,7 +265,6 @@ const RegisterView: React.FC<{
   );
 };
 
-// --- Forgot Password View ---
 const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLogin}) => {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -279,7 +275,7 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLo
       setEmailError('');
       setIsSubmitted(true);
     } else {
-      setEmailError('Пожалуйста, введите корректный email');
+      setEmailError(MESSAGES.AUTH.EMAIL_INVALID);
     }
   };
 
@@ -343,8 +339,6 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLo
   );
 };
 
-
-// --- Main Page Component ---
 type AuthMode = 'login' | 'register' | 'forgotPassword';
 
 interface AuthPageProps {

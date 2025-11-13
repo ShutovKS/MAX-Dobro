@@ -5,7 +5,6 @@ import {ArrowLeft, List, Plus} from 'lucide-react';
 import EventManagementCard from '../../../features/organization/components/EventManagementCard';
 import EmptyState from '../../../components/ui/EmptyState';
 
-// A simple skeleton card for loading state
 const SkeletonCard = () => (
   <div className="w-full bg-white rounded-2xl p-4 shadow-sm animate-pulse">
     <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>

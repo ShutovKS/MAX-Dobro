@@ -1,10 +1,11 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {courseCategories} from '../../../lib/mockData';
+import {useNavigate} from 'react-router';
 import {fetchAllCourses} from '../../../lib/api';
 import type {Course} from '../../../lib/types';
 import {CheckCircle, Clock, GraduationCap, SearchX} from 'lucide-react';
 import {NatureProtectorIcon} from '../../../components/ui/icons';
 import EmptyState from '../../../components/ui/EmptyState';
+import {COURSE_CATEGORIES} from '../../../lib/constants';
 
 const CourseSkeletonCard: React.FC = () => (
   <div className="bg-white rounded-2xl shadow-md p-4 flex items-center space-x-4 animate-pulse w-full">
@@ -57,6 +58,7 @@ const CourseCard: React.FC<{ course: Course; onSelect: () => void; }> = React.me
 ));
 
 const CoursesPage: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [allCourses, setAllCourses] = useState<Course[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('Все');
@@ -79,7 +81,7 @@ const CoursesPage: React.FC = () => {
   }, []);
 
   const onSelectCourse = (id: number) => {
-    window.location.hash = `#/courses/${id}`;
+    navigate(`/courses/${id}`);
   };
 
   const filteredCourses = useMemo(() => {
@@ -109,7 +111,7 @@ const CoursesPage: React.FC = () => {
 
       <div className="px-6 mb-6">
         <div className="flex space-x-2 overflow-x-auto pb-2 -mx-6 px-6">
-          {courseCategories.map(cat => (
+          {COURSE_CATEGORIES.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}

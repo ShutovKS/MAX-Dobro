@@ -1,53 +1,8 @@
 import React, {useEffect, useRef, useState} from 'react';
 import type {AppEvent, EventChatMessage, User} from '../../../lib/types';
-import {fetchEventById} from '../../../lib/api';
+import {fetchEventById, fetchEventChatMessages} from '../../../lib/api';
 import {ArrowLeft, MoreHorizontal, Paperclip, Pin, Send, X} from 'lucide-react';
-import {CURRENT_USER_ID} from '../../../lib/mockData';
-
-const MOCK_MESSAGES: EventChatMessage[] = [
-  {
-    id: 1,
-    author: {id: 10, name: 'Организатор', avatarUrl: 'https://i.pravatar.cc/48?img=11'},
-    text: 'Всем привет! Рад видеть всех, кто откликнулся. Встречаемся завтра в 10:00 у главного входа в парк.',
-    timestamp: '14:20'
-  },
-  {
-    id: 2,
-    author: {id: 2, name: 'Александр С.', avatarUrl: 'https://i.pravatar.cc/48?img=21'},
-    text: 'Отлично, буду на месте!',
-    timestamp: '14:22'
-  },
-  {
-    id: 3,
-    author: {id: 3, name: 'Мария И.', avatarUrl: 'https://i.pravatar.cc/48?img=22'},
-    text: 'А парковка там есть рядом?',
-    timestamp: '14:25'
-  },
-  {
-    id: 4,
-    author: {id: 10, name: 'Организатор', avatarUrl: 'https://i.pravatar.cc/48?img=11'},
-    text: 'Да, есть платная городская парковка вдоль улицы.',
-    timestamp: '14:26'
-  },
-  {
-    id: 5,
-    author: {id: CURRENT_USER_ID, name: 'Елена Иванова', avatarUrl: 'https://i.pravatar.cc/150?img=1'},
-    text: 'Поняла, спасибо! Постараюсь быть вовремя.',
-    timestamp: '14:30'
-  },
-  {
-    id: 6,
-    author: {id: 4, name: 'Анна П.', avatarUrl: 'https://i.pravatar.cc/48?img=24'},
-    text: 'Если кто-то поедет от метро Сокольники, можем встретиться и пойти вместе!',
-    timestamp: '14:31'
-  },
-  {
-    id: 7,
-    author: {id: CURRENT_USER_ID, name: 'Елена Иванова', avatarUrl: 'https://i.pravatar.cc/150?img=1'},
-    text: 'Отличная идея!',
-    timestamp: '14:32'
-  },
-];
+import {CURRENT_USER_ID} from '../../../lib/constants';
 
 const MessageBubble: React.FC<{ message: EventChatMessage; isOutgoing: boolean; showAuthor: boolean }> = ({
                                                                                                             message,
@@ -92,19 +47,23 @@ const EventChatPage: React.FC<{
 }> = ({eventId, user, onBack}) => {
   const [event, setEvent] = useState<AppEvent | null>(null);
   const [loading, setLoading] = useState(true);
-  const [messages, setMessages] = useState<EventChatMessage[]>(MOCK_MESSAGES);
+  const [messages, setMessages] = useState<EventChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [showPinned, setShowPinned] = useState(true);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   useEffect(() => {
-    const loadEvent = async () => {
+    const loadData = async () => {
       setLoading(true);
-      const data = await fetchEventById(eventId);
-      if (data) setEvent(data as AppEvent);
+      const [eventData, messagesData] = await Promise.all([
+        fetchEventById(eventId),
+        fetchEventChatMessages(eventId)
+      ]);
+      if (eventData) setEvent(eventData as AppEvent);
+      setMessages(messagesData);
       setLoading(false);
     };
-    loadEvent();
+    loadData();
   }, [eventId]);
 
   useEffect(() => {
@@ -144,7 +103,7 @@ const EventChatPage: React.FC<{
         </button>
         <div className="flex flex-col items-center">
           <h1 className="text-lg font-bold text-[#0C0D0E] text-center leading-tight">{event.title}</h1>
-          <p className="text-sm text-gray-500 font-medium">15 участников</p>
+          <p className="text-sm text-gray-500 font-medium">{event.participantCount || 0} участников</p>
         </div>
         <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                 aria-label="Действия">

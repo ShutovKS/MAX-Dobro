@@ -1,58 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import type {OrganizationEvent} from '../../../../lib/types';
-import {allCategories} from '../../../../lib/mockData';
 import {fetchOrganizationEvents} from '../../../../lib/api';
+import {parseRuDateToDateTimeLocal} from '../../../../lib/dateUtils';
 import {ArrowLeft, Camera, MapPin, Users} from 'lucide-react';
-
-const toDateTimeLocal = (dateString?: string): string => {
-  if (!dateString) return '';
-  try {
-    const monthMap: { [key: string]: number } = {
-      'января': 0,
-      'февраля': 1,
-      'марта': 2,
-      'апреля': 3,
-      'мая': 4,
-      'июня': 5,
-      'июля': 6,
-      'августа': 7,
-      'сентября': 8,
-      'октября': 9,
-      'ноября': 10,
-      'декабря': 11
-    };
-    const parts = dateString.replace(',', '').split(' ');
-    if (parts.length < 3) return '';
-
-    const day = parseInt(parts[0], 10);
-    const month = monthMap[parts[1].toLowerCase()];
-    const time = parts[2].split(':');
-    const hour = parseInt(time[0], 10);
-    const minute = parseInt(time[1], 10);
-
-    if (isNaN(day) || month === undefined || isNaN(hour) || isNaN(minute)) return '';
-
-    const now = new Date();
-    const currentYear = now.getFullYear();
-
-    let eventDate = new Date(currentYear, month, day, hour, minute);
-
-    // If the parsed date is in the past (e.g., event is "Jan" but we are in "Dec"), assume it's for the next year.
-    if (eventDate < now) {
-      eventDate.setFullYear(currentYear + 1);
-    }
-
-    const ten = (i: number) => (i < 10 ? '0' : '') + i;
-    const YYYY = eventDate.getFullYear();
-    const MM = ten(eventDate.getMonth() + 1);
-    const DD = ten(eventDate.getDate());
-    const HH = ten(eventDate.getHours());
-    const mm = ten(eventDate.getMinutes());
-    return `${YYYY}-${MM}-${DD}T${HH}:${mm}`;
-  } catch {
-    return '';
-  }
-};
+import {EVENT_CATEGORIES} from '../../../../lib/constants';
 
 const FormSection: React.FC<{ title: string; children: React.ReactNode }> = ({title, children}) => (
   <section className="bg-white rounded-2xl shadow-sm">
@@ -99,7 +50,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
   const [title, setTitle] = useState(event?.title || '');
   const [category, setCategory] = useState<string | null>(null);
   const [description, setDescription] = useState('');
-  const [startDate, setStartDate] = useState(toDateTimeLocal(event?.date));
+  const [startDate, setStartDate] = useState(parseRuDateToDateTimeLocal(event?.date));
   const [endDate, setEndDate] = useState('');
   const [format, setFormat] = useState<'Офлайн' | 'Онлайн'>('Офлайн');
   const [address, setAddress] = useState('');
@@ -114,10 +65,8 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
         const existingEvent = allOrgEvents.find(e => e.id === event.id);
         if (existingEvent) {
           setTitle(existingEvent.title);
-          setStartDate(toDateTimeLocal(existingEvent.date));
+          setStartDate(parseRuDateToDateTimeLocal(existingEvent.date));
           setVolunteerCount(existingEvent.capacity.toString());
-          // NOTE: The mock data for OrganizationEvent is simple. In a real app,
-          // you would pre-fill all other fields like description, category, etc. here.
         }
       };
       loadEventData();
@@ -156,7 +105,6 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
         </div>
         <h1 className="text-lg font-bold text-[#0C0D0E]">{event ? 'Редактирование события' : 'Новое событие'}</h1>
         <div className="w-10"></div>
-        {/* Spacer to balance the back button */}
       </header>
 
       <main className="flex-grow overflow-y-auto p-4 space-y-4 pb-28">
@@ -175,7 +123,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
           </InputField>
           <InputField label="Категория события*">
             <div className="flex flex-wrap gap-2">
-              {allCategories.map(cat => (
+              {EVENT_CATEGORIES.map(cat => (
                 <button key={cat} onClick={() => setCategory(cat)}
                         className={`px-4 py-2 text-sm font-semibold rounded-full border-2 transition-colors ${category === cat ? 'bg-[#007AFF] text-white border-transparent' : 'bg-white text-[#007AFF] border-[#007AFF]/50'}`}>
                   {cat}

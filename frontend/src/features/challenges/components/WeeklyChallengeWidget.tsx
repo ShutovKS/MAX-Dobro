@@ -42,18 +42,15 @@ const WeeklyChallengeWidget: React.FC<WeeklyChallengeWidgetProps> = ({challenge,
       <div className="absolute -right-8 -bottom-8">
         <challenge.Icon className="w-32 h-32 opacity-20 transform -rotate-12"/>
       </div>
-      {/* Element 1: Icon */}
       <div className="flex-shrink-0 mr-4 z-10">
         <challenge.Icon className="w-16 h-16 opacity-80"/>
       </div>
       <div className="flex-1 space-y-2 z-10">
-        {/* Element 2: Text */}
         <div>
           <p className="font-bold text-sm opacity-80">{challenge.title}</p>
           <h3 className="font-bold text-lg leading-tight">{challenge.description}</h3>
           <p className="text-xs opacity-90 mt-1">{challenge.reward}</p>
         </div>
-        {/* Element 3: Progress Bar */}
         <div className="flex items-center space-x-2">
           <div className="w-full bg-white/30 rounded-full h-1.5 flex-1">
             <div className="bg-yellow-300 h-1.5 rounded-full" style={{width: `${progressPercentage}%`}}></div>
@@ -61,7 +58,6 @@ const WeeklyChallengeWidget: React.FC<WeeklyChallengeWidgetProps> = ({challenge,
           <span className="text-xs font-mono">{challenge.progress}/{challenge.target}</span>
         </div>
       </div>
-      {/* Element 4: CTA Button */}
       <div className="flex-shrink-0 z-10 self-center ml-3">
         <button
           onClick={() => onCtaClick(challenge.filterCategory)}

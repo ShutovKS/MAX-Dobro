@@ -1,7 +1,9 @@
 import React, {useState} from 'react';
+import {useNavigate} from 'react-router';
 import {ArrowLeft, Bell, ChevronRight, FileText, LogOut, MessageSquare, ShieldCheck, UserCircle} from 'lucide-react';
 import type {ProfileSubScreen} from '../../../lib/types';
 import LogoutConfirmationModal from '../../../components/ui/LogoutConfirmationModal';
+import {APP_VERSION} from '../../../lib/constants';
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({title, children}) => (
   <section>
@@ -65,11 +67,12 @@ const ToggleRow: React.FC<{ label: string; enabled: boolean; onChange: (enabled:
 
 
 const SettingsPage: React.FC<{ onBack: () => void; onLogout: () => void; }> = ({onBack, onLogout}) => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState({newEvents: true, reminders: true, achievements: false});
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const onNavigate = (screen: ProfileSubScreen) => {
-    window.location.hash = `#/profile/${screen}`;
+    navigate(`/profile/${screen}`);
   };
 
   const handleToggle = (key: keyof typeof notifications) => {
@@ -122,7 +125,7 @@ const SettingsPage: React.FC<{ onBack: () => void; onLogout: () => void; }> = ({
             }}/>
             <SettingsRow label="Политика конфиденциальности" Icon={FileText} onClick={() => {
             }}/>
-            <SettingsRow label="Версия" Icon={FileText} info="1.0.0"/>
+            <SettingsRow label="Версия" Icon={FileText} info={APP_VERSION}/>
           </SettingsSection>
 
           <div className="pt-4">

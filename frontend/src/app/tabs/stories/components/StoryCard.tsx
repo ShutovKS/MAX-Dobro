@@ -1,23 +1,24 @@
 import React from 'react';
+import {useNavigate} from 'react-router';
 import type {Story} from '../../../../lib/types';
 import {Heart, MessageSquare, Upload} from 'lucide-react';
 
 const StoryCard: React.FC<{
   story: Story;
 }> = React.memo(({story}) => {
+  const navigate = useNavigate();
 
   const onSelectEvent = (id: number) => {
-    window.location.hash = `#/events/${id}`;
+    navigate(`/events/${id}`);
   };
 
   const onSelectStory = (id: number) => {
-    window.location.hash = `#/stories/${id}`;
+    navigate(`/stories/${id}`);
   };
 
   return (
     <div className="bg-white rounded-2xl shadow-sm w-full max-w-lg mx-auto">
       <div className="p-4 cursor-pointer" onClick={() => onSelectStory(story.id)}>
-        {/* Header */}
         <div className="flex items-center mb-3">
           <img src={story.author.avatarUrl} alt={story.author.name} className="w-10 h-10 rounded-full"/>
           <div className="ml-3">
@@ -26,7 +27,6 @@ const StoryCard: React.FC<{
           </div>
         </div>
 
-        {/* Context */}
         <p className="text-sm text-[rgb(12,13,14,0.52)] mb-2">
           поделился(-ась) историей с события{" "}
           <button onClick={(e) => {
@@ -37,17 +37,14 @@ const StoryCard: React.FC<{
           </button>
         </p>
 
-        {/* Text */}
         <p className="text-[#0C0D0E] text-sm mb-3 leading-relaxed">
           {story.text}
         </p>
 
-        {/* Media */}
         <div className="mb-3">
           <img src={story.imageUrl} alt="Story visual" className="w-full rounded-lg object-cover"/>
         </div>
       </div>
-      {/* Actions */}
       <div className="flex justify-between items-center text-[rgb(12,13,14,0.52)] p-4 pt-0"
            onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center space-x-6">

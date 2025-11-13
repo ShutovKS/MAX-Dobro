@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
 import {CheckCircle} from 'lucide-react';
+import {TOAST_DURATION} from '../../lib/constants';
 
 interface ToastProps {
   message: string;
@@ -14,7 +15,7 @@ const Toast: React.FC<ToastProps> = ({
                                        message,
                                        show,
                                        onClose,
-                                       duration = 5000, // 5 seconds as per spec
+                                       duration = TOAST_DURATION,
                                        type = 'info',
                                        onUndo,
                                      }) => {
@@ -31,7 +32,7 @@ const Toast: React.FC<ToastProps> = ({
     if (onUndo) {
       onUndo();
     }
-    onClose(); // Close toast immediately when undo is clicked
+    onClose();
   };
 
   return (

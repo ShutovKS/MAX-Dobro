@@ -1,6 +1,5 @@
 import React from 'react';
 
-// --- Types ---
 export type AppEvent = {
   id: number;
   organizationId: number;
@@ -12,11 +11,12 @@ export type AppEvent = {
   Icon: React.FC<React.SVGProps<SVGSVGElement>>;
   pos: { top: string; left: string; };
   requirements?: string[];
+  participantCount?: number;
+  rewards?: { hours: number; karma: number };
 };
 
 export type HistoryEvent = AppEvent & {
   status: 'upcoming' | 'past';
-  rewards?: { hours: number; karma: number };
   role?: string;
 };
 
@@ -88,10 +88,25 @@ export type Organization = {
   isVerified: boolean;
   coverImageUrl: string;
   rating: number;
+  reviewCount: number;
   subscribers: number;
   websiteUrl: string;
   fullDescription: string;
   isSubscribed: boolean;
+  address: string;
+};
+
+export type OrganizationStat = {
+  id: string;
+  label: string;
+  value: string;
+  Icon: React.FC<any>;
+  change: string;
+};
+
+export type OrganizationDetails = {
+  id: number;
+  name: string;
 };
 
 export type OrganizationEvent = {
@@ -115,7 +130,7 @@ export type EventParticipant = {
 export type Achievement = {
   id: number;
   name: string;
-  description: string; // How to unlock for locked, what for for unlocked
+  description: string;
   Icon: React.FC<React.SVGProps<SVGSVGElement>>;
   unlocked: boolean;
   unlockedDate?: string;
@@ -218,4 +233,22 @@ export type RewardItem = {
   price: number;
   imageUrl: string;
   isPurchased: boolean;
+};
+
+export type MapMarker = {
+  id: number;
+  position: [number, number];
+  title: string;
+  description: string;
+};
+
+export type WeeklyChallenge = {
+  title: string;
+  description: string;
+  reward: string;
+  Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  progress: number;
+  target: number;
+  filterCategory: string;
+  isCompleted: boolean;
 };

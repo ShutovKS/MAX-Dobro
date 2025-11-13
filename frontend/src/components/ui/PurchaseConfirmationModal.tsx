@@ -27,10 +27,8 @@ const PurchaseConfirmationModal: React.FC<PurchaseConfirmationModalProps> = ({
          aria-modal="true" aria-labelledby="purchase-title">
       <div
         className="bg-white rounded-[20px] shadow-xl p-8 m-4 w-full max-w-sm text-center flex flex-col items-center space-y-6 animate-scale-in">
-        {/* Title */}
         <h2 id="purchase-title" className="text-2xl font-bold text-[#0C0D0E]">Подтвердите покупку</h2>
 
-        {/* Details */}
         <div className="w-full text-left text-base space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-gray-500">Товар:</span>
@@ -59,7 +57,6 @@ const PurchaseConfirmationModal: React.FC<PurchaseConfirmationModalProps> = ({
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="w-full flex space-x-3 pt-2">
           <button
             onClick={onCancel}
@@ -75,12 +72,6 @@ const PurchaseConfirmationModal: React.FC<PurchaseConfirmationModalProps> = ({
           </button>
         </div>
       </div>
-      <style>{`
-                @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
-                .animate-fade-in { animation: fade-in 0.2s ease-out; }
-                @keyframes scale-in { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-                .animate-scale-in { animation: scale-in 0.2s ease-out; }
-            `}</style>
     </div>
   );
 };

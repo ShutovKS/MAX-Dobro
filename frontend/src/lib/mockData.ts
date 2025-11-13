@@ -2,8 +2,10 @@ import {
   BookOpen,
   Briefcase,
   Calendar,
+  CheckCircle,
   Clock,
   Dog,
+  Eye,
   GraduationCap,
   HandHeart,
   Leaf,
@@ -11,7 +13,9 @@ import {
   MessageSquare,
   Palette,
   Star,
+  TrendingUp,
   Trophy,
+  User as UserIcon,
   Users
 } from 'lucide-react';
 
@@ -20,21 +24,24 @@ import type {
   AppEvent,
   Comment,
   Course,
+  EventChatMessage,
   EventParticipant,
-  Filters,
   Friend,
   HistoryEvent,
   LeaderboardUser,
+  MapMarker,
   MyChatItem,
   Organization,
+  OrganizationDetails,
   OrganizationEvent,
-  OrganizationFilters,
+  OrganizationStat,
   RewardItem,
   Story,
-  User
+  User,
+  WeeklyChallenge
 } from './types';
+import {CURRENT_USER_ID, LEADERBOARD_DEFAULTS} from './constants';
 
-// --- Mock Data ---
 export const allEvents: AppEvent[] = [
   {
     id: 1,
@@ -46,7 +53,9 @@ export const allEvents: AppEvent[] = [
     location: 'Москва, Парк Сокольники',
     Icon: Leaf,
     pos: {top: '30%', left: '25%'},
-    requirements: ['Удобная одежда и обувь', 'Хорошее настроение', 'Возраст 18+']
+    requirements: ['Удобная одежда и обувь', 'Хорошее настроение', 'Возраст 18+'],
+    participantCount: 30,
+    rewards: {hours: 3, karma: 50}
   },
   {
     id: 2,
@@ -58,7 +67,9 @@ export const allEvents: AppEvent[] = [
     location: 'Москва, ул. Лесная, 5',
     Icon: Dog,
     pos: {top: '45%', left: '60%'},
-    requirements: ['Любовь к животным', 'Готовность к физической работе']
+    requirements: ['Любовь к животным', 'Готовность к физической работе'],
+    participantCount: 15,
+    rewards: {hours: 4, karma: 75}
   },
   {
     id: 3,
@@ -70,7 +81,9 @@ export const allEvents: AppEvent[] = [
     location: 'Район "Марьино"',
     Icon: HandHeart,
     pos: {top: '65%', left: '35%'},
-    requirements: ['Наличие автомобиля желательно', 'Стрессоустойчивость']
+    requirements: ['Наличие автомобиля желательно', 'Стрессоустойчивость'],
+    participantCount: 10,
+    rewards: {hours: 2, karma: 40}
   },
   {
     id: 4,
@@ -82,7 +95,9 @@ export const allEvents: AppEvent[] = [
     location: 'Арт-пространство "Винзавод"',
     Icon: Palette,
     pos: {top: '55%', left: '15%'},
-    requirements: ['Креативность', 'Опыт в организации мероприятий приветствуется']
+    requirements: ['Креативность', 'Опыт в организации мероприятий приветствуется'],
+    participantCount: 20,
+    rewards: {hours: 5, karma: 60}
   },
   {
     id: 5,
@@ -94,7 +109,9 @@ export const allEvents: AppEvent[] = [
     location: 'Онлайн',
     Icon: BookOpen,
     pos: {top: '20%', left: '75%'},
-    requirements: ['Базовые знания HTML/CSS', 'Стабильный интернет']
+    requirements: ['Базовые знания HTML/CSS', 'Стабильный интернет'],
+    participantCount: 50,
+    rewards: {hours: 2, karma: 30}
   },
   {
     id: 6,
@@ -106,12 +123,13 @@ export const allEvents: AppEvent[] = [
     location: 'Москва, Набережная',
     Icon: Leaf,
     pos: {top: '80%', left: '50%'},
-    requirements: ['Перчатки и мешки для мусора (предоставляются)', 'Желание сделать город чище']
+    requirements: ['Перчатки и мешки для мусора (предоставляются)', 'Желание сделать город чище'],
+    participantCount: 40,
+    rewards: {hours: 3, karma: 50}
   },
 ];
 
 export const activityHistoryEvents: HistoryEvent[] = [
-  // Upcoming
   {
     id: 101,
     organizationId: 1,
@@ -124,7 +142,9 @@ export const activityHistoryEvents: HistoryEvent[] = [
     Icon: Trophy,
     pos: {top: '0%', left: '0%'},
     requirements: ['Спортивная форма', 'Бутылка воды'],
-    role: 'Помощник на трассе'
+    role: 'Помощник на трассе',
+    participantCount: 50,
+    rewards: {hours: 6, karma: 100}
   },
   {
     id: 102,
@@ -138,24 +158,14 @@ export const activityHistoryEvents: HistoryEvent[] = [
     Icon: Palette,
     pos: {top: '0%', left: '0%'},
     requirements: ['Ответственность', 'Коммуникабельность'],
-    role: 'Координатор'
+    role: 'Координатор',
+    participantCount: 10,
+    rewards: {hours: 4, karma: 60}
   },
-  // Past
-  {...allEvents[0], status: 'past', rewards: {hours: 3, karma: 50}, role: 'Волонтер по уборке'},
-  {...allEvents[1], status: 'past', rewards: {hours: 4, karma: 75}, role: 'Помощник по уходу'},
-  {...allEvents[2], status: 'past', rewards: {hours: 2, karma: 40}, role: 'Водитель-волонтер'},
+  {...allEvents[0], status: 'past', role: 'Волонтер по уборке'},
+  {...allEvents[1], status: 'past', role: 'Помощник по уходу'},
+  {...allEvents[2], status: 'past', role: 'Водитель-волонтер'},
 ];
-
-
-export const allCategories = ['Экология', 'Животные', 'Помощь старшим', 'Арт', 'Онлайн', 'Спорт', 'Культура', 'Дети'];
-
-export const defaultFilters: Filters = {
-  format: 'Все',
-  categories: [],
-  date: 'Любая',
-  distance: 10,
-};
-
 
 export const allCourses: Course[] = [
   {
@@ -247,7 +257,6 @@ export const allCourses: Course[] = [
     ]
   },
 ];
-export const courseCategories = ["Все", "Первая помощь", "Экология", "Для новичков", "Животные"];
 
 export const allOrganizationsData: (Omit<Organization, 'isSubscribed'>)[] = [
   {
@@ -259,9 +268,11 @@ export const allOrganizationsData: (Omit<Organization, 'isSubscribed'>)[] = [
     isVerified: true,
     coverImageUrl: `https://picsum.photos/seed/1/600/400`,
     rating: 4.9,
+    reviewCount: 120,
     subscribers: 12500,
     websiteUrl: '#',
-    fullDescription: '«Подари жизнь» — негосударственный благотворительный фонд, помогающий детям и молодым взрослым до 25 лет с онкологическими и тяжелыми гематологическими заболеваниями. Мы верим, что вместе можем сделать больше.'
+    fullDescription: '«Подари жизнь» — негосударственный благотворительный фонд, помогающий детям и молодым взрослым до 25 лет с онкологическими и тяжелыми гематологическими заболеваниями. Мы верим, что вместе можем сделать больше.',
+    address: 'Москва, ул. Добрая, д. 1, офис 101'
   },
   {
     id: 2,
@@ -272,9 +283,11 @@ export const allOrganizationsData: (Omit<Organization, 'isSubscribed'>)[] = [
     isVerified: true,
     coverImageUrl: `https://picsum.photos/seed/2/600/400`,
     rating: 4.8,
+    reviewCount: 95,
     subscribers: 8400,
     websiteUrl: '#',
-    fullDescription: 'Гринпис — это международная независимая неправительственная экологическая организация, созданная с целью сохранить природу и мир на планете. Мы существуем на пожертвования неравнодушных людей и не принимаем финансовую помощь от государственных и коммерческих структур.'
+    fullDescription: 'Гринпис — это международная независимая неправительственная экологическая организация, созданная с целью сохранить природу и мир на планете. Мы существуем на пожертвования неравнодушных людей и не принимаем финансовую помощь от государственных и коммерческих структур.',
+    address: 'Москва, ул. Лесная, д. 5, этаж 3'
   },
   {
     id: 3,
@@ -285,9 +298,11 @@ export const allOrganizationsData: (Omit<Organization, 'isSubscribed'>)[] = [
     isVerified: true,
     coverImageUrl: `https://picsum.photos/seed/3/600/400`,
     rating: 5.0,
+    reviewCount: 250,
     subscribers: 9800,
     websiteUrl: '#',
-    fullDescription: 'Мы помогаем пожилым людям и инвалидам в домах престарелых и психоневрологических интернатах. Наша цель — дать им почувствовать, что они не одиноки, что о них помнят и заботятся.'
+    fullDescription: 'Мы помогаем пожилым людям и инвалидам в домах престарелых и психоневрологических интернатах. Наша цель — дать им почувствовать, что они не одиноки, что о них помнят и заботятся.',
+    address: 'Москва, ул. Садовая, д. 10'
   },
   {
     id: 4,
@@ -298,9 +313,11 @@ export const allOrganizationsData: (Omit<Organization, 'isSubscribed'>)[] = [
     isVerified: false,
     coverImageUrl: `https://picsum.photos/seed/4/600/400`,
     rating: 4.6,
+    reviewCount: 50,
     subscribers: 3200,
     websiteUrl: '#',
-    fullDescription: '«Верный друг» — это частный приют для бездомных собак и кошек. Мы лечим, стерилизуем и находим новый дом для наших подопечных. Приюту всегда нужна помощь волонтеров и финансовая поддержка.'
+    fullDescription: '«Верный друг» — это частный приют для бездомных собак и кошек. Мы лечим, стерилизуем и находим новый дом для наших подопечных. Приюту всегда нужна помощь волонтеров и финансовая поддержка.',
+    address: 'Московская область, пос. Лесной, ул. Центральная, 1'
   },
   {
     id: 5,
@@ -311,9 +328,11 @@ export const allOrganizationsData: (Omit<Organization, 'isSubscribed'>)[] = [
     isVerified: true,
     coverImageUrl: `https://picsum.photos/seed/5/600/400`,
     rating: 4.9,
+    reviewCount: 180,
     subscribers: 6100,
     websiteUrl: '#',
-    fullDescription: 'Старейшая благотворительная организация, помогающая бездомным людям в Санкт-Петербурге и Москве. Мы кормим, обогреваем, помогаем с документами, работой, лечением и возвращением домой.'
+    fullDescription: 'Старейшая благотворительная организация, помогающая бездомным людям в Санкт-Петербурге и Москве. Мы кормим, обогреваем, помогаем с документами, работой, лечением и возвращением домой.',
+    address: 'Москва, ул. Социальная, д. 22'
   },
   {
     id: 6,
@@ -324,9 +343,11 @@ export const allOrganizationsData: (Omit<Organization, 'isSubscribed'>)[] = [
     isVerified: true,
     coverImageUrl: `https://picsum.photos/seed/6/600/400`,
     rating: 4.8,
+    reviewCount: 310,
     subscribers: 15300,
     websiteUrl: '#',
-    fullDescription: 'Наша миссия — в сохранении биологического разнообразия Земли. Мы работаем в более чем 100 странах и поддерживаем около 1300 природоохранных проектов по всему миру.'
+    fullDescription: 'Наша миссия — в сохранении биологического разнообразия Земли. Мы работаем в более чем 100 странах и поддерживаем около 1300 природоохранных проектов по всему миру.',
+    address: 'Москва, ул. Природы, д. 8'
   },
   {
     id: 7,
@@ -337,9 +358,11 @@ export const allOrganizationsData: (Omit<Organization, 'isSubscribed'>)[] = [
     isVerified: true,
     coverImageUrl: `https://picsum.photos/seed/7/600/400`,
     rating: 5.0,
+    reviewCount: 450,
     subscribers: 25000,
     websiteUrl: '#',
-    fullDescription: 'Добровольческий поисково-спасательный отряд, занимающийся поиском пропавших людей. Мы не принимаем денежную помощь, но всегда нуждаемся в волонтерах и оборудовании.'
+    fullDescription: 'Добровольческий поисково-спасательный отряд, занимающийся поиском пропавших людей. Мы не принимаем денежную помощь, но всегда нуждаемся в волонтерах и оборудовании.',
+    address: 'Москва, ул. Поисковая, д. 1'
   },
   {
     id: 8,
@@ -350,20 +373,15 @@ export const allOrganizationsData: (Omit<Organization, 'isSubscribed'>)[] = [
     isVerified: true,
     coverImageUrl: `https://picsum.photos/seed/8/600/400`,
     rating: 4.9,
+    reviewCount: 220,
     subscribers: 11200,
     websiteUrl: '#',
-    fullDescription: 'Благотворительный Фонд Константина Хабенского с 2008 года помогает детям и молодым взрослым с опухолями головного и спинного мозга вовремя получать всю необходимую медицинскую помощь и возвращаться к полноценной жизни.'
+    fullDescription: 'Благотворительный Фонд Константина Хабенского с 2008 года помогает детям и молодым взрослым с опухолями головного и спинного мозга вовремя получать всю необходимую медицинскую помощь и возвращаться к полноценной жизни.',
+    address: 'Москва, ул. Надежды, д. 4'
   },
 ];
-export const organizationCategories = ['Дети', 'Экология', 'Помощь пожилым', 'Животные', 'Помощь людям'];
-export const defaultOrganizationFilters: OrganizationFilters = {
-  city: 'Москва',
-  categories: [],
-  verifiedOnly: true,
-};
 
 export const allAchievements: Achievement[] = [
-  // Unlocked
   {
     id: 1,
     name: 'Первый шаг',
@@ -428,8 +446,6 @@ export const allAchievements: Achievement[] = [
     unlocked: true,
     unlockedDate: '01.08.2024'
   },
-
-  // Locked
   {
     id: 9,
     name: 'Ветеран',
@@ -473,7 +489,7 @@ export const allAchievements: Achievement[] = [
     target: 5,
     cta: 'Начать новый курс',
     filterCategory: 'Обучение'
-  }, // Special category for navigation
+  },
   {
     id: 13,
     name: 'Суперзвезда',
@@ -495,7 +511,7 @@ export const allAchievements: Achievement[] = [
     target: 1,
     cta: 'Создать событие',
     filterCategory: 'Организация'
-  }, // Special category
+  },
   {
     id: 15,
     name: 'Меценат',
@@ -506,8 +522,20 @@ export const allAchievements: Achievement[] = [
     target: 10,
     cta: 'Найти организацию',
     filterCategory: 'Организации'
-  }, // Special category
+  },
 ];
+
+export const mockDashboardStats: OrganizationStat[] = [
+  {id: 'new_volunteers', label: 'Новых волонтеров', value: '12', Icon: UserIcon, change: '+5%'},
+  {id: 'total_regs', label: 'Всего регистраций', value: '87', Icon: CheckCircle, change: '+12%'},
+  {id: 'event_views', label: 'Просмотры событий', value: '1.2k', Icon: Eye, change: '-3%'},
+  {id: 'response_rate', label: 'Коэффициент отклика', value: '23%', Icon: TrendingUp, change: '+1.5%'},
+];
+
+export const mockOrganizationDetails: OrganizationDetails = {
+  id: 1,
+  name: 'Фонд "Подари жизнь"'
+};
 
 export const mockOrganizationEvents: OrganizationEvent[] = [
   {
@@ -567,11 +595,9 @@ export const mockOrganizationEvents: OrganizationEvent[] = [
 ];
 
 export const mockParticipants: EventParticipant[] = [
-  // New
   {id: 1, name: 'Александр Смирнов', avatarUrl: 'https://i.pravatar.cc/48?img=21', rating: 4.9, status: 'new'},
   {id: 2, name: 'Мария Иванова', avatarUrl: 'https://i.pravatar.cc/48?img=22', rating: 4.8, status: 'new'},
   {id: 3, name: 'Дмитрий Кузнецов', avatarUrl: 'https://i.pravatar.cc/48?img=23', rating: 4.7, status: 'new'},
-  // Confirmed
   {id: 4, name: 'Анна Попова', avatarUrl: 'https://i.pravatar.cc/48?img=24', rating: 5.0, status: 'confirmed'},
   {id: 5, name: 'Сергей Васильев', avatarUrl: 'https://i.pravatar.cc/48?img=25', rating: 4.9, status: 'confirmed'},
   {id: 6, name: 'Екатерина Петрова', avatarUrl: 'https://i.pravatar.cc/48?img=26', rating: 4.9, status: 'confirmed'},
@@ -580,7 +606,6 @@ export const mockParticipants: EventParticipant[] = [
   {id: 9, name: 'Алексей Новиков', avatarUrl: 'https://i.pravatar.cc/48?img=29', rating: 4.7, status: 'confirmed'},
   {id: 10, name: 'Наталья Фёдорова', avatarUrl: 'https://i.pravatar.cc/48?img=30', rating: 4.6, status: 'confirmed'},
   {id: 11, name: 'Иван Петров', avatarUrl: 'https://i.pravatar.cc/48?img=31', rating: 4.5, status: 'confirmed'},
-  // Rejected
   {id: 12, name: 'Олег Сидоров', avatarUrl: 'https://i.pravatar.cc/48?img=32', rating: 4.2, status: 'rejected'},
 ];
 
@@ -616,33 +641,30 @@ export const defaultUserData: User = {
   ],
 };
 
-// --- Leaderboard Data ---
 const firstNames = ["Александр", "Мария", "Дмитрий", "Анна", "Сергей", "Екатерина", "Андрей", "Ольга", "Алексей", "Наталья"];
 const lastNames = ["Смирнов", "Иванова", "Кузнецов", "Попова", "Васильев", "Петрова", "Соколов", "Михайлова", "Новиков", "Фёдорова"];
 
 const generateLeaderboard = (period: 'week' | 'month' | 'allTime'): LeaderboardUser[] => {
-  const periodMultiplier = {week: 0.25, month: 0.7, allTime: 1.5}[period];
-  const userCount = 150;
+  const {USER_COUNT, PERIOD_MULTIPLIERS} = LEADERBOARD_DEFAULTS;
+  const periodMultiplier = PERIOD_MULTIPLIERS[period];
 
-  let users = Array.from({length: userCount}, (_, i) => {
-    const id = i + 2; // Keep ID 1 for current user
+  let users = Array.from({length: USER_COUNT}, (_, i) => {
+    const id = i + 2;
     return {
       id: id,
       name: `${firstNames[id % firstNames.length]} ${lastNames[id % lastNames.length].slice(0, 1)}.`,
-      avatarUrl: `https://i.pravatar.cc/48?img=${id + 20}`, // Shift image index
-      // Use a deterministic but varied karma calculation
+      avatarUrl: `https://i.pravatar.cc/48?img=${id + 20}`,
       karma: Math.floor(
-        ((userCount - i) * 100 + Math.sin(id) * 500) * periodMultiplier
+        ((USER_COUNT - i) * 100 + Math.sin(id) * 500) * periodMultiplier
       ),
     };
   });
 
-  // Add current user
   const currentUser = {
-    id: 1,
+    id: CURRENT_USER_ID,
     name: `${defaultUserData.firstName} ${defaultUserData.lastName}`,
     avatarUrl: defaultUserData.avatarUrl,
-    karma: Math.floor(15200 * periodMultiplier * (period === 'week' ? 0.5 : 1)), // Lower weekly karma to test sticky footer
+    karma: Math.floor(15200 * periodMultiplier * (period === 'week' ? 0.5 : 1)),
   };
 
   users.push(currentUser);
@@ -660,9 +682,7 @@ export const leaderboardsData = {
   month: generateLeaderboard('month'),
   allTime: generateLeaderboard('allTime'),
 };
-export const CURRENT_USER_ID = 1;
 
-// --- Mock Friends Data for Invite Modal ---
 export const mockFriends: Friend[] = [
   {id: 1, name: 'Александр Смирнов', avatarUrl: 'https://i.pravatar.cc/48?img=21'},
   {id: 2, name: 'Мария Иванова', avatarUrl: 'https://i.pravatar.cc/48?img=22'},
@@ -816,7 +836,6 @@ export const myChatsData: MyChatItem[] = [
   }
 ];
 
-// --- Rewards Mock Data ---
 export const allRewards: RewardItem[] = [
   {
     id: 1,
@@ -867,3 +886,66 @@ export const allRewards: RewardItem[] = [
     isPurchased: false
   },
 ];
+
+export const mockMapMarkers: MapMarker[] = [
+  {id: 1, position: [55.7963, 37.679], title: 'Уборка парка "Сокольники"', description: '25 июля, 11:00'},
+  {id: 2, position: [55.7341, 37.642], title: 'Помощь в приюте "Верный друг"', description: '26 июля, 13:00'},
+  {id: 3, position: [55.652, 37.741], title: 'Доставка продуктов пенсионерам', description: 'Район "Марьино"'},
+  {id: 4, position: [55.759, 37.662], title: 'Организация арт-выставки', description: 'Арт-пространство "Винзавод"'},
+];
+
+export const mockEventChatMessages: EventChatMessage[] = [
+  {
+    id: 1,
+    author: {id: 10, name: 'Организатор', avatarUrl: 'https://i.pravatar.cc/48?img=11'},
+    text: 'Всем привет! Рад видеть всех, кто откликнулся. Встречаемся завтра в 10:00 у главного входа в парк.',
+    timestamp: '14:20'
+  },
+  {
+    id: 2,
+    author: {id: 2, name: 'Александр С.', avatarUrl: 'https://i.pravatar.cc/48?img=21'},
+    text: 'Отлично, буду на месте!',
+    timestamp: '14:22'
+  },
+  {
+    id: 3,
+    author: {id: 3, name: 'Мария И.', avatarUrl: 'https://i.pravatar.cc/48?img=22'},
+    text: 'А парковка там есть рядом?',
+    timestamp: '14:25'
+  },
+  {
+    id: 4,
+    author: {id: 10, name: 'Организатор', avatarUrl: 'https://i.pravatar.cc/48?img=11'},
+    text: 'Да, есть платная городская парковка вдоль улицы.',
+    timestamp: '14:26'
+  },
+  {
+    id: 5,
+    author: {id: CURRENT_USER_ID, name: 'Елена Иванова', avatarUrl: 'https://i.pravatar.cc/150?img=1'},
+    text: 'Поняла, спасибо! Постараюсь быть вовремя.',
+    timestamp: '14:30'
+  },
+  {
+    id: 6,
+    author: {id: 4, name: 'Анна П.', avatarUrl: 'https://i.pravatar.cc/48?img=24'},
+    text: 'Если кто-то поедет от метро Сокольники, можем встретиться и пойти вместе!',
+    timestamp: '14:31'
+  },
+  {
+    id: 7,
+    author: {id: CURRENT_USER_ID, name: 'Елена Иванова', avatarUrl: 'https://i.pravatar.cc/150?img=1'},
+    text: 'Отличная идея!',
+    timestamp: '14:32'
+  },
+];
+
+export const mockWeeklyChallenge: WeeklyChallenge = {
+  title: "Челлендж недели",
+  description: "Помогите животным 1 раз",
+  reward: "Награда: +100 баллов кармы ✨",
+  Icon: Dog,
+  progress: 0,
+  target: 1,
+  filterCategory: "Животные",
+  isCompleted: false,
+};

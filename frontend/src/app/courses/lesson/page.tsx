@@ -2,6 +2,7 @@ import React, {useMemo, useState} from 'react';
 import type {Course} from '../../../lib/types';
 import {Check, Puzzle, Trophy, X} from 'lucide-react';
 import CourseCompleteModal from '../../../components/ui/CourseCompleteModal';
+import {COURSE_PASS_THRESHOLD} from '../../../lib/constants';
 
 const TestResultModal: React.FC<{
   isOpen: boolean;
@@ -65,12 +66,6 @@ const TestResultModal: React.FC<{
           </>
         )}
       </div>
-      <style>{`
-                @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
-                .animate-fade-in { animation: fade-in 0.2s ease-out; }
-                @keyframes scale-in { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-                .animate-scale-in { animation: scale-in 0.2s ease-out; }
-            `}</style>
     </div>
   );
 };
@@ -92,67 +87,52 @@ const LessonPage: React.FC<{
   const course = useMemo(() => allCourses.find(c => c.id === courseId), [allCourses, courseId]);
   const lesson = useMemo(() => course?.program[lessonIndex], [course, lessonIndex]);
 
-  if (!course || !lesson) {
-    return <div className="w-full h-screen flex items-center justify-center">Урок не найден.</div>;
-  }
+  const handleAnswerChange = (questionId: string, answer: string) => {
+    if (!lesson?.quiz) return;
+    const question = lesson.quiz.find(q => q.id === questionId);
+    if (!question) return;
 
-  const quiz = lesson.quiz || [];
-  const questionsCount = quiz.length;
-
-  const answeredQuestionsCount = Object.keys(answers).filter(key => {
-    const answer = answers[key];
-    return Array.isArray(answer) ? answer.length > 0 : !!answer;
-  }).length;
-
-  const isCtaActive = answeredQuestionsCount === questionsCount;
-
-  const handleAnswerChange = (questionId: string, value: string, type: 'single' | 'multiple') => {
-    if (isSubmitted) return;
-    setAnswers(prev => {
-      if (type === 'single') {
-        return {...prev, [questionId]: value};
-      } else {
-        const currentAnswers = (prev[questionId] as string[] || []);
-        const newAnswers = currentAnswers.includes(value)
-          ? currentAnswers.filter(a => a !== value)
-          : [...currentAnswers, value];
-        return {...prev, [questionId]: newAnswers};
-      }
-    });
+    if (question.type === 'single') {
+      setAnswers(prev => ({...prev, [questionId]: answer}));
+    } else {
+      const currentAnswers = (answers[questionId] as string[] | undefined) || [];
+      const newAnswers = currentAnswers.includes(answer)
+        ? currentAnswers.filter(a => a !== answer)
+        : [...currentAnswers, answer];
+      setAnswers(prev => ({...prev, [questionId]: newAnswers}));
+    }
   };
 
-  const handleCheckAnswers = () => {
-    if (!isCtaActive || isSubmitted) return;
+  const handleSubmitTest = () => {
+    if (!lesson?.quiz || !course) return;
 
-    setIsSubmitted(true);
-    let correctCount = 0;
-
-    for (const q of quiz) {
+    let correctAnswers = 0;
+    lesson.quiz.forEach(q => {
       const userAnswer = answers[q.id];
-      if (q.type === 'single') {
-        if (userAnswer === q.correctAnswer) {
-          correctCount++;
-        }
+      if (q.type === 'single' && userAnswer === q.correctAnswer) {
+        correctAnswers++;
       } else if (q.type === 'multiple') {
-        const correct = q.correctAnswers || [];
-        const user = (userAnswer as string[] || []);
-        if (correct.length === user.length && correct.every(a => user.includes(a))) {
-          correctCount++;
+        const userAnswersSet = new Set(userAnswer as string[]);
+        const correctAnswersSet = new Set(q.correctAnswers);
+        if (userAnswersSet.size === correctAnswersSet.size && [...userAnswersSet].every(a => correctAnswersSet.has(a))) {
+          correctAnswers++;
         }
       }
-    }
+    });
 
-    setScore(correctCount);
-    const isPass = correctCount === questionsCount;
-    const isFinalTestWithCert = course.hasCertificate &&
-      course.program.indexOf(lesson) === course.program.length - 1 &&
-      lesson.type === 'test';
+    const newScore = correctAnswers;
+    setScore(newScore);
+    setIsSubmitted(true);
 
-    if (isPass && isFinalTestWithCert) {
-      setShowCourseCompleteModal(true);
-    } else {
-      setTestResult(isPass ? 'passed' : 'failed');
-      setShowResultModal(true);
+    const passed = newScore / lesson.quiz.length >= COURSE_PASS_THRESHOLD;
+    setTestResult(passed ? 'passed' : 'failed');
+    setShowResultModal(true);
+
+    if (passed && lessonIndex === course.program.length - 1) {
+      setTimeout(() => {
+        setShowResultModal(false);
+        setShowCourseCompleteModal(true);
+      }, 1500);
     }
   };
 
@@ -162,117 +142,117 @@ const LessonPage: React.FC<{
     setTestResult(null);
     setScore(0);
     setShowResultModal(false);
+  };
+
+  const handleContinue = () => {
+    if (course && lessonIndex === course.program.length - 1) {
+      setShowCourseCompleteModal(true);
+    } else {
+      onClose();
+    }
+  };
+
+  if (!course || !lesson) {
+    return <div className="w-full h-screen flex items-center justify-center">Урок не найден.</div>;
   }
 
-  const progressPercentage = questionsCount > 0 ? (answeredQuestionsCount / questionsCount) * 100 : 0;
+  const isTest = lesson.type === 'test';
+  const totalQuestions = lesson.quiz?.length || 0;
+  const allQuestionsAnswered = isTest && lesson.quiz?.every(q => answers[q.id] && (answers[q.id] as any[]).length > 0);
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-white flex flex-col font-sans antialiased">
-        {/* Header */}
-        <header className="flex-shrink-0 p-4 flex items-center justify-between border-b border-gray-200">
-          <div className="w-10"></div>
-          <div className="text-center">
-            <p className="text-sm text-gray-500">{course.title}</p>
-            <h1 className="text-lg font-bold text-[#0C0D0E]">{lesson.title}</h1>
+      <div className="w-full h-screen font-sans antialiased bg-white flex flex-col">
+        <header className="flex-shrink-0 p-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-100">
+              {isTest ? <Puzzle className="w-5 h-5 text-[#007AFF]"/> : <Check className="w-5 h-5 text-[#007AFF]"/>}
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">{course.title}</p>
+              <h1 className="text-lg font-bold text-[#0C0D0E]">{lesson.title}</h1>
+            </div>
           </div>
           <button onClick={onClose}
                   className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                   aria-label="Закрыть">
-            <X className="w-6 h-6 text-gray-600"/>
+            <X className="w-6 h-6 text-gray-700"/>
           </button>
         </header>
 
-        {/* Main Content */}
+        <div className="w-full h-1 bg-gray-200">
+          <div className="h-1 bg-[#007AFF]"
+               style={{width: `${((lessonIndex + 1) / course.program.length) * 100}%`}}></div>
+        </div>
+
         <main className="flex-grow overflow-y-auto p-6 space-y-6">
-          {lesson.content && (
-            <section>
-              <h2 className="text-2xl font-bold text-[#0C0D0E] mb-3">{lesson.contentTitle}</h2>
-              <div className="prose text-[rgb(12,13,14,0.52)] leading-relaxed whitespace-pre-line">
-                {lesson.content}
-              </div>
-            </section>
-          )}
-
-          {quiz.length > 0 && (
-            <section className="space-y-6">
-              {quiz.map((q, index) => (
-                <div key={q.id} className="bg-gray-50 p-4 rounded-xl">
-                  <p className="font-semibold text-[#0C0D0E] mb-3">{index + 1}. {q.question}</p>
-                  <div className="space-y-2">
-                    {q.options.map(option => {
-                      const isChecked = q.type === 'single' ? answers[q.id] === option : (answers[q.id] as string[] || []).includes(option);
-                      const isCorrect = isSubmitted && (q.type === 'single' ? option === q.correctAnswer : (q.correctAnswers || []).includes(option));
-                      const isIncorrect = isSubmitted && isChecked && !isCorrect;
-
-                      return (
-                        <button
-                          key={option}
-                          onClick={() => handleAnswerChange(q.id, option, q.type)}
+          {isTest ? (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold">{lesson.contentTitle}</h2>
+              <p className="text-gray-600 leading-relaxed whitespace-pre-line">{lesson.content}</p>
+              {lesson.quiz?.map((q, index) => (
+                <div key={q.id} className="border-t border-gray-200 pt-4">
+                  <p className="font-semibold">{`${index + 1}. ${q.question}`}</p>
+                  <div className="mt-2 space-y-2">
+                    {q.options.map(opt => (
+                      <label key={opt} className={`flex items-center space-x-3 p-3 rounded-lg border-2 ${
+                        isSubmitted
+                          ? (q.correctAnswer === opt || q.correctAnswers?.includes(opt)) ? 'border-green-400 bg-green-50' : ((answers[q.id] === opt || (answers[q.id] as string[])?.includes(opt))) ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                          : 'border-gray-200'
+                      }`}>
+                        <input
+                          type={q.type === 'single' ? 'radio' : 'checkbox'}
+                          name={q.id}
+                          value={opt}
+                          checked={q.type === 'single' ? answers[q.id] === opt : (answers[q.id] as string[] | undefined)?.includes(opt)}
+                          onChange={() => handleAnswerChange(q.id, opt)}
                           disabled={isSubmitted}
-                          className={`w-full text-left flex items-center p-3 rounded-lg border-2 transition-colors ${
-                            isSubmitted ?
-                              isCorrect ? 'bg-[#1ABE43]/10 border-[#1ABE43]/40 text-green-800 font-semibold' :
-                                isIncorrect ? 'bg-[#FF303C]/10 border-[#FF303C]/40 text-red-800 font-semibold' :
-                                  'border-gray-200 text-gray-500'
-                              : isChecked ?
-                                'bg-blue-100 border-blue-400 text-blue-800 font-semibold' :
-                                'bg-white border-gray-200 hover:bg-gray-100 text-[#0C0D0E]'
-                          }`}
-                        >
-                          <div
-                            className={`w-5 h-5 flex-shrink-0 rounded-full border-2 flex items-center justify-center mr-3 ${
-                              isChecked ? 'border-blue-500 bg-blue-500' : 'border-gray-400'
-                            }`}>
-                            {isChecked && <Check className="w-3 h-3 text-white" strokeWidth={3}/>}
-                          </div>
-                          <span className="flex-1">{option}</span>
-                          {isSubmitted && isCorrect && <Check className="w-5 h-5 text-[#1ABE43]"/>}
-                          {isSubmitted && isIncorrect && <X className="w-5 h-5 text-[#FF303C]"/>}
-                        </button>
-                      );
-                    })}
+                          className="w-5 h-5"
+                        />
+                        <span>{opt}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               ))}
-            </section>
+            </div>
+          ) : (
+            <div className="prose max-w-none">
+              <h2>{lesson.contentTitle}</h2>
+              <p>{lesson.content}</p>
+            </div>
           )}
         </main>
 
-        {quiz.length > 0 && (
-          <footer className="flex-shrink-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100">
-            <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
-              <div className="bg-[#007AFF] h-1.5 rounded-full" style={{width: `${progressPercentage}%`}}></div>
-            </div>
-            <button
-              onClick={handleCheckAnswers}
-              disabled={!isCtaActive || isSubmitted}
-              className="w-full text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 disabled:bg-gray-300 disabled:cursor-not-allowed bg-[#007AFF] hover:bg-blue-600 shadow-lg"
-            >
-              {isSubmitted ? (isSubmitted && score === questionsCount ? 'Отлично!' : 'Попробовать снова') : 'Проверить ответы'}
-            </button>
-          </footer>
-        )}
+        <footer className="flex-shrink-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100">
+          <button
+            onClick={isTest ? handleSubmitTest : handleContinue}
+            disabled={isTest && !allQuestionsAnswered}
+            className="w-full text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            {isTest ? 'Проверить ответы' : 'Завершить урок'}
+          </button>
+        </footer>
       </div>
-
       <TestResultModal
         isOpen={showResultModal}
         result={testResult}
         score={score}
-        totalQuestions={questionsCount}
+        totalQuestions={totalQuestions}
         onTryAgain={handleTryAgain}
-        onViewCertificate={() => onComplete(course.id)}
         onBackToLesson={() => setShowResultModal(false)}
+        onViewCertificate={() => onComplete(courseId)}
       />
-
       <CourseCompleteModal
         isOpen={showCourseCompleteModal}
         courseTitle={course.title}
-        onViewCertificate={() => onComplete(course.id)}
-        onClose={onClose}
+        onClose={() => {
+          setShowCourseCompleteModal(false);
+          onClose();
+        }}
+        onViewCertificate={() => onComplete(courseId)}
       />
     </>
   );
 };
-
 export default LessonPage;

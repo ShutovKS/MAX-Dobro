@@ -1,14 +1,6 @@
 import React, {useState} from 'react';
-// FIX: Replaced import for CheckCircleIcon from local icons with CheckCircle from lucide-react to resolve export error and improve consistency.
-import {AnimalFriendIcon, ArtVolunteerIcon, ElderlyHelperIcon, NatureProtectorIcon} from '../../components/ui/icons';
 import {CheckCircle} from 'lucide-react';
-
-const interests = [
-  {id: 'nature', title: 'Защитник природы', Icon: NatureProtectorIcon},
-  {id: 'animals', title: 'Друг животных', Icon: AnimalFriendIcon},
-  {id: 'seniors', title: 'Помощник старшим', Icon: ElderlyHelperIcon},
-  {id: 'art', title: 'Арт-волонтер', Icon: ArtVolunteerIcon},
-];
+import {ONBOARDING_INTERESTS} from '../../lib/constants';
 
 interface InterestCardProps {
   title: string;
@@ -26,7 +18,6 @@ const InterestCard: React.FC<InterestCardProps> = ({title, Icon, isSelected, onC
     >
       {isSelected && (
         <div className="absolute top-3 right-3 text-[#007AFF]">
-          {/* FIX: Use CheckCircle from lucide-react */}
           <CheckCircle className="w-6 h-6 fill-white"/>
         </div>
       )}
@@ -58,7 +49,7 @@ const OnboardingPage: React.FC<{ onComplete: () => void }> = ({onComplete}) => {
         </div>
 
         <div className="w-full max-w-sm grid grid-cols-2 gap-4">
-          {interests.map(interest => (
+          {ONBOARDING_INTERESTS.map(interest => (
             <InterestCard
               key={interest.id}
               title={interest.title}

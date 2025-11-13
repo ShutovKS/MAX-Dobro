@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {fetchCourseById} from '../../../lib/api';
+import {useNavigate} from 'react-router';
 import type {Course, CourseLesson} from '../../../lib/types';
 import {ArrowLeft, CheckCircle, Clock, GraduationCap, Lock, PlayCircle, Share2, User} from 'lucide-react';
 
@@ -42,6 +43,7 @@ const LessonRow: React.FC<{ lesson: CourseLesson; index: number; onSelect: () =>
 const CourseDetailPage: React.FC<{
   id: number;
 }> = ({id}) => {
+  const navigate = useNavigate();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,9 +57,9 @@ const CourseDetailPage: React.FC<{
     loadCourse();
   }, [id]);
 
-  const onBack = () => window.location.hash = '#/training';
-  const onSelectLesson = (courseId: number, lessonIndex: number) => window.location.hash = `#/courses/${courseId}/lesson/${lessonIndex}`;
-  const onViewCertificate = (courseId: number) => window.location.hash = `#/courses/${courseId}/certificate`;
+  const onBack = () => navigate('/training');
+  const onSelectLesson = (courseId: number, lessonIndex: number) => navigate(`/courses/${courseId}/lesson/${lessonIndex}`);
+  const onViewCertificate = (courseId: number) => navigate(`/courses/${courseId}/certificate`);
 
   const handleCtaClick = () => {
     if (!course) return;
@@ -68,7 +70,6 @@ const CourseDetailPage: React.FC<{
       if (currentLessonIndex !== -1) {
         onSelectLesson(course.id, currentLessonIndex);
       } else {
-        // If no 'current', start from the first non-completed one
         const firstLessonIndex = course.program.findIndex(l => l.status !== 'completed');
         if (firstLessonIndex !== -1) {
           onSelectLesson(course.id, firstLessonIndex);
@@ -95,7 +96,6 @@ const CourseDetailPage: React.FC<{
 
   return (
     <div className="relative w-full h-screen font-sans antialiased bg-white overflow-y-auto">
-      {/* Header */}
       <header className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4">
         <button onClick={onBack} className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
                 aria-label="Назад">
@@ -106,7 +106,6 @@ const CourseDetailPage: React.FC<{
         </button>
       </header>
 
-      {/* Course Cover */}
       <div
         className="h-[40vh] w-full bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] flex flex-col items-center justify-center text-center p-4">
         <course.Icon className="w-24 h-24 text-white/60 mb-4"/>
@@ -114,7 +113,6 @@ const CourseDetailPage: React.FC<{
       </div>
 
       <div className="relative bg-white rounded-t-2xl -mt-6 p-6 space-y-6">
-        {/* Meta-information */}
         <section className="flex justify-around items-center bg-gray-50 rounded-xl p-3 text-sm text-center">
           <div className="flex flex-col items-center space-y-1">
             <Clock className="w-5 h-5 text-gray-500"/>
@@ -131,13 +129,11 @@ const CourseDetailPage: React.FC<{
           </div>
         </section>
 
-        {/* Description */}
         <section>
           <h2 className="text-xl font-bold text-[#0C0D0E] mb-2">О чем этот курс?</h2>
           <p className="text-[rgb(12,13,14,0.52)] leading-relaxed">{course.description}</p>
         </section>
 
-        {/* Program */}
         <section>
           <h2 className="text-xl font-bold text-[#0C0D0E] mb-3">Программа</h2>
           <div className="space-y-2">

@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router';
 import {fetchStoryById} from '../../../../lib/api';
 import type {Comment, Story} from '../../../../lib/types';
 import {ArrowLeft, Heart, MessageSquare, MoreHorizontal, Upload} from 'lucide-react';
@@ -23,6 +24,7 @@ const StoryDetailPage: React.FC<{
   id: number;
   currentUserAvatar: string;
 }> = ({id, currentUserAvatar}) => {
+  const navigate = useNavigate();
   const [story, setStory] = useState<Story | null>(null);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
@@ -41,8 +43,8 @@ const StoryDetailPage: React.FC<{
     loadStory();
   }, [id]);
 
-  const onBack = () => window.location.hash = '#/stories';
-  const onSelectEvent = (eventId: number) => window.location.hash = `#/events/${eventId}`;
+  const onBack = () => navigate('/stories');
+  const onSelectEvent = (eventId: number) => navigate(`/events/${eventId}`);
 
   const handlePostComment = () => {
     if (!newComment.trim()) return;
@@ -62,7 +64,6 @@ const StoryDetailPage: React.FC<{
 
   return (
     <div className="w-full h-screen font-sans antialiased bg-white flex flex-col">
-      {/* Header */}
       <header
         className="flex-shrink-0 p-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center justify-between sticky top-0 z-20">
         <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
@@ -76,9 +77,7 @@ const StoryDetailPage: React.FC<{
         </button>
       </header>
 
-      {/* Scrollable Content */}
       <main className="flex-grow overflow-y-auto">
-        {/* Author Info */}
         <div className="p-4 flex items-center">
           <img src={story.author.avatarUrl} alt={story.author.name} className="w-12 h-12 rounded-full"/>
           <div className="ml-3">
@@ -87,15 +86,12 @@ const StoryDetailPage: React.FC<{
           </div>
         </div>
 
-        {/* Media */}
         <img src={story.imageUrl} alt="Story visual" className="w-full object-cover"/>
 
-        {/* Story Text */}
         <div className="p-4">
           <p className="text-[#0C0D0E] leading-relaxed whitespace-pre-line">{story.text}</p>
         </div>
 
-        {/* Event Context */}
         <div className="px-4 pb-2">
           <button onClick={() => onSelectEvent(story.event.id)}
                   className="inline-block bg-gray-100 rounded-lg p-3 w-full text-left hover:bg-gray-200 transition-colors">
@@ -105,7 +101,6 @@ const StoryDetailPage: React.FC<{
           </button>
         </div>
 
-        {/* Action Bar */}
         <div className="flex justify-between items-center text-[rgb(12,13,14,0.52)] p-4 border-y border-gray-100">
           <div className="flex items-center space-x-6">
             <button className="flex items-center space-x-1.5 hover:text-[#FF303C]">
@@ -122,7 +117,6 @@ const StoryDetailPage: React.FC<{
           </button>
         </div>
 
-        {/* Comments Section */}
         <section className="p-4 space-y-4">
           <h2 className="font-bold text-[#0C0D0E]">Комментарии ({comments.length})</h2>
           {comments.length > 0 ? (
@@ -134,10 +128,8 @@ const StoryDetailPage: React.FC<{
           )}
         </section>
         <div className="h-24"></div>
-        {/* Spacer for sticky footer */}
       </main>
 
-      {/* Sticky Footer for Comment Input */}
       <footer className="flex-shrink-0 p-3 bg-white/90 backdrop-blur-sm border-t border-gray-200 sticky bottom-0 z-20">
         <div className="flex items-center space-x-3">
           <img src={currentUserAvatar} alt="Ваш аватар" className="w-10 h-10 rounded-full"/>

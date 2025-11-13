@@ -1,4 +1,5 @@
 import React, {useMemo, useState} from 'react';
+import {useNavigate} from 'react-router';
 import type {RewardItem, User} from '../../../../lib/types';
 import {ArrowLeft, CheckCircle, Sparkles} from 'lucide-react';
 import PurchaseConfirmationModal from '../../../../components/ui/PurchaseConfirmationModal';
@@ -11,6 +12,7 @@ interface RewardsDetailPageProps {
 }
 
 const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewards, user, onPurchase}) => {
+  const navigate = useNavigate();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   const reward = useMemo(() => allRewards.find(r => r.id === rewardId), [rewardId, allRewards]);
@@ -20,7 +22,7 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
     return karmaStat ? parseInt(karmaStat.value.replace(/,/g, ''), 10) : 0;
   }, [user.stats]);
 
-  const onBack = () => window.location.hash = '#/profile/rewardsStore';
+  const onBack = () => navigate('/profile/rewardsStore');
 
   if (!reward) {
     return <div className="w-full h-screen flex items-center justify-center">Награда не найдена.</div>;
@@ -79,12 +81,10 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
         </header>
 
         <main className="flex-grow overflow-y-auto px-6 pb-28">
-          {/* Image Card */}
           <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
             <img src={reward.imageUrl} alt={reward.name} className="w-full aspect-square object-cover rounded-xl"/>
           </div>
 
-          {/* Info */}
           <div className="space-y-2">
             <h2 className="text-3xl font-bold text-[#0C0D0E]">{reward.name}</h2>
             <p

@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router';
 import {fetchAllAchievements} from '../../../lib/api';
 import type {Achievement} from '../../../lib/types';
 import {ArrowLeft, Lock} from 'lucide-react';
@@ -70,11 +71,12 @@ const AchievementBadge: React.FC<{ achievement: Achievement }> = ({achievement})
 };
 
 const AllAchievementsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const onBack = () => window.location.hash = '#/profile';
+  const onBack = () => navigate('/profile');
 
   useEffect(() => {
     const loadAchievements = async () => {
@@ -95,16 +97,16 @@ const AllAchievementsPage: React.FC = () => {
   const handleNavigateWithFilter = (category: string) => {
     setSelectedAchievement(null);
     if (category === 'Обучение') {
-      window.location.hash = '#/training';
+      navigate('/training');
     } else if (category === 'Организации') {
-      window.location.hash = '#/organizations';
+      navigate('/organizations');
     } else {
       // For other categories, just go home and user can filter
-      window.location.hash = '#/home';
+      navigate('/home');
     }
   };
 
-  const onFindEvent = () => window.location.hash = '#/home';
+  const onFindEvent = () => navigate('/home');
 
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">

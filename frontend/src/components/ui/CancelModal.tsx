@@ -13,18 +13,14 @@ const CancelModal: React.FC<{
          aria-modal="true">
       <div
         className="bg-white rounded-2xl shadow-xl p-8 m-4 w-full max-w-sm text-center flex flex-col items-center space-y-4 animate-scale-in">
-        {/* Element 1: Icon */}
         <HelpCircle className="w-20 h-20 text-blue-400" strokeWidth={1.5}/>
 
-        {/* Element 2: Title */}
         <h2 className="text-2xl font-bold text-[#0C0D0E]">Отменить участие?</h2>
 
-        {/* Element 3: Subtitle */}
         <p className="text-[rgb(12,13,14,0.52)]">
           Организатор рассчитывает на вас. Если вы отмените запись, ваше место может занять кто-то другой. Вы уверены?
         </p>
 
-        {/* Element 4: Buttons */}
         <div
           className="w-full flex flex-col-reverse sm:flex-row space-y-3 space-y-reverse sm:space-y-0 sm:space-x-3 pt-2">
           <button
@@ -41,12 +37,6 @@ const CancelModal: React.FC<{
           </button>
         </div>
       </div>
-      <style>{`
-                @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
-                .animate-fade-in { animation: fade-in 0.2s ease-out; }
-                @keyframes scale-in { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-                .animate-scale-in { animation: scale-in 0.2s ease-out; }
-            `}</style>
     </div>
   );
 };

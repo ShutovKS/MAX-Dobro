@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router';
 import type {AppEvent, Organization} from '../../../lib/types';
 import {fetchAllEvents, fetchOrganizationById, updateOrganizationSubscription} from '../../../lib/api';
 import {ArrowLeft, BadgeCheck, Globe, SearchX, Share2, Star} from 'lucide-react';
@@ -7,10 +8,12 @@ import Toast from '../../../components/ui/Toast';
 import SkeletonCard from '../../../components/ui/SkeletonCard';
 import EventCard from '../../../components/ui/EventCard';
 import EmptyState from '../../../components/ui/EmptyState';
+import {MESSAGES} from '../../../lib/constants';
 
 const OrganizationProfilePage: React.FC<{
   id: number;
 }> = ({id}) => {
+  const navigate = useNavigate();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'description' | 'events'>('description');
@@ -45,8 +48,8 @@ const OrganizationProfilePage: React.FC<{
     loadOrgEvents();
   }, [activeTab, organization]);
 
-  const onBack = () => window.location.hash = '#/organizations';
-  const onSelectEvent = (eventId: number) => window.location.hash = `#/events/${eventId}`;
+  const onBack = () => navigate('/organizations');
+  const onSelectEvent = (eventId: number) => navigate(`/events/${eventId}`);
 
   const onToggleSubscription = async () => {
     if (!organization) return;
@@ -61,7 +64,7 @@ const OrganizationProfilePage: React.FC<{
       onToggleSubscription();
       setToast({
         show: true,
-        message: `Вы отписались от "${organization.name}"`,
+        message: MESSAGES.TOASTS.UNSUBSCRIBED(organization.name),
         onUndo: onToggleSubscription,
       });
     } else {
@@ -75,7 +78,7 @@ const OrganizationProfilePage: React.FC<{
     setShowSubscribeModal(false);
     setToast({
       show: true,
-      message: `Вы подписались на "${organization.name}"`,
+      message: MESSAGES.TOASTS.SUBSCRIBED(organization.name),
       onUndo: onToggleSubscription,
     });
   };

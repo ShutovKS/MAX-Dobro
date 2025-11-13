@@ -1,7 +1,6 @@
 import React, {useMemo} from 'react';
 import {allCourses} from '../../../lib/mockData';
 import type {Course, User} from '../../../lib/types';
-// FIX: Replaced ArrowLeftIcon import with ArrowLeft from lucide-react to fix export error and improve consistency.
 import {DiplomaStandIllustrationIcon, HeartHandIcon} from '../../../components/ui/icons';
 import {ArrowLeft} from 'lucide-react';
 import EmptyState from '../../../components/ui/EmptyState';

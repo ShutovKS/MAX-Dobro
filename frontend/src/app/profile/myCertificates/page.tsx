@@ -1,7 +1,6 @@
-import React, {useMemo} from 'react';
-import {allCourses} from '../../../lib/mockData';
+import React, {useEffect, useMemo, useState} from 'react';
+import {fetchAllCourses} from '../../../lib/api';
 import type {Course, User} from '../../../lib/types';
-// FIX: Replaced ArrowLeftIcon import with ArrowLeft from lucide-react to fix export error and improve consistency.
 import {DiplomaStandIllustrationIcon, HeartHandIcon} from '../../../components/ui/icons';
 import {ArrowLeft} from 'lucide-react';
 import EmptyState from '../../../components/ui/EmptyState';
@@ -35,11 +34,61 @@ const MyCertificatesPage: React.FC<{
   onGoToTraining: () => void;
 }> = ({user, onBack, onSelectCertificate, onGoToTraining}) => {
 
-  const completedCourses = useMemo(() => {
-    return allCourses.filter(c => c.status === 'completed' && c.hasCertificate);
+  const [allCourses, setAllCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      setLoading(true);
+      try {
+        const courses = await fetchAllCourses();
+        setAllCourses(courses);
+      } catch (error) {
+        console.error("Failed to fetch courses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCourses();
   }, []);
 
+  const completedCourses = useMemo(() => {
+    return allCourses.filter(c => c.status === 'completed' && c.hasCertificate);
+  }, [allCourses]);
+
   const userName = `${user.firstName} ${user.lastName}`;
+
+  const renderContent = () => {
+    if (loading) {
+      return <p className="text-center text-gray-500">Загрузка сертификатов...</p>;
+    }
+    if (completedCourses.length > 0) {
+      return (
+        <div className="grid grid-cols-2 gap-4">
+          {completedCourses.map(course => (
+            <CertificatePreviewCard
+              key={course.id}
+              course={course}
+              userName={userName}
+              onSelect={() => onSelectCertificate(course.id)}
+            />
+          ))}
+        </div>
+      );
+    }
+    return (
+      <EmptyState
+        Icon={DiplomaStandIllustrationIcon}
+        title="Знания ждут вас"
+        subtitle="Пройдите свой первый курс, чтобы получить красивый сертификат и новые навыки."
+        action={{
+          text: 'Перейти к обучению',
+          onClick: onGoToTraining,
+          type: 'primary'
+        }}
+      />
+    );
+  };
 
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
@@ -54,29 +103,7 @@ const MyCertificatesPage: React.FC<{
       </header>
 
       <main className="flex-grow overflow-y-auto p-6">
-        {completedCourses.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4">
-            {completedCourses.map(course => (
-              <CertificatePreviewCard
-                key={course.id}
-                course={course}
-                userName={userName}
-                onSelect={() => onSelectCertificate(course.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            Icon={DiplomaStandIllustrationIcon}
-            title="Знания ждут вас"
-            subtitle="Пройдите свой первый курс, чтобы получить красивый сертификат и новые навыки."
-            action={{
-              text: 'Перейти к обучению',
-              onClick: onGoToTraining,
-              type: 'primary'
-            }}
-          />
-        )}
+        {renderContent()}
       </main>
     </div>
   );

@@ -30,7 +30,6 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
   const isPublishEnabled = !!selectedEvent && text.trim().length > 0 && photos.length > 0;
 
   const handleAddPhoto = () => {
-    // Simulate adding a photo from a gallery
     const newPhoto = `https://picsum.photos/seed/${Date.now()}/600/400`;
     setPhotos(prev => [...prev, newPhoto]);
   };
@@ -52,7 +51,6 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
   return (
     <>
       <div className="w-full h-screen font-sans antialiased bg-white flex flex-col">
-        {/* Header */}
         <header className="flex-shrink-0 p-4 border-b border-gray-200 flex items-center justify-between">
           <button onClick={onCancel} className="text-lg font-medium text-[#007AFF]">Отмена</button>
           <h1 className="text-lg font-bold text-[#0C0D0E]">Новая история</h1>
@@ -66,7 +64,6 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
         </header>
 
         <main className="flex-grow overflow-y-auto p-4 space-y-4">
-          {/* Event Selector */}
           <section className="bg-gray-50 p-3 rounded-xl flex justify-between items-center">
             <p className="text-sm text-gray-700 flex-1 truncate">
               История о событии: <span
@@ -78,7 +75,6 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
             </button>
           </section>
 
-          {/* Photo Uploader */}
           <section>
             <div className="flex space-x-3 overflow-x-auto pb-2">
               {photos.map((photoUrl, index) => (
@@ -100,7 +96,6 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
             </div>
           </section>
 
-          {/* Text Editor */}
           <section className="flex-grow flex">
                         <textarea
                           value={text}
