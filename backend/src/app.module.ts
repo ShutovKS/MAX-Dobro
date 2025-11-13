@@ -6,14 +6,15 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { EventsModule } from './events/events.module';
+import { LearningModule } from './learning/learning.module';
+import { OrganizationsModule } from './organizations/organizations.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { RewardsModule } from './rewards/rewards.module';
+import { StoriesModule } from './stories/stories.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
-import { LearningModule } from './learning/learning.module';
-import { OrganizationsModule } from './organizations/organizations.module';
-import { RewardsModule } from './rewards/rewards.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { RewardsModule } from './rewards/rewards.module';
     LearningModule,
     OrganizationsModule,
     RewardsModule,
+    StoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

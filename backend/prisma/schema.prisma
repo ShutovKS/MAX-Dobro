@@ -189,3 +189,14 @@ model UserReward {
   @@id([userId, rewardId])
   @@map("user_rewards")
 }
+
+// Модель истории
+model Story {
+  id            Int      @id @default(autoincrement())
+  title         String
+  coverImageUrl String
+  content       String   @db.Text
+  createdAt     DateTime @default(now())
+
+  @@map("stories")
+}

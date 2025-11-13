@@ -7,7 +7,8 @@ const TEST_USER_SUPABASE_ID = '3eec394c-a786-44f6-b29d-3b201d540502';
 async function main() {
   console.log('Start seeding...');
 
-  // 1. Очистка
+  // 1. Очистка (в порядке, обратном созданию, чтобы избежать ошибок внешних ключей)
+  await prisma.story.deleteMany();
   await prisma.userReward.deleteMany();
   await prisma.reward.deleteMany();
   await prisma.userCertificate.deleteMany();
@@ -21,7 +22,6 @@ async function main() {
   await prisma.lesson.deleteMany();
   await prisma.course.deleteMany();
   await prisma.user.deleteMany();
-
 
   // 2. Создание или обновление тестового пользователя
   const user = await prisma.user.upsert({
@@ -148,6 +148,25 @@ async function main() {
     },
   });
   console.log('Courses created.');
+
+  // 8. Создание историй
+  await prisma.story.createMany({
+    data: [
+      {
+        title: 'Как мы сажали деревья в парке',
+        coverImageUrl: 'https://placehold.co/600x400/a7e9af/333?text=Story+1',
+        content:
+          '<h1>День первый</h1><p>Это был замечательный солнечный день...</p>',
+      },
+      {
+        title: 'Помощь приюту для животных',
+        coverImageUrl: 'https://placehold.co/600x400/e9cfa7/333?text=Story+2',
+        content:
+          '<h1>Наши пушистые друзья</h1><p>В прошлые выходные мы посетили местный приют...</p>',
+      },
+    ],
+  });
+  console.log('Stories created.');
 
   console.log('Seeding finished.');
 }
