@@ -3,11 +3,15 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const TEST_USER_SUPABASE_ID = '3eec394c-a786-44f6-b29d-3b201d540502';
+const OTHER_USER_SUPABASE_ID = '0e24c3b5-2e3b-4b1a-9a0e-1e9d1e4e1e0a';
 
 async function main() {
   console.log('Start seeding...');
 
   // 1. Очистка (в порядке, обратном созданию, чтобы избежать ошибок внешних ключей)
+  await prisma.chatMessage.deleteMany();
+  await prisma.chatParticipant.deleteMany();
+  await prisma.chat.deleteMany();
   await prisma.story.deleteMany();
   await prisma.userReward.deleteMany();
   await prisma.reward.deleteMany();
@@ -23,21 +27,25 @@ async function main() {
   await prisma.course.deleteMany();
   await prisma.user.deleteMany();
 
-  // 2. Создание или обновление тестового пользователя
-  const user = await prisma.user.upsert({
-    where: { supabaseUserId: TEST_USER_SUPABASE_ID },
-    update: {
-      totalHours: 0,
-      karmaPoints: 500, // Даем пользователю кармы для тестов
-    },
-    create: {
+  // 2. Создание пользователей
+  const user1 = await prisma.user.create({
+    data: {
       email: 'test@example.com',
       supabaseUserId: TEST_USER_SUPABASE_ID,
       name: 'Реальный Тестер',
       karmaPoints: 500,
     },
   });
-  console.log('Test user created/updated with 500 karma points.');
+  console.log('Test user 1 created.');
+
+  const user2 = await prisma.user.create({
+    data: {
+      email: 'friend@example.com',
+      supabaseUserId: OTHER_USER_SUPABASE_ID,
+      name: 'Друг Тестера',
+    },
+  });
+  console.log('Test user 2 created.');
 
   // 3. Создание достижений
   await prisma.achievement.createMany({
@@ -80,7 +88,7 @@ async function main() {
   // 5. Регистрация пользователя на это событие
   await prisma.eventParticipant.create({
     data: {
-      userId: user.id,
+      userId: user1.id,
       eventId: event.id,
       status: 'approved',
     },
@@ -167,6 +175,22 @@ async function main() {
     ],
   });
   console.log('Stories created.');
+
+  // 9. Создание чата и сообщений
+  await prisma.chat.create({
+    data: {
+      participants: {
+        create: [{ userId: user1.id }, { userId: user2.id }],
+      },
+      messages: {
+        create: [
+          { authorId: user1.id, content: 'Привет! Как дела?' },
+          { authorId: user2.id, content: 'Привет! Все отлично, спасибо!' },
+        ],
+      },
+    },
+  });
+  console.log('Chat and messages created.');
 
   console.log('Seeding finished.');
 }

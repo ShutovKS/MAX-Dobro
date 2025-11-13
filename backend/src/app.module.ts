@@ -5,6 +5,7 @@ import { AchievementsModule } from './achievements/achievements.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { ChatModule } from './chat/chat.module';
 import { EventsModule } from './events/events.module';
 import { LearningModule } from './learning/learning.module';
 import { OrganizationsModule } from './organizations/organizations.module';
@@ -32,6 +33,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     OrganizationsModule,
     RewardsModule,
     StoriesModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
