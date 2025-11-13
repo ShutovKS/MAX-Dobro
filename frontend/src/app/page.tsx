@@ -7,7 +7,7 @@ import OnboardingPage from './onboarding/page';
 import TabsLayout from './tabs/layout';
 import EventDetailPage from './events/detail/page';
 import CourseDetailPage from './courses/detail/page';
-import OrganizationProfilePage from './organizations/detail/page';
+import OrganizationProfilePage from './organization/detail/page';
 import LessonPage from './courses/lesson/page';
 import CertificatePage from './courses/certificate/page';
 import ActivityHistoryPage from './profile/history/page';

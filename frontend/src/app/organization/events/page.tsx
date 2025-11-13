@@ -2,7 +2,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {fetchOrganizationEvents} from '../../../lib/api';
 import type {OrganizationEvent} from '../../../lib/types';
 import {ArrowLeft, List, Plus} from 'lucide-react';
-import EventManagementCard from '../../../features/organization/components/EventManagementCard';
+import EventManagementCard from '../components/EventManagementCard';
 import EmptyState from '../../../components/ui/EmptyState';
 
 const SkeletonCard = () => (

@@ -171,7 +171,7 @@ const OrganizationProfilePage: React.FC<{
               <p
                 className="text-[rgb(12,13,14,0.52)] leading-relaxed whitespace-pre-line">{organization.fullDescription}</p>
               <h2 className="text-xl font-bold text-[#0C0D0E] pt-4">Контакты</h2>
-              <p className="text-[rgb(12,13,14,0.52)]">Москва, ул. Добрая, д. 1</p>
+              <p className="text-[rgb(12,13,14,0.52)]">{organization.address}</p>
             </div>
           )}
           {activeTab === 'events' && (

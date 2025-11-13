@@ -1,6 +1,7 @@
 .DS_Store
 
+all_sources.md
+
 .env.*
 !.env.example
-
-all_sources.md
+frontend/.env
