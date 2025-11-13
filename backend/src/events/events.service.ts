@@ -7,6 +7,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { TasksService } from '../tasks/tasks.service';
+import { PublicUserEntity } from '../users/entities/public-user.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
@@ -173,5 +174,26 @@ export class EventsService {
       }
       throw error;
     }
+  }
+
+  async getParticipants(eventId: number): Promise<PublicUserEntity[]> {
+    await this.findOne(eventId);
+
+    const participations = await this.prisma.eventParticipant.findMany({
+      where: { eventId, status: 'approved' },
+      select: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    return participations.map((p) => p.user);
   }
 }

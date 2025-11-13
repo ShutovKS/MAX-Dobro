@@ -16,11 +16,12 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { User } from '@prisma/client';
-import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
+import type { User } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
+import { EventEntity } from '../events/entities/event.entity';
 import { OrganizationEntity } from './entities/organization.entity';
 import { OrganizationsService } from './organizations.service';
 
@@ -36,7 +37,7 @@ export class OrganizationsController {
   @ApiResponse({
     status: 200,
     description: 'List of organizations.',
-    type: [OrganizationEntity],
+    type: [() => OrganizationEntity],
   })
   findAll(
     @Query() pagination: PaginationQueryDto,
@@ -49,10 +50,25 @@ export class OrganizationsController {
   @UseGuards(OptionalAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a single organization by ID' })
-  @ApiResponse({ status: 200, type: OrganizationEntity })
+  @ApiResponse({ status: 200, type: () => OrganizationEntity })
   @ApiResponse({ status: 404, description: 'Organization not found.' })
   findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: User) {
     return this.organizationsService.findOne(id, user?.id);
+  }
+
+  @Get(':id/events')
+  @ApiOperation({ summary: "Get a list of an organization's events" })
+  @ApiResponse({
+    status: 200,
+    description: "List of organization's events.",
+    type: [() => EventEntity],
+  })
+  @ApiResponse({ status: 404, description: 'Organization not found.' })
+  findEvents(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() pagination: PaginationQueryDto,
+  ) {
+    return this.organizationsService.findEvents(id, pagination);
   }
 
   @Post(':id/subscribe')

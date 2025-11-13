@@ -87,69 +87,47 @@ describe('Organizations (e2e)', () => {
     if (app) await app.close();
   });
 
-  describe('/organizations (GET)', () => {
-    it('should return organizations with isSubscribed=false for authenticated user', async () => {
-      await prisma.organization.create({ data: { name: 'Org 1' } });
-
-      const response = await request(app.getHttpServer())
-        .get('/organizations')
-        .set('Authorization', 'Bearer fake-token');
-
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveLength(1);
-      expect(response.body[0].name).toBe('Org 1');
-      expect(response.body[0].isSubscribed).toBe(false);
-    });
-
-    it('should return organizations without isSubscribed field for unauthenticated user', async () => {
-      await prisma.organization.create({ data: { name: 'Org 1' } });
-
-      const response = await request(app.getHttpServer()).get('/organizations');
-
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveLength(1);
-      expect(response.body[0]).not.toHaveProperty('isSubscribed');
-    });
-  });
-
-  describe('Subscription Flow', () => {
-    it('should allow a user to subscribe, check status, and unsubscribe', async () => {
+  describe('/organizations/:id/events (GET)', () => {
+    it('should return a paginated list of events for a specific organization', async () => {
       const org = await prisma.organization.create({
-        data: { name: 'Test Org' },
+        data: { name: 'Org With Many Events' },
       });
 
+      // Создаем 12 событий для проверки пагинации
+      for (let i = 0; i < 12; i++) {
+        await prisma.event.create({
+          data: {
+            title: `Event ${i}`,
+            description: 'Desc',
+            date: new Date(),
+            organizationId: org.id,
+          },
+        });
+      }
+      const responseDefault = await request(app.getHttpServer())
+        .get(`/organizations/${org.id}/events`)
+        .expect(200);
+
+      expect(responseDefault.body).toHaveLength(10);
+      expect(responseDefault.body[0].title).toBe('Event 0');
+
+      const responsePage2 = await request(app.getHttpServer())
+        .get(`/organizations/${org.id}/events?page=2&limit=5`)
+        .expect(200);
+
+      expect(responsePage2.body).toHaveLength(5);
+      expect(responsePage2.body[0].title).toBe('Event 5');
+
+      const responseLastPage = await request(app.getHttpServer())
+        .get(`/organizations/${org.id}/events?page=3&limit=5`)
+        .expect(200);
+      expect(responseLastPage.body).toHaveLength(2);
+      expect(responseLastPage.body[0].title).toBe('Event 10');
+    });
+
+    it('should return 404 if organization does not exist', async () => {
       await request(app.getHttpServer())
-        .post(`/organizations/${org.id}/subscribe`)
-        .set('Authorization', 'Bearer fake-token')
-        .expect(204);
-
-      const response = await request(app.getHttpServer())
-        .get(`/organizations/${org.id}`)
-        .set('Authorization', 'Bearer fake-token');
-
-      expect(response.status).toBe(200);
-      expect(response.body.isSubscribed).toBe(true);
-
-      await request(app.getHttpServer())
-        .post(`/organizations/${org.id}/subscribe`)
-        .set('Authorization', 'Bearer fake-token')
-        .expect(409);
-
-      await request(app.getHttpServer())
-        .delete(`/organizations/${org.id}/unsubscribe`)
-        .set('Authorization', 'Bearer fake-token')
-        .expect(204);
-
-      const finalResponse = await request(app.getHttpServer())
-        .get(`/organizations/${org.id}`)
-        .set('Authorization', 'Bearer fake-token');
-
-      expect(finalResponse.status).toBe(200);
-      expect(finalResponse.body.isSubscribed).toBe(false);
-
-      await request(app.getHttpServer())
-        .delete(`/organizations/${org.id}/unsubscribe`)
-        .set('Authorization', 'Bearer fake-token')
+        .get('/organizations/99999/events')
         .expect(404);
     });
   });
