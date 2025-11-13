@@ -89,7 +89,7 @@ export class AuthService {
     });
   }
 
-   async getUserCertificates(userId: number) {
+  async getUserCertificates(userId: number) {
     return this.prisma.userCertificate.findMany({
       where: { userId },
       include: {
@@ -97,6 +97,18 @@ export class AuthService {
       },
       orderBy: {
         completedAt: 'desc',
+      },
+    });
+  }
+
+  async getUserRewards(userId: number) {
+    return this.prisma.userReward.findMany({
+      where: { userId },
+      include: {
+        reward: true,
+      },
+      orderBy: {
+        purchasedAt: 'desc',
       },
     });
   }

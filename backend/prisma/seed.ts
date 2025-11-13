@@ -5,29 +5,39 @@ const prisma = new PrismaClient();
 const TEST_USER_SUPABASE_ID = '3eec394c-a786-44f6-b29d-3b201d540502';
 
 async function main() {
-
   console.log('Start seeding...');
 
   // 1. Очистка
+  await prisma.userReward.deleteMany();
+  await prisma.reward.deleteMany();
+  await prisma.userCertificate.deleteMany();
   await prisma.userAchievement.deleteMany();
   await prisma.achievement.deleteMany();
   await prisma.eventParticipant.deleteMany();
   await prisma.event.deleteMany();
   await prisma.organization.deleteMany();
+  await prisma.quizAnswer.deleteMany();
+  await prisma.quizQuestion.deleteMany();
+  await prisma.lesson.deleteMany();
+  await prisma.course.deleteMany();
+  await prisma.user.deleteMany();
+
 
   // 2. Создание или обновление тестового пользователя
   const user = await prisma.user.upsert({
     where: { supabaseUserId: TEST_USER_SUPABASE_ID },
     update: {
       totalHours: 0,
-      karmaPoints: 0,
+      karmaPoints: 500, // Даем пользователю кармы для тестов
     },
     create: {
       email: 'test@example.com',
       supabaseUserId: TEST_USER_SUPABASE_ID,
       name: 'Реальный Тестер',
+      karmaPoints: 500,
     },
   });
+  console.log('Test user created/updated with 500 karma points.');
 
   // 3. Создание достижений
   await prisma.achievement.createMany({
@@ -76,30 +86,57 @@ async function main() {
     },
   });
 
-  console.log(
-    'Seeding finished. A past event with karma has been created.',
-  );
+  // 6. Создание наград
+  await prisma.reward.createMany({
+    data: [
+      {
+        title: 'Фирменный стикерпак',
+        description: 'Набор наклеек для ноутбука.',
+        cost: 100,
+        icon: 'sticker-icon',
+      },
+      {
+        title: 'Брендированная футболка',
+        description: 'Стильная футболка MAX Добро.',
+        cost: 1000,
+        icon: 'tshirt-icon',
+      },
+    ],
+  });
+  console.log('Rewards created.');
 
-  // 6. Создание курсов
+  // 7. Создание курсов
   console.log('Creating courses...');
   await prisma.course.create({
     data: {
       title: 'Основы Первой Помощи',
-      description: 'Курс, который научит вас базовым действиям в экстренных ситуациях.',
+      description:
+        'Курс, который научит вас базовым действиям в экстренных ситуациях.',
       lessons: {
         create: [
           {
             title: 'Урок 1: Оценка ситуации',
-            content: 'Первое, что нужно сделать - убедиться в собственной безопасности...',
+            content:
+              'Первое, что нужно сделать - убедиться в собственной безопасности...',
             questions: {
               create: [
                 {
-                  question: 'Что является первым шагом при оказании первой помощи?',
+                  question:
+                    'Что является первым шагом при оказании первой помощи?',
                   answers: {
                     create: [
-                      { answer: 'Начать сердечно-легочную реанимацию', isCorrect: false },
-                      { answer: 'Убедиться в безопасности места происшествия', isCorrect: true },
-                      { answer: 'Позвонить в скорую помощь', isCorrect: false },
+                      {
+                        answer: 'Начать сердечно-легочную реанимацию',
+                        isCorrect: false,
+                      },
+                      {
+                        answer: 'Убедиться в безопасности места происшествия',
+                        isCorrect: true,
+                      },
+                      {
+                        answer: 'Позвонить в скорую помощь',
+                        isCorrect: false,
+                      },
                     ],
                   },
                 },
@@ -111,6 +148,8 @@ async function main() {
     },
   });
   console.log('Courses created.');
+
+  console.log('Seeding finished.');
 }
 
 main()

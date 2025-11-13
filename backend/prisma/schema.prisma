@@ -24,6 +24,7 @@ model User {
   achievements   UserAchievement[]
   certificates   UserCertificate[]
   subscriptions  UserOrganizationSubscription[]
+  rewards        UserReward[]
 
   supabaseUserId String @unique @map("supabase_user_id")
 }
@@ -126,7 +127,7 @@ model Course {
 model Lesson {
   id        Int      @id @default(autoincrement())
   title     String
-  content   String   @db.Text // Используем Text для длинного контента
+  content   String   @db.Text
   courseId  Int
   course    Course   @relation(fields: [courseId], references: [id])
   questions QuizQuestion[]
@@ -163,4 +164,28 @@ model UserCertificate {
 
   @@id([userId, courseId])
   @@map("user_certificates")
+}
+
+// Модель награды в магазине
+model Reward {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  icon        String?
+  cost        Int
+  users       UserReward[]
+
+  @@map("rewards")
+}
+
+// Связующая таблица для купленных наград
+model UserReward {
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  rewardId    Int
+  reward      Reward   @relation(fields: [rewardId], references: [id])
+  purchasedAt DateTime @default(now())
+
+  @@id([userId, rewardId])
+  @@map("user_rewards")
 }

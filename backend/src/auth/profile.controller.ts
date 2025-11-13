@@ -11,6 +11,7 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import { ProfileEntity } from './entities/profile.entity';
 import { UserEventsEntity } from './entities/user-events.entity';
 import { UserCertificateEntity } from './entities/user-certificate.entity';
+import { UserRewardEntity } from './entities/user-reward.entity';
 import { AuthGuard } from './guards/auth.guard';
 
 @ApiTags('Profile')
@@ -60,5 +61,13 @@ export class ProfileController {
   @ApiResponse({ status: 200, type: [UserCertificateEntity] })
   getMyCertificates(@CurrentUser() user: User) {
     return this.authService.getUserCertificates(user.id);
+  }
+
+  @Get('me/rewards')
+  @ApiOperation({ summary: "Get current user's purchased rewards" })
+  @ApiResponse({ status: 200, type: [UserRewardEntity] })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  getMyRewards(@CurrentUser() user: User) {
+    return this.authService.getUserRewards(user.id);
   }
 }

@@ -13,6 +13,7 @@ import { UsersModule } from './users/users.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { LearningModule } from './learning/learning.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { RewardsModule } from './rewards/rewards.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
     AchievementsModule,
     LearningModule,
     OrganizationsModule,
+    RewardsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
