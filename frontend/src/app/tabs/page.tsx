@@ -8,15 +8,89 @@ import type {AppEvent, FilterDate, FilterFormat, Filters, MapMarker, Story} from
 import SkeletonCard from '../../components/ui/SkeletonCard';
 import EventCard from '../../components/ui/EventCard';
 import InteractiveMap from '../../components/ui/InteractiveMap';
-import {UI_TEXT} from '../../lib/constants';
+import {EVENT_CATEGORIES, FILTER_DATE_OPTIONS, FILTER_FORMAT_OPTIONS, UI_TEXT} from '../../lib/constants';
+import {parseRuDateToDate} from '../../lib/dateUtils';
 
-// FIX: Define defaultFilters locally as it is not exported from mockData, and remove the faulty import.
 const defaultFilters: Filters = {
   format: 'Все',
   categories: [],
   date: 'Любая',
   distance: 5,
 };
+
+// Haversine distance function
+const getDistance = (from: [number, number], to: [number, number]): number => {
+  const R = 6371; // Radius of the Earth in km
+  const dLat = (to[0] - from[0]) * Math.PI / 180;
+  const dLon = (to[1] - from[1]) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(from[0] * Math.PI / 180) * Math.cos(to[0] * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in km
+};
+
+// Reusable filter function
+const applyAllFilters = (
+  events: AppEvent[],
+  markers: MapMarker[],
+  filters: Filters,
+  userLocation: [number, number]
+): AppEvent[] => {
+  const markersMap = new Map(markers.map(m => [m.id, m.position]));
+
+  return events.filter(event => {
+    const {format, categories, date, distance} = filters;
+
+    // Format match
+    const formatMatch = format === 'Все' || (format === 'Онлайн' ? event.location === 'Онлайн' : event.location !== 'Онлайн');
+    if (!formatMatch) return false;
+
+    // Category match
+    const categoryMatch = categories.length === 0 || categories.includes(event.category);
+    if (!categoryMatch) return false;
+
+    // Date match
+    const dateMatch = (() => {
+      if (date === 'Любая') return true;
+      const eventDate = parseRuDateToDate(event.date);
+      if (!eventDate) return false;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (date === 'Сегодня') {
+        return eventDate.toDateString() === today.toDateString();
+      }
+
+      if (date === 'На неделе') {
+        const endOfWeek = new Date(today);
+        const dayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1; // Monday is 0, Sunday is 6
+        endOfWeek.setDate(today.getDate() + (6 - dayOfWeek));
+        endOfWeek.setHours(23, 59, 59, 999);
+        return eventDate >= today && eventDate <= endOfWeek;
+      }
+      return true;
+    })();
+    if (!dateMatch) return false;
+
+    // Distance match (only for offline events)
+    if (format !== 'Онлайн') {
+      const eventPosition = markersMap.get(event.id);
+      if (!eventPosition) {
+        return false;
+      }
+      const eventDistance = getDistance(userLocation, eventPosition);
+      if (eventDistance > distance) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+};
+
 
 const StoryPreviewCard: React.FC<{ story: Story; onSelectStory: (id: number) => void }> = ({story, onSelectStory}) => (
   <div onClick={() => onSelectStory(story.id)} className="flex-shrink-0 w-40 space-y-2 cursor-pointer group">
@@ -50,12 +124,33 @@ const FilterPanel: React.FC<{
   onClose: () => void;
   onApply: (filters: Filters) => void;
   initialFilters: Filters;
-  eventCount: number;
-}> = ({isOpen, onClose, onApply, initialFilters, eventCount}) => {
+  allEvents: AppEvent[];
+  allMarkers: MapMarker[];
+  userLocation: [number, number];
+}> = ({isOpen, onClose, onApply, initialFilters, allEvents, allMarkers, userLocation}) => {
   const [format, setFormat] = useState<FilterFormat>(initialFilters.format);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialFilters.categories);
   const [date, setDate] = useState<FilterDate>(initialFilters.date);
   const [distance, setDistance] = useState(initialFilters.distance);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormat(initialFilters.format);
+      setSelectedCategories(initialFilters.categories);
+      setDate(initialFilters.date);
+      setDistance(initialFilters.distance);
+    }
+  }, [isOpen, initialFilters]);
+
+  const previewEventCount = useMemo(() => {
+    const currentFilters: Filters = {
+      format,
+      categories: selectedCategories,
+      date,
+      distance,
+    };
+    return applyAllFilters(allEvents, allMarkers, currentFilters, userLocation).length;
+  }, [format, selectedCategories, date, distance, allEvents, allMarkers, userLocation]);
 
   const toggleCategory = (category: string) => {
     setSelectedCategories(prev =>
@@ -78,7 +173,7 @@ const FilterPanel: React.FC<{
 
   return (
     <div
-      className={`fixed inset-0 z-50 transition-colors duration-300 ${isOpen ? 'bg-black/40' : 'bg-transparent pointer-events-none'}`}>
+      className={`fixed inset-0 z-[1001] transition-colors duration-300 ${isOpen ? 'bg-black/40' : 'bg-transparent pointer-events-none'}`}>
       <div
         className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
         style={{height: '80vh'}}
@@ -97,13 +192,82 @@ const FilterPanel: React.FC<{
           </header>
 
           <div className="flex-grow p-6 overflow-y-auto space-y-6">
+            <section>
+              <h3 className="text-lg font-bold text-[#0C0D0E] mb-3">Формат</h3>
+              <div className="flex bg-gray-100 rounded-xl p-1">
+                {FILTER_FORMAT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => setFormat(opt as FilterFormat)}
+                    className={`w-1/3 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                      format === opt ? 'bg-white shadow text-[#007AFF]' : 'text-gray-600'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </section>
 
+            <section>
+              <h3 className="text-lg font-bold text-[#0C0D0E] mb-3">Категории</h3>
+              <div className="flex flex-wrap gap-2">
+                {EVENT_CATEGORIES.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => toggleCategory(cat)}
+                    className={`px-4 py-2 text-sm font-semibold rounded-full border-2 transition-colors ${
+                      selectedCategories.includes(cat)
+                        ? 'bg-[#007AFF] text-white border-transparent'
+                        : 'bg-white text-[#007AFF] border-[#007AFF]/50'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-lg font-bold text-[#0C0D0E] mb-3">Дата</h3>
+              <div className="flex bg-gray-100 rounded-xl p-1">
+                {FILTER_DATE_OPTIONS.map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setDate(d as FilterDate)}
+                    className={`w-1/3 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                      date === d ? 'bg-white shadow text-[#007AFF]' : 'text-gray-600'
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {format !== 'Онлайн' && (
+              <section>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-lg font-bold text-[#0C0D0E]">Расстояние</h3>
+                  <span className="font-semibold text-gray-700">до {distance} км</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="50"
+                  step="1"
+                  value={distance}
+                  onChange={(e) => setDistance(parseInt(e.target.value, 10))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#007AFF]"
+                />
+              </section>
+            )}
           </div>
 
           <footer className="p-4 border-t border-gray-200 flex-shrink-0">
             <button onClick={handleApply}
                     className="w-full text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] hover:opacity-90 shadow-lg">
-              Показать {eventCount} событий
+              Показать {previewEventCount} событий
             </button>
           </footer>
         </div>
@@ -208,6 +372,7 @@ export default function HomePage() {
   const [allMarkers, setAllMarkers] = useState<MapMarker[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userLocation] = useState<[number, number]>([55.751244, 37.618423]); // Mock user location (Moscow Center)
 
   useEffect(() => {
     const loadData = async () => {
@@ -232,15 +397,10 @@ export default function HomePage() {
   }, []);
 
   const filteredEvents = useMemo(() => {
-    const baseFiltered = allEvents.filter(event => {
-      const {format, categories} = appliedFilters;
-      const formatMatch = format === 'Все' || (format === 'Онлайн' ? event.location === 'Онлайн' : event.location !== 'Онлайн');
-      const categoryMatch = categories.length === 0 || categories.includes(event.category);
-      return formatMatch && categoryMatch;
-    });
+    const baseFiltered = applyAllFilters(allEvents, allMarkers, appliedFilters, userLocation);
     if (!searchQuery) return baseFiltered;
     return baseFiltered.filter(event => event.title.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [appliedFilters, searchQuery, allEvents]);
+  }, [appliedFilters, searchQuery, allEvents, allMarkers, userLocation]);
 
   const filteredMarkers = useMemo(() => {
     const eventIds = new Set(filteredEvents.map(e => e.id));
@@ -355,8 +515,15 @@ export default function HomePage() {
         />
       )}
 
-      <FilterPanel isOpen={isFilterPanelOpen} onClose={() => setIsFilterPanelOpen(false)} onApply={handleApplyFilters}
-                   initialFilters={appliedFilters} eventCount={filteredEvents.length}/>
+      <FilterPanel
+        isOpen={isFilterPanelOpen}
+        onClose={() => setIsFilterPanelOpen(false)}
+        onApply={handleApplyFilters}
+        initialFilters={appliedFilters}
+        allEvents={allEvents}
+        allMarkers={allMarkers}
+        userLocation={userLocation}
+      />
     </div>
   );
 };

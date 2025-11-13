@@ -1,38 +1,66 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useNavigate} from 'react-router';
 import type {AppEvent, ChatMessage, User} from '../../lib/types';
-import {GoogleGenAI, Type} from '@google/genai';
 import {fetchEventById} from '../../lib/api';
 import {ArrowLeft, Send, Sparkles} from 'lucide-react';
 import EventCard from '../../components/ui/EventCard';
-import {GEMINI_CHAT_PROMPT, GEMINI_MODEL_NAME, MESSAGES, ROUTES} from '../../lib/constants';
+import {MESSAGES, ROUTES} from '../../lib/constants';
 
-const ai = new GoogleGenAI({apiKey: process.env.API_KEY as string});
 
-const responseSchema = {
-  type: Type.OBJECT,
-  properties: {
-    text: {
-      type: Type.STRING,
-      description: 'The conversational response to the user.',
-    },
-    event: {
-      type: Type.OBJECT,
-      description: 'An event object if the user is asking to find an event. Only include if an event is explicitly found.',
-      nullable: true,
-      properties: {
-        id: {
-          type: Type.NUMBER,
-          description: 'The ID of the event found.'
-        },
-        title: {
-          type: Type.STRING,
-          description: 'The title of the event.'
-        }
-      }
+// Mock function to simulate an assistant's response without using AI
+const getMockAssistantResponse = async (text: string): Promise<ChatMessage> => {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  const textToProcess = text.toLowerCase();
+  let response: ChatMessage;
+
+  if (textToProcess.includes('экология')) {
+    const foundEvent = await fetchEventById(1) as AppEvent | undefined;
+    if (foundEvent) {
+      response = {
+        id: Date.now(),
+        sender: 'assistant',
+        type: 'event-card',
+        text: `Нашел для вас подходящее событие по экологии!`,
+        event: foundEvent,
+        actions: [
+          {label: 'Подробнее о событии', route: ROUTES.EVENT_DETAIL(foundEvent.id)},
+          {label: 'Найти другие события', route: ROUTES.HOME}
+        ]
+      };
+    } else {
+      response = {id: Date.now(), sender: 'assistant', type: 'text', text: MESSAGES.ASSISTANT.EVENT_NOT_FOUND};
     }
+  } else if (textToProcess.includes('курс')) {
+    response = {
+      id: Date.now(),
+      sender: 'assistant',
+      type: 'text',
+      text: 'У нас много интересных курсов! Вы можете посмотреть их все в разделе "Обучение".',
+      actions: [
+        {label: 'Перейти к курсам', route: ROUTES.TRAINING}
+      ]
+    };
+  } else if (textToProcess.includes('что ты умеешь')) {
+    response = {
+      id: Date.now(),
+      sender: 'assistant',
+      type: 'text',
+      text: 'Я могу помочь вам найти волонтерские события или курсы. Просто спросите, что вас интересует, например, "экологические события" или "курсы первой помощи".'
+    };
+  } else {
+    response = {
+      id: Date.now(),
+      sender: 'assistant',
+      type: 'text',
+      text: 'Я не совсем понял ваш вопрос. Попробуйте переформулировать.'
+    };
   }
+
+  return response;
 };
+
 
 const AssistantChatPage: React.FC<{
   onClose: () => void;
@@ -67,10 +95,6 @@ const AssistantChatPage: React.FC<{
     messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
   }, [messages, isLoading]);
 
-  const onSelectEvent = (id: number) => {
-    navigate(ROUTES.EVENT_DETAIL(id));
-  };
-
   const handleSend = async (messageText?: string) => {
     const textToSend = (messageText || input).trim();
     if (!textToSend || isLoading) return;
@@ -88,61 +112,10 @@ const AssistantChatPage: React.FC<{
     if (!messageText) setInput('');
     setIsLoading(true);
 
-    try {
-      const response = await ai.models.generateContent({
-        model: GEMINI_MODEL_NAME,
-        contents: textToSend,
-        config: {
-          systemInstruction: GEMINI_CHAT_PROMPT(user.firstName),
-          responseMimeType: "application/json",
-          responseSchema: responseSchema,
-        },
-      });
+    const assistantResponse = await getMockAssistantResponse(textToSend);
 
-      let assistantResponse: ChatMessage;
-
-      try {
-        const jsonResponse = JSON.parse(response.text);
-        if (jsonResponse.event && jsonResponse.event.id) {
-          const foundEvent = await fetchEventById(jsonResponse.event.id) as AppEvent | undefined;
-          if (foundEvent) {
-            assistantResponse = {
-              id: Date.now() + 1,
-              sender: 'assistant',
-              type: 'event-card',
-              text: jsonResponse.text || `Нашел для вас событие!`,
-              event: foundEvent,
-            };
-          } else {
-            assistantResponse = {
-              id: Date.now() + 1,
-              sender: 'assistant',
-              type: 'text',
-              text: jsonResponse.text || MESSAGES.ASSISTANT.EVENT_NOT_FOUND
-            };
-          }
-        } else {
-          assistantResponse = {id: Date.now() + 1, sender: 'assistant', type: 'text', text: jsonResponse.text};
-        }
-      } catch (e) {
-        console.error("JSON parsing error, falling back to text:", e);
-        assistantResponse = {id: Date.now() + 1, sender: 'assistant', type: 'text', text: response.text};
-      }
-
-      setMessages(prev => [...prev, assistantResponse]);
-
-    } catch (error) {
-      console.error("Gemini API error:", error);
-      const errorResponse: ChatMessage = {
-        id: Date.now() + 1,
-        sender: 'assistant',
-        type: 'text',
-        text: MESSAGES.ASSISTANT.API_ERROR,
-      };
-      setMessages(prev => [...prev, errorResponse]);
-    } finally {
-      setIsLoading(false);
-    }
+    setMessages(prev => [...prev, assistantResponse]);
+    setIsLoading(false);
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -192,10 +165,22 @@ const AssistantChatPage: React.FC<{
                 <div className="space-y-2">
                   {msg.text && <div
                       className="px-4 py-2 rounded-2xl bg-white text-[#0C0D0E] shadow-sm rounded-br-lg">{msg.text}</div>}
-                  <button onClick={() => onSelectEvent(msg.event!.id)}
-                          className="w-full transition-transform duration-200 active:scale-95">
+                  <div className="w-full">
                     <EventCard event={msg.event}/>
-                  </button>
+                  </div>
+                </div>
+              )}
+              {msg.actions && msg.sender === 'assistant' && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {msg.actions.map((action, index) => (
+                    <button
+                      key={index}
+                      onClick={() => navigate(action.route)}
+                      className="px-4 py-2 text-sm font-semibold bg-white border border-gray-200 text-[#007AFF] rounded-full hover:bg-gray-100 transition-colors shadow-sm"
+                    >
+                      {action.label}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

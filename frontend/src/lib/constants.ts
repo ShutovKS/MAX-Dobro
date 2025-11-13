@@ -27,11 +27,6 @@ export const CERTIFICATE_DEFAULTS = {
 // Logic
 export const COURSE_PASS_THRESHOLD = 0.7;
 
-// Gemini API
-export const GEMINI_MODEL_NAME = 'gemini-2.5-flash';
-export const GEMINI_CHAT_PROMPT = (userName: string) => `You are Помощник Добра (Helper of Good), a friendly and helpful AI assistant for a volunteering app called MAXДобро. You help users find volunteering events, answer questions about the app, and encourage them to do good deeds. Your name is Max. Keep your answers concise, friendly and helpful. Respond in Russian. The user's name is ${userName}. If you find an event for the user, include the event object in your response.`;
-
-
 // Calendar
 export const MONTH_NAMES = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 export const DAY_NAMES = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];

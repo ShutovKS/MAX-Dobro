@@ -202,6 +202,7 @@ export type ChatMessage = {
   text?: string;
   event?: AppEvent;
   suggestions?: string[];
+  actions?: { label: string; route: string; }[];
 };
 
 export type EventChatMessage = {
