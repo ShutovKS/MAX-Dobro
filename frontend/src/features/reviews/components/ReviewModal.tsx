@@ -1,8 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import type {HistoryEvent} from '../../../lib/types';
-import {StarIcon, XIcon} from '../../../components/ui/icons';
-
-const quickTags = ["👍 Отличная организация", "🤝 Дружелюбная атмосфера", "😊 Было весело", "👎 Было скучно", "🤔 Непонятные задачи"];
+import {Star, X} from 'lucide-react';
+import {MODAL_TRANSITION_DURATION, REVIEW_QUICK_TAGS} from '../../../lib/constants';
 
 const ReviewModal: React.FC<{
   isOpen: boolean;
@@ -26,19 +25,17 @@ const ReviewModal: React.FC<{
 
   const handleSubmit = () => {
     if (rating > 0) {
-      // In a real app, you would send the rating, comment, and tags to a server
       onSubmit();
     }
   };
 
-  // Reset state on close to ensure it's fresh for the next review
   useEffect(() => {
     if (!isOpen) {
       setTimeout(() => {
         setRating(0);
         setComment('');
         setSelectedTags([]);
-      }, 300); // delay to allow closing animation
+      }, MODAL_TRANSITION_DURATION);
     }
   }, [isOpen]);
 
@@ -57,10 +54,8 @@ const ReviewModal: React.FC<{
         style={{height: '80vh', maxHeight: '700px'}}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <header className="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
           <div className="w-12"></div>
-          {/* Spacer */}
           <div className="text-center">
             <div className="w-10 h-1.5 bg-gray-300 rounded-full mx-auto mb-2"></div>
             <h2 id="review-title" className="text-xl font-bold text-[#0C0D0E]">Как все прошло?</h2>
@@ -68,31 +63,28 @@ const ReviewModal: React.FC<{
           <button onClick={onClose}
                   className="w-12 h-10 flex items-center justify-center text-gray-500 hover:text-gray-800"
                   aria-label="Закрыть">
-            <XIcon className="w-6 h-6"/>
+            <X className="w-6 h-6"/>
           </button>
         </header>
 
-        {/* Scrollable Content */}
         <div className="flex-grow p-6 overflow-y-auto space-y-6">
-          {/* Rating Block */}
           <section className="text-center">
             <h3 className="font-semibold text-gray-700 mb-3">Ваша общая оценка</h3>
             <div className="flex justify-center space-x-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button key={star} onClick={() => handleRating(star)}
                         className="transform transition-transform active:scale-90">
-                  <StarIcon
-                    className={`w-12 h-12 transition-colors ${rating >= star ? 'text-[#FF9315]' : 'text-gray-300'}`}/>
+                  <Star
+                    className={`w-12 h-12 transition-colors ${rating >= star ? 'text-[#FF9315] fill-current' : 'text-gray-300'}`}/>
                 </button>
               ))}
             </div>
           </section>
 
-          {/* Quick Tags Block */}
           <section>
             <h3 className="font-semibold text-gray-700 mb-3 text-center">Что вам понравилось?</h3>
             <div className="flex flex-wrap justify-center gap-2">
-              {quickTags.map(tag => (
+              {REVIEW_QUICK_TAGS.map(tag => (
                 <button
                   key={tag}
                   onClick={() => toggleTag(tag)}
@@ -104,7 +96,6 @@ const ReviewModal: React.FC<{
             </div>
           </section>
 
-          {/* Comment Field */}
           <section>
             <label htmlFor="comment" className="font-semibold text-gray-700 mb-3 block text-center">Ваш
               комментарий</label>
@@ -123,7 +114,6 @@ const ReviewModal: React.FC<{
           </section>
         </div>
 
-        {/* Sticky Footer */}
         <footer className="p-4 border-t border-gray-100 flex-shrink-0 bg-white">
           <button
             onClick={handleSubmit}

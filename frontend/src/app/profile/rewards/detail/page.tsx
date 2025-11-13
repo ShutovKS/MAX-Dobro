@@ -1,6 +1,7 @@
 import React, {useMemo, useState} from 'react';
+import {useNavigate} from 'react-router';
 import type {RewardItem, User} from '../../../../lib/types';
-import {ArrowLeftIcon, CheckCircleIcon, SparklesIcon} from '../../../../components/ui/icons';
+import {ArrowLeft, CheckCircle, Sparkles} from 'lucide-react';
 import PurchaseConfirmationModal from '../../../../components/ui/PurchaseConfirmationModal';
 
 interface RewardsDetailPageProps {
@@ -11,6 +12,7 @@ interface RewardsDetailPageProps {
 }
 
 const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewards, user, onPurchase}) => {
+  const navigate = useNavigate();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   const reward = useMemo(() => allRewards.find(r => r.id === rewardId), [rewardId, allRewards]);
@@ -20,7 +22,7 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
     return karmaStat ? parseInt(karmaStat.value.replace(/,/g, ''), 10) : 0;
   }, [user.stats]);
 
-  const onBack = () => window.location.hash = '#/profile/rewardsStore';
+  const onBack = () => navigate('/profile/rewardsStore');
 
   if (!reward) {
     return <div className="w-full h-screen flex items-center justify-center">Награда не найдена.</div>;
@@ -43,7 +45,7 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
     if (reward.isPurchased) {
       return (
         <div className="flex items-center justify-center space-x-2 font-semibold text-lg text-green-600 h-[52px]">
-          <CheckCircleIcon className="w-6 h-6"/>
+          <CheckCircle className="w-6 h-6"/>
           <span>Уже в коллекции</span>
         </div>
       );
@@ -72,19 +74,17 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
           <button onClick={onBack}
                   className="w-10 h-10 flex items-center justify-center rounded-full bg-white/50 hover:bg-white/90 shadow-sm"
                   aria-label="Назад">
-            <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+            <ArrowLeft className="w-6 h-6 text-gray-700"/>
           </button>
           <h1 className="text-lg font-bold text-[#0C0D0E] mx-auto">Награда</h1>
           <div className="w-10"></div>
         </header>
 
         <main className="flex-grow overflow-y-auto px-6 pb-28">
-          {/* Image Card */}
           <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
             <img src={reward.imageUrl} alt={reward.name} className="w-full aspect-square object-cover rounded-xl"/>
           </div>
 
-          {/* Info */}
           <div className="space-y-2">
             <h2 className="text-3xl font-bold text-[#0C0D0E]">{reward.name}</h2>
             <p
@@ -102,7 +102,7 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
             <div className="text-left">
               <p className="text-sm text-gray-500">Цена:</p>
               <div className="flex items-center space-x-1 font-bold text-lg text-[#0C0D0E]">
-                <SparklesIcon className="w-5 h-5 text-[#007AFF]"/>
+                <Sparkles className="w-5 h-5 text-[#007AFF]"/>
                 <span>{reward.price.toLocaleString('ru-RU')}</span>
               </div>
             </div>

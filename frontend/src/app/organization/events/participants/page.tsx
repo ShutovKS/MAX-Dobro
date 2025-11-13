@@ -1,13 +1,8 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {fetchEventParticipants} from '../../../../lib/api';
+import {useParams} from 'react-router';
+import {fetchEventParticipants, fetchOrganizationEvents} from '../../../../lib/api';
 import type {EventParticipant, OrganizationEvent} from '../../../../lib/types';
-import {
-  ArrowLeftIcon,
-  ChatBubbleLeftRightIcon,
-  DotsHorizontalIcon,
-  StarIcon,
-  UserGroupIcon
-} from '../../../../components/ui/icons';
+import {ArrowLeft, MessageSquare, MoreHorizontal, Star, Users} from 'lucide-react';
 import EmptyState from '../../../../components/ui/EmptyState';
 
 type ParticipantTab = 'new' | 'confirmed' | 'rejected';
@@ -24,7 +19,7 @@ const ParticipantCell: React.FC<{
       <div className="flex-1">
         <p className="font-bold text-md text-[#0C0D0E]">{participant.name}</p>
         <div className="flex items-center text-sm text-[rgb(12,13,14,0.52)]">
-          <StarIcon className="w-4 h-4 text-yellow-400 mr-1"/>
+          <Star className="w-4 h-4 text-yellow-400 fill-current mr-1"/>
           <span>{participant.rating}</span>
         </div>
       </div>
@@ -41,9 +36,9 @@ const ParticipantCell: React.FC<{
       )}
       {tab === 'confirmed' && (
         <div className="flex space-x-2">
-          <button className="p-2 rounded-lg hover:bg-gray-200"><ChatBubbleLeftRightIcon
-            className="w-6 h-6 text-gray-600"/></button>
-          <button className="p-2 rounded-lg hover:bg-gray-200"><DotsHorizontalIcon className="w-6 h-6 text-gray-600"/>
+          <button className="p-2 rounded-lg hover:bg-gray-200"><MessageSquare className="w-6 h-6 text-gray-600"/>
+          </button>
+          <button className="p-2 rounded-lg hover:bg-gray-200"><MoreHorizontal className="w-6 h-6 text-gray-600"/>
           </button>
         </div>
       )}
@@ -67,28 +62,43 @@ const ParticipantCellSkeleton: React.FC = () => (
 );
 
 const EventParticipantsPage: React.FC<{
-  event: OrganizationEvent;
   onBack: () => void;
-}> = ({event, onBack}) => {
+}> = ({onBack}) => {
+  const {eventId} = useParams<{ eventId: string }>();
+  const [event, setEvent] = useState<OrganizationEvent | null>(null);
   const [activeTab, setActiveTab] = useState<ParticipantTab>('new');
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
+      if (!eventId) return;
       setLoading(true);
-      const data = await fetchEventParticipants(event.id);
-      setParticipants(data);
-      setLoading(false);
+      const eventIdNum = parseInt(eventId, 10);
+      try {
+        const [allOrgEvents, participantsData] = await Promise.all([
+          fetchOrganizationEvents(),
+          fetchEventParticipants(eventIdNum)
+        ]);
+        const currentEvent = allOrgEvents.find(e => e.id === eventIdNum);
+        setEvent(currentEvent || null);
+        setParticipants(participantsData);
+      } catch (error) {
+        console.error("Failed to load event participants data", error);
+        setEvent(null);
+        setParticipants([]);
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
-  }, [event.id]);
+  }, [eventId]);
 
   const newApplications = useMemo(() => participants.filter(p => p.status === 'new'), [participants]);
   const confirmedParticipants = useMemo(() => participants.filter(p => p.status === 'confirmed'), [participants]);
   const rejectedParticipants = useMemo(() => participants.filter(p => p.status === 'rejected'), [participants]);
 
-  const handleStatusChange = (id: number, newStatus: ParticipantTab) => {
+  const handleStatusChange = (id: number, newStatus: 'confirmed' | 'rejected') => {
     setParticipants(prev => prev.map(p => p.id === id ? {...p, status: newStatus} : p));
   };
 
@@ -114,23 +124,55 @@ const EventParticipantsPage: React.FC<{
     };
     const {title, subtitle} = emptyStates[activeTab];
 
-    return <EmptyState Icon={UserGroupIcon} title={title} subtitle={subtitle}/>;
+    return <EmptyState Icon={Users} title={title} subtitle={subtitle}/>;
   };
 
   const isTotallyEmpty = !loading && participants.length === 0;
 
+  const renderHeader = () => (
+    <header
+      className="flex-shrink-0 p-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center justify-between sticky top-0 z-10">
+      <button onClick={onBack}
+              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 -ml-2"
+              aria-label="Назад">
+        <ArrowLeft className="w-6 h-6 text-gray-700"/>
+      </button>
+      <h1 className="text-lg font-bold text-[#0C0D0E] text-center truncate px-2">
+        {event ? `Участники: ${event.title}` : 'Участники'}
+      </h1>
+      <div className="w-8"></div>
+    </header>
+  );
+
+  if (loading) {
+    return (
+      <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
+        {renderHeader()}
+        <main className="flex-grow overflow-y-auto bg-white">
+          <div className="divide-y divide-gray-100">
+            <ParticipantCellSkeleton/>
+            <ParticipantCellSkeleton/>
+            <ParticipantCellSkeleton/>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  if (!event) {
+    return (
+      <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
+        {renderHeader()}
+        <main className="flex-grow flex items-center justify-center">
+          <EmptyState Icon={Users} title="Событие не найдено" subtitle="Не удалось загрузить информацию о событии."/>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
-      <header
-        className="flex-shrink-0 p-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center justify-between sticky top-0 z-10">
-        <button onClick={onBack}
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 -ml-2"
-                aria-label="Назад">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
-        </button>
-        <h1 className="text-lg font-bold text-[#0C0D0E] text-center truncate px-2">Участники: {event.title}</h1>
-        <div className="w-8"></div>
-      </header>
+      {renderHeader()}
 
       <section className="flex-shrink-0 p-4 bg-white">
         <div className="bg-gray-100 rounded-xl p-3 text-center grid grid-cols-3 gap-2">
@@ -170,7 +212,7 @@ const EventParticipantsPage: React.FC<{
         {isTotallyEmpty ? (
           <div className="pt-10">
             <EmptyState
-              Icon={UserGroupIcon}
+              Icon={Users}
               title="Пока никто не записался"
               subtitle="Поделитесь событием, чтобы привлечь больше волонтеров!"
               action={{
@@ -182,13 +224,7 @@ const EventParticipantsPage: React.FC<{
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {loading ? (
-              <>
-                <ParticipantCellSkeleton/>
-                <ParticipantCellSkeleton/>
-                <ParticipantCellSkeleton/>
-              </>
-            ) : currentList.length > 0 ? (
+            {currentList.length > 0 ? (
               currentList.map(p => (
                 <ParticipantCell
                   key={p.id}

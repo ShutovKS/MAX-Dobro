@@ -1,25 +1,15 @@
 import React, {useMemo, useState} from 'react';
-import {
-  ArrowLeftIcon,
-  CheckCircleIcon,
-  EnvelopeIcon,
-  EyeIcon,
-  EyeOffIcon,
-  HeartHandIcon,
-  LockIcon,
-  MaxIcon,
-  RefreshIcon,
-  UserIcon
-} from '../../components/ui/icons';
+import {ArrowLeft, CheckCircle, Eye, EyeOff, Lock, Mail, RefreshCw, User as UserIcon} from 'lucide-react';
+import {HeartHandIcon, MaxIcon} from '../../components/ui/icons';
 import {login, register} from '../../lib/auth';
 import type {User} from '../../lib/types';
 import {defaultUserData} from '../../lib/mockData';
+import {MESSAGES, PASSWORD_MIN_LENGTH} from '../../lib/constants';
 
 const Spinner: React.FC = () => (
-  <RefreshIcon className="w-5 h-5 text-white animate-spin"/>
+  <RefreshCw className="w-5 h-5 text-white animate-spin"/>
 );
 
-// --- Login View ---
 const LoginView: React.FC<{
   onAuthSuccess: (user: User) => void,
   onSwitchToRegister: () => void,
@@ -37,17 +27,17 @@ const LoginView: React.FC<{
     let isValid = true;
     setLoginError('');
     if (!email) {
-      setEmailError('Пожалуйста, введите email');
+      setEmailError(MESSAGES.AUTH.EMAIL_REQUIRED);
       isValid = false;
     } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setEmailError('Пожалуйста, введите корректный email');
+      setEmailError(MESSAGES.AUTH.EMAIL_INVALID);
       isValid = false;
     } else {
       setEmailError('');
     }
 
     if (!password) {
-      setPasswordError('Пожалуйста, введите пароль');
+      setPasswordError(MESSAGES.AUTH.PASSWORD_REQUIRED);
       isValid = false;
     } else {
       setPasswordError('');
@@ -59,15 +49,13 @@ const LoginView: React.FC<{
         const {user} = await login(email, password);
         onAuthSuccess(user);
       } catch (err) {
-        setLoginError('Неверный email или пароль. Попробуйте снова.');
+        setLoginError(MESSAGES.AUTH.LOGIN_ERROR);
         setIsLoading(false);
       }
     }
   };
 
   const handleMaxLogin = () => {
-    // In a real app, this would trigger an OAuth flow.
-    // Here, we just simulate a successful login with default data.
     onAuthSuccess(defaultUserData);
   }
 
@@ -106,7 +94,7 @@ const LoginView: React.FC<{
           <div className="w-full">
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <EnvelopeIcon className="w-5 h-5 text-gray-400"/>
+                <Mail className="w-5 h-5 text-gray-400"/>
               </span>
               <input type="email" value={email} onChange={handleEmailChange} placeholder="Ваш email"
                      className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-900 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
@@ -117,7 +105,7 @@ const LoginView: React.FC<{
           <div className="w-full">
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <LockIcon className="w-5 h-5 text-gray-400"/>
+                <Lock className="w-5 h-5 text-gray-400"/>
               </span>
               <input type={showPassword ? 'text' : 'password'} value={password} onChange={handlePasswordChange}
                      placeholder="Пароль"
@@ -126,7 +114,7 @@ const LoginView: React.FC<{
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                       aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}>
-                {showPassword ? <EyeOffIcon className="w-5 h-5"/> : <EyeIcon className="w-5 h-5"/>}
+                {showPassword ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
               </button>
             </div>
             {passwordError && <p id="password-error" className="text-red-600 text-xs mt-1 ml-1">{passwordError}</p>}
@@ -149,7 +137,6 @@ const LoginView: React.FC<{
   );
 };
 
-// --- Register View ---
 const RegisterView: React.FC<{
   onRegisterSuccess: (user: User) => void,
   onSwitchToLogin: () => void
@@ -163,13 +150,13 @@ const RegisterView: React.FC<{
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.firstName) newErrors.firstName = 'Введите имя';
-    if (!formData.lastName) newErrors.lastName = 'Введите фамилию';
-    if (!formData.email) newErrors.email = 'Введите email';
-    else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = 'Неверный формат email';
-    if (!formData.password) newErrors.password = 'Введите пароль';
-    else if (formData.password.length < 6) newErrors.password = 'Пароль должен быть не менее 6 символов';
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Пароли не совпадают';
+    if (!formData.firstName) newErrors.firstName = MESSAGES.AUTH.FIRST_NAME_REQUIRED;
+    if (!formData.lastName) newErrors.lastName = MESSAGES.AUTH.LAST_NAME_REQUIRED;
+    if (!formData.email) newErrors.email = MESSAGES.AUTH.EMAIL_REQUIRED;
+    else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = MESSAGES.AUTH.EMAIL_INVALID;
+    if (!formData.password) newErrors.password = MESSAGES.AUTH.PASSWORD_REQUIRED;
+    else if (formData.password.length < PASSWORD_MIN_LENGTH) newErrors.password = MESSAGES.AUTH.PASSWORD_MIN_LENGTH(PASSWORD_MIN_LENGTH);
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = MESSAGES.AUTH.PASSWORDS_DONT_MATCH;
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -189,14 +176,14 @@ const RegisterView: React.FC<{
         const {user} = await register(formData);
         onRegisterSuccess(user);
       } catch (err) {
-        setRegisterError('Не удалось зарегистрироваться. Попробуйте позже.');
+        setRegisterError(MESSAGES.AUTH.REGISTER_ERROR);
         setIsLoading(false);
       }
     }
   };
 
   const isFormValid = useMemo(() => {
-    return Object.values(formData).every(value => value.length > 0) && formData.password.length >= 6 && formData.password === formData.confirmPassword && /^\S+@\S+\.\S+$/.test(formData.email);
+    return Object.values(formData).every(value => typeof value === 'string' && value.length > 0) && formData.password.length >= PASSWORD_MIN_LENGTH && formData.password === formData.confirmPassword && /^\S+@\S+\.\S+$/.test(formData.email);
   }, [formData]);
 
   return (
@@ -227,7 +214,7 @@ const RegisterView: React.FC<{
           </div>
           <div className="w-full">
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><EnvelopeIcon
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><Mail
                 className="w-5 h-5 text-gray-400"/></span>
               <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email"
                      className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-900 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"/>
@@ -236,28 +223,28 @@ const RegisterView: React.FC<{
           </div>
           <div className="w-full">
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><LockIcon
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><Lock
                 className="w-5 h-5 text-gray-400"/></span>
               <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password}
                      onChange={handleChange} placeholder="Пароль"
                      className="w-full pl-10 pr-10 py-3 bg-gray-100 text-gray-900 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"/>
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
-                {showPassword ? <EyeOffIcon className="w-5 h-5"/> : <EyeIcon className="w-5 h-5"/>}
+                {showPassword ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
               </button>
             </div>
             {errors.password && <p className="text-red-600 text-xs mt-1 ml-1">{errors.password}</p>}
           </div>
           <div className="w-full">
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><LockIcon
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><Lock
                 className="w-5 h-5 text-gray-400"/></span>
               <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword"
                      value={formData.confirmPassword} onChange={handleChange} placeholder="Повторите пароль"
                      className="w-full pl-10 pr-10 py-3 bg-gray-100 text-gray-900 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"/>
               <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
-                {showConfirmPassword ? <EyeOffIcon className="w-5 h-5"/> : <EyeIcon className="w-5 h-5"/>}
+                {showConfirmPassword ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
               </button>
             </div>
             {errors.confirmPassword && <p className="text-red-600 text-xs mt-1 ml-1">{errors.confirmPassword}</p>}
@@ -278,7 +265,6 @@ const RegisterView: React.FC<{
   );
 };
 
-// --- Forgot Password View ---
 const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLogin}) => {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -289,7 +275,7 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLo
       setEmailError('');
       setIsSubmitted(true);
     } else {
-      setEmailError('Пожалуйста, введите корректный email');
+      setEmailError(MESSAGES.AUTH.EMAIL_INVALID);
     }
   };
 
@@ -303,7 +289,7 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLo
       <div
         className="bg-white w-full h-screen flex flex-col items-center justify-center p-6 font-sans antialiased text-center">
         <div className="w-full max-w-sm flex flex-col items-center">
-          <CheckCircleIcon className="w-24 h-24 text-green-500 mb-6"/>
+          <CheckCircle className="w-24 h-24 text-green-500 mb-6"/>
           <h1 className="text-[28px] font-bold text-[#0C0D0E] mb-4">Письмо отправлено!</h1>
           <p className="text-[rgb(12,13,14,0.52)] mb-8">
             Мы отправили ссылку для восстановления пароля на <span
@@ -330,7 +316,7 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLo
           <div className="w-full">
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <EnvelopeIcon className="w-5 h-5 text-gray-400"/>
+                <Mail className="w-5 h-5 text-gray-400"/>
               </span>
               <input type="email" value={email} onChange={handleEmailChange} placeholder="Ваш email"
                      className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-900 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
@@ -344,7 +330,7 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLo
           </button>
           <button onClick={onBackToLogin}
                   className="flex items-center space-x-2 text-sm text-[#007AFF] hover:underline font-semibold pt-4">
-            <ArrowLeftIcon className="w-4 h-4"/>
+            <ArrowLeft className="w-4 h-4"/>
             <span>Вернуться ко входу</span>
           </button>
         </div>
@@ -353,8 +339,6 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLo
   );
 };
 
-
-// --- Main Page Component ---
 type AuthMode = 'login' | 'register' | 'forgotPassword';
 
 interface AuthPageProps {

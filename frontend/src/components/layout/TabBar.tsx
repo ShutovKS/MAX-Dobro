@@ -1,5 +1,5 @@
 import React from 'react';
-import {ChatBubbleLeftRightIcon, HomeIcon, OrganizationsIcon, ProfileIcon, TrainingIcon} from '../ui/icons';
+import {BookOpen, Home, MessageSquare, User, Users} from 'lucide-react';
 import type {Tab} from '../../lib/types';
 
 const TabBar: React.FC<{ activeTab: Tab; onTabChange: (tab: Tab) => void; }> = React.memo(({
@@ -7,11 +7,11 @@ const TabBar: React.FC<{ activeTab: Tab; onTabChange: (tab: Tab) => void; }> = R
                                                                                              onTabChange
                                                                                            }) => {
   const navItems = [
-    {id: 'home', label: 'Главная', Icon: HomeIcon},
-    {id: 'training', label: 'Обучение', Icon: TrainingIcon},
-    {id: 'organizations', label: 'Организации', Icon: OrganizationsIcon},
-    {id: 'stories', label: 'Истории', Icon: ChatBubbleLeftRightIcon},
-    {id: 'profile', label: 'Профиль', Icon: ProfileIcon},
+    {id: 'home', label: 'Главная', Icon: Home},
+    {id: 'training', label: 'Обучение', Icon: BookOpen},
+    {id: 'organizations', label: 'Организации', Icon: Users},
+    {id: 'stories', label: 'Истории', Icon: MessageSquare},
+    {id: 'profile', label: 'Профиль', Icon: User},
   ];
   return (
     <footer

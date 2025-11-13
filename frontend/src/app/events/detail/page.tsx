@@ -1,22 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router';
-import type {Achievement, AppEvent, ProfileSubScreen} from '../../../lib/types';
-import {fetchEventById} from '../../../lib/api';
-import {allAchievements} from '../../../lib/mockData';
-import {
-  ArrowLeftIcon,
-  CalendarIcon,
-  ChatBubbleLeftRightIcon,
-  CheckIcon,
-  ListIcon,
-  LocationMarkerIcon,
-  ShareIcon,
-  StarIcon
-} from '../../../components/ui/icons';
+import type {Achievement, AppEvent, Friend, Organization, ProfileSubScreen} from '../../../lib/types';
+import {fetchAllAchievements, fetchEventById, fetchFriends, fetchOrganizationById} from '../../../lib/api';
+import {ArrowLeft, Calendar, Check, Clock, List, MapPin, MessageSquare, Share2, Star, Trophy} from 'lucide-react';
 import InviteFriendModal from '../../../features/invites/components/InviteFriendModal';
 import Toast from '../../../components/ui/Toast';
 import NewAchievementModal from '../../../components/ui/NewAchievementModal';
 import CancelModal from '../../../components/ui/CancelModal';
+import {FIRST_STEP_ACHIEVEMENT_ID, MESSAGES, MODAL_TRANSITION_DURATION} from '../../../lib/constants';
 
 const ConfirmationModal: React.FC<{
   isOpen: boolean;
@@ -42,15 +33,15 @@ const ConfirmationModal: React.FC<{
         <h2 id="confirm-title" className="text-xl font-bold text-[#0C0D0E] text-center mb-6">Подтвердите участие</h2>
         <div className="space-y-3 mb-6 bg-gray-50 p-4 rounded-xl">
           <div className="flex items-center space-x-4">
-            <ListIcon className="w-6 h-6 text-gray-500 flex-shrink-0"/>
+            <List className="w-6 h-6 text-gray-500 flex-shrink-0"/>
             <span className="font-semibold text-[#0C0D0E]">{event.title}</span>
           </div>
           <div className="flex items-center space-x-4">
-            <CalendarIcon className="w-6 h-6 text-gray-500 flex-shrink-0"/>
+            <Calendar className="w-6 h-6 text-gray-500 flex-shrink-0"/>
             <span className="text-[rgb(12,13,14,0.52)]">{event.date}</span>
           </div>
           <div className="flex items-center space-x-4">
-            <LocationMarkerIcon className="w-6 h-6 text-gray-500 flex-shrink-0"/>
+            <MapPin className="w-6 h-6 text-gray-500 flex-shrink-0"/>
             <span className="text-[rgb(12,13,14,0.52)]">{event.location}</span>
           </div>
         </div>
@@ -116,10 +107,6 @@ const SuccessModal: React.FC<{
         </button>
       </div>
       <style>{`
-                @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
-                .animate-fade-in { animation: fade-in 0.2s ease-out; }
-                @keyframes scale-in { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-                .animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
                 .checkmark-circle-bg { stroke-width: 3; stroke-miterlimit: 10; stroke: #1ABE43; fill: none; opacity: 0.1; }
                 .checkmark-circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 3; stroke-miterlimit: 10; stroke: #1ABE43; fill: none; animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
                 .checkmark-check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; stroke-width: 4; stroke-linecap: round; stroke: #1ABE43; animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.5s forwards; }
@@ -134,6 +121,8 @@ const EventDetailPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [event, setEvent] = useState<AppEvent | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [friends, setFriends] = useState<Friend[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSignedUp, setIsSignedUp] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -145,20 +134,31 @@ const EventDetailPage: React.FC = () => {
     message: ''
   });
   const [unlockedAchievement, setUnlockedAchievement] = useState<Achievement | null>(null);
+  const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
-    const loadEvent = async () => {
+    const loadData = async () => {
       if (id) {
         setLoading(true);
         const eventId = parseInt(id, 10);
-        const data = await fetchEventById(eventId);
-        if (data) {
-          setEvent(data as AppEvent);
+        const [eventData, achievementsData, friendsData] = await Promise.all([
+          fetchEventById(eventId),
+          fetchAllAchievements(),
+          fetchFriends()
+        ]);
+
+        if (eventData) {
+          const typedEventData = eventData as AppEvent;
+          setEvent(typedEventData);
+          const orgData = await fetchOrganizationById(typedEventData.organizationId);
+          if (orgData) setOrganization(orgData);
         }
+        setAllAchievements(achievementsData);
+        setFriends(friendsData);
         setLoading(false);
       }
     };
-    loadEvent();
+    loadData();
   }, [id]);
 
   const onBack = () => navigate(-1);
@@ -170,13 +170,13 @@ const EventDetailPage: React.FC = () => {
   const handleConfirmSignUp = () => {
     setShowConfirmation(false);
     setIsSignedUp(true);
-    setTimeout(() => setShowSuccess(true), 300);
+    setTimeout(() => setShowSuccess(true), MODAL_TRANSITION_DURATION);
   };
   const handleCancelSignUp = () => setShowConfirmation(false);
   const handleCloseSuccessModal = () => {
     setShowSuccess(false);
-    const firstAchievement = allAchievements.find(a => a.id === 1);
-    if (firstAchievement) setTimeout(() => setUnlockedAchievement(firstAchievement), 300);
+    const firstAchievement = allAchievements.find(a => a.id === FIRST_STEP_ACHIEVEMENT_ID);
+    if (firstAchievement) setTimeout(() => setUnlockedAchievement(firstAchievement), MODAL_TRANSITION_DURATION);
   };
   const handleNavigateToAchievements = () => {
     setUnlockedAchievement(null);
@@ -186,7 +186,7 @@ const EventDetailPage: React.FC = () => {
   const handleConfirmCancel = () => {
     setShowCancelConfirm(false);
     setIsSignedUp(false);
-    setToast({show: true, message: "Ваша запись отменена", onUndo: () => setIsSignedUp(true)});
+    setToast({show: true, message: MESSAGES.TOASTS.SIGNUP_CANCELLED, onUndo: () => setIsSignedUp(true)});
   };
   const handleCloseCancelModal = () => setShowCancelConfirm(false);
   const handleInvite = () => {
@@ -195,7 +195,7 @@ const EventDetailPage: React.FC = () => {
   };
   const handleSendInvites = () => {
     setShowInviteModal(false);
-    setToast({show: true, message: "Приглашения отправлены!"});
+    setToast({show: true, message: MESSAGES.TOASTS.INVITES_SENT});
   };
 
   const mainButtonAction = isSignedUp ? handleOpenCancelModal : handleSignUpClick;
@@ -208,6 +208,9 @@ const EventDetailPage: React.FC = () => {
     return <div className="w-full h-screen flex items-center justify-center">Событие не найдено.</div>;
   }
 
+  const friendsToShow = friends.slice(0, 3);
+  const remainingFriendsCount = friends.length - friendsToShow.length;
+
   return (
     <>
       <Toast message={toast.message} show={toast.show} onClose={() => setToast({...toast, show: false})}
@@ -215,9 +218,9 @@ const EventDetailPage: React.FC = () => {
       <div className="relative w-full h-screen font-sans antialiased bg-white overflow-y-auto">
         <header className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4">
           <button onClick={onBack} className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
-                  aria-label="Назад"><ArrowLeftIcon className="w-6 h-6 text-white"/></button>
+                  aria-label="Назад"><ArrowLeft className="w-6 h-6 text-white"/></button>
           <button className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
-                  aria-label="Поделиться"><ShareIcon className="w-5 h-5 text-white"/></button>
+                  aria-label="Поделиться"><Share2 className="w-5 h-5 text-white"/></button>
         </header>
         <div
           className="h-[40vh] w-full bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] flex items-center justify-center">
@@ -230,9 +233,9 @@ const EventDetailPage: React.FC = () => {
             </div>
             <h1 className="text-[28px] font-bold text-[#0C0D0E]">{event.title}</h1>
             <div className="mt-4 space-y-2 text-[rgb(12,13,14,0.52)]">
-              <div className="flex items-center space-x-3"><CalendarIcon
+              <div className="flex items-center space-x-3"><Calendar
                 className="w-5 h-5 text-gray-400"/><span>{event.date}</span></div>
-              <div className="flex items-center space-x-3"><LocationMarkerIcon
+              <div className="flex items-center space-x-3"><MapPin
                 className="w-5 h-5 text-gray-400"/><span>{event.location}</span></div>
             </div>
           </section>
@@ -240,7 +243,7 @@ const EventDetailPage: React.FC = () => {
             {isSignedUp ? (
               <button onClick={() => onOpenChat(event)}
                       className="w-full flex items-center justify-center space-x-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors relative">
-                <ChatBubbleLeftRightIcon className="w-6 h-6 text-[#007AFF]"/>
+                <MessageSquare className="w-6 h-6 text-[#007AFF]"/>
                 <span className="font-semibold text-lg text-[#0C0D0E]">Чат мероприятия</span>
                 <span
                   className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">3</span>
@@ -248,7 +251,7 @@ const EventDetailPage: React.FC = () => {
             ) : (
               <div
                 className="w-full flex items-center justify-center space-x-3 p-4 bg-gray-50 rounded-2xl relative text-center">
-                <ChatBubbleLeftRightIcon className="w-6 h-6 text-gray-400"/>
+                <MessageSquare className="w-6 h-6 text-gray-400"/>
                 <span className="font-semibold text-lg text-gray-400">Чат доступен после записи</span>
               </div>
             )}
@@ -256,12 +259,15 @@ const EventDetailPage: React.FC = () => {
           <section>
             <button onClick={() => onSelectOrganization(event.organizationId)}
                     className="w-full flex items-center space-x-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors">
-              <img src={`https://i.pravatar.cc/48?img=${event.organizationId + 10}`} alt="Логотип организатора"
-                   className="w-12 h-12 rounded-full"/>
+              <img src={organization?.logoUrl} alt="Логотип организатора" className="w-12 h-12 rounded-full"/>
               <div className="text-left">
                 <h3 className="font-semibold text-[#0C0D0E]">Организатор "{event.organizationName}"</h3>
-                <div className="flex items-center text-sm text-[rgb(12,13,14,0.52)]"><StarIcon
-                  className="w-4 h-4 text-yellow-400 mr-1"/><span>4.9 (120 отзывов)</span></div>
+                {organization && (
+                  <div className="flex items-center text-sm text-[rgb(12,13,14,0.52)]">
+                    <Star className="w-4 h-4 text-yellow-400 fill-current mr-1"/>
+                    <span>{organization.rating} ({organization.reviewCount} отзывов)</span>
+                  </div>
+                )}
               </div>
             </button>
           </section>
@@ -279,44 +285,49 @@ const EventDetailPage: React.FC = () => {
                   <li key={index} className="flex items-start space-x-3">
                     <div
                       className="w-6 h-6 flex-shrink-0 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
-                      <CheckIcon className="w-4 h-4 text-[#007AFF]"/></div>
+                      <Check className="w-4 h-4 text-[#007AFF]" strokeWidth={3}/></div>
                     <span className="text-[rgb(12,13,14,0.52)] leading-relaxed">{req}</span>
                   </li>
                 ))}
               </ul>
             </section>
           )}
-          <section>
-            <h2 className="text-xl font-bold text-[#0C0D0E] mb-3">Что вы получите?</h2>
-            <ul className="space-y-3">
-              <li className="flex items-center space-x-3"><span className="text-2xl">✨</span> <span
-                className="text-[rgb(12,13,14,0.52)]">+50 баллов кармы</span></li>
-              <li className="flex items-center space-x-3"><span className="text-2xl">🕒</span> <span
-                className="text-[rgb(12,13,14,0.52)]">+3 часа добра в вашу копилку</span></li>
-              <li className="flex items-center space-x-3"><span className="text-2xl">📜</span> <span
-                className="text-[rgb(12,13,14,0.52)]">Сертификат участника</span></li>
-            </ul>
-          </section>
+          {event.rewards && (
+            <section>
+              <h2 className="text-xl font-bold text-[#0C0D0E] mb-3">Что вы получите?</h2>
+              <ul className="space-y-3">
+                <li className="flex items-center space-x-3"><Star className="w-6 h-6 text-yellow-400 fill-current"/>
+                  <span className="text-[rgb(12,13,14,0.52)]">+{event.rewards.karma} баллов кармы</span></li>
+                <li className="flex items-center space-x-3"><Clock className="w-6 h-6 text-blue-400"/> <span
+                  className="text-[rgb(12,13,14,0.52)]">+{event.rewards.hours} часа добра в вашу копилку</span></li>
+                <li className="flex items-center space-x-3"><Trophy className="w-6 h-6 text-orange-400"/> <span
+                  className="text-[rgb(12,13,14,0.52)]">Сертификат участника</span></li>
+              </ul>
+            </section>
+          )}
           <section>
             <h2 className="text-xl font-bold text-[#0C0D0E] mb-3">Кто из друзей идет?</h2>
-            <div className="flex -space-x-2">
-              <img loading="lazy" className="inline-block h-10 w-10 rounded-full ring-2 ring-white"
-                   src="https://i.pravatar.cc/40?img=1" alt="User 1"/>
-              <img loading="lazy" className="inline-block h-10 w-10 rounded-full ring-2 ring-white"
-                   src="https://i.pravatar.cc/40?img=2" alt="User 2"/>
-              <img loading="lazy" className="inline-block h-10 w-10 rounded-full ring-2 ring-white"
-                   src="https://i.pravatar.cc/40?img=3" alt="User 3"/>
-              <div
-                className="h-10 w-10 rounded-full ring-2 ring-white bg-gray-200 flex items-center justify-center text-xs font-semibold text-[rgb(12,13,14,0.52)]">+5
+            {friends.length > 0 ? (
+              <div className="flex -space-x-2">
+                {friendsToShow.map(friend => (
+                  <img key={friend.id} loading="lazy" className="inline-block h-10 w-10 rounded-full ring-2 ring-white"
+                       src={friend.avatarUrl} alt={friend.name}/>
+                ))}
+                {remainingFriendsCount > 0 && (
+                  <div
+                    className="h-10 w-10 rounded-full ring-2 ring-white bg-gray-200 flex items-center justify-center text-xs font-semibold text-[rgb(12,13,14,0.52)]">+{remainingFriendsCount}</div>
+                )}
               </div>
-            </div>
+            ) : (
+              <p className="text-[rgb(12,13,14,0.52)]">Вы будете первым из ваших друзей!</p>
+            )}
           </section>
         </div>
         <div className="h-28"></div>
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100">
           <button onClick={mainButtonAction}
                   className={`w-full py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg ${isSignedUp ? 'bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300' : 'bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] text-white font-bold hover:opacity-90'}`}>
-            {isSignedUp ? (<><CheckIcon className="w-5 h-5 mr-2"/>Вы участвуете</>) : ('Я помогу!')}
+            {isSignedUp ? (<><Check className="w-5 h-5 mr-2"/>Вы участвуете</>) : ('Я помогу!')}
           </button>
         </div>
       </div>

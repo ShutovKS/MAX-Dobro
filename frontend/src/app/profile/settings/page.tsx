@@ -1,16 +1,9 @@
 import React, {useState} from 'react';
-import {
-  ArrowLeftIcon,
-  ArrowRightOnRectangleIcon,
-  BellIcon,
-  ChatBubbleLeftRightIcon,
-  ChevronRightIcon,
-  DocumentTextIcon,
-  ShieldCheckIcon,
-  UserCircleIcon
-} from '../../../components/ui/icons';
+import {useNavigate} from 'react-router';
+import {ArrowLeft, Bell, ChevronRight, FileText, LogOut, MessageSquare, ShieldCheck, UserCircle} from 'lucide-react';
 import type {ProfileSubScreen} from '../../../lib/types';
 import LogoutConfirmationModal from '../../../components/ui/LogoutConfirmationModal';
+import {APP_VERSION} from '../../../lib/constants';
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({title, children}) => (
   <section>
@@ -42,7 +35,7 @@ const SettingsRow: React.FC<{
     </div>
     <div className="flex items-center space-x-2">
       {info && <span className="text-gray-400 text-sm">{info}</span>}
-      {onClick && <ChevronRightIcon className="w-5 h-5 text-gray-400"/>}
+      {onClick && <ChevronRight className="w-5 h-5 text-gray-400"/>}
     </div>
   </button>
 );
@@ -74,11 +67,12 @@ const ToggleRow: React.FC<{ label: string; enabled: boolean; onChange: (enabled:
 
 
 const SettingsPage: React.FC<{ onBack: () => void; onLogout: () => void; }> = ({onBack, onLogout}) => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState({newEvents: true, reminders: true, achievements: false});
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const onNavigate = (screen: ProfileSubScreen) => {
-    window.location.hash = `#/profile/${screen}`;
+    navigate(`/profile/${screen}`);
   };
 
   const handleToggle = (key: keyof typeof notifications) => {
@@ -92,7 +86,7 @@ const SettingsPage: React.FC<{ onBack: () => void; onLogout: () => void; }> = ({
           className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center">
           <button onClick={onBack}
                   className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-gray-100">
-            <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+            <ArrowLeft className="w-6 h-6 text-gray-700"/>
           </button>
           <h1 className="text-2xl font-bold text-[#0C0D0E] mx-auto">Настройки</h1>
           <div className="w-8"></div>
@@ -100,15 +94,15 @@ const SettingsPage: React.FC<{ onBack: () => void; onLogout: () => void; }> = ({
 
         <main className="flex-grow overflow-y-auto pt-8 space-y-8 pb-8">
           <SettingsSection title="Аккаунт">
-            <SettingsRow label="Редактировать профиль" Icon={UserCircleIcon} onClick={() => onNavigate('editProfile')}/>
-            <SettingsRow label="Приватность" Icon={ShieldCheckIcon} onClick={() => {
+            <SettingsRow label="Редактировать профиль" Icon={UserCircle} onClick={() => onNavigate('editProfile')}/>
+            <SettingsRow label="Приватность" Icon={ShieldCheck} onClick={() => {
             }}/>
           </SettingsSection>
 
           <SettingsSection title="Уведомления">
             <div className="p-4 flex items-center space-x-4">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-100">
-                <BellIcon className="w-5 h-5 text-[#007AFF]"/>
+                <Bell className="w-5 h-5 text-[#007AFF]"/>
               </div>
               <span className="font-semibold text-[#0C0D0E]">Push-уведомления</span>
             </div>
@@ -127,17 +121,17 @@ const SettingsPage: React.FC<{ onBack: () => void; onLogout: () => void; }> = ({
           </SettingsSection>
 
           <SettingsSection title="О платформе">
-            <SettingsRow label="Написать в поддержку" Icon={ChatBubbleLeftRightIcon} onClick={() => {
+            <SettingsRow label="Написать в поддержку" Icon={MessageSquare} onClick={() => {
             }}/>
-            <SettingsRow label="Политика конфиденциальности" Icon={DocumentTextIcon} onClick={() => {
+            <SettingsRow label="Политика конфиденциальности" Icon={FileText} onClick={() => {
             }}/>
-            <SettingsRow label="Версия" Icon={DocumentTextIcon} info="1.0.0"/>
+            <SettingsRow label="Версия" Icon={FileText} info={APP_VERSION}/>
           </SettingsSection>
 
           <div className="pt-4">
             <div className="bg-white rounded-2xl shadow-sm mx-4">
-              <SettingsRow label="Выйти из аккаунта" Icon={ArrowRightOnRectangleIcon}
-                           onClick={() => setShowLogoutConfirm(true)} isDestructive/>
+              <SettingsRow label="Выйти из аккаунта" Icon={LogOut} onClick={() => setShowLogoutConfirm(true)}
+                           isDestructive/>
             </div>
           </div>
         </main>

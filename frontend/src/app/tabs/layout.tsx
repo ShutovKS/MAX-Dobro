@@ -1,4 +1,5 @@
 import React from 'react';
+import {useNavigate} from 'react-router';
 import TabBar from '../../components/layout/TabBar';
 import HomePage from './page';
 import CoursesPage from './courses/page';
@@ -16,9 +17,10 @@ interface TabsLayoutProps {
 const TabsLayout: React.FC<TabsLayoutProps> = ({
                                                  user, activeTab, onSwitchToOrganizationMode
                                                }) => {
+  const navigate = useNavigate();
 
   const handleTabChange = (tab: Tab) => {
-    window.location.hash = `#/${tab}`;
+    navigate(`/${tab}`);
   }
 
   const renderContent = () => {

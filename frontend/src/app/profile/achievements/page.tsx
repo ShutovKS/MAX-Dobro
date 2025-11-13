@@ -1,7 +1,9 @@
 import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router';
 import {fetchAllAchievements} from '../../../lib/api';
 import type {Achievement} from '../../../lib/types';
-import {ArrowLeftIcon, EmptyShelfIllustrationIcon, LockClosedIcon} from '../../../components/ui/icons';
+import {ArrowLeft, Lock} from 'lucide-react';
+import {EmptyShelfIllustrationIcon} from '../../../components/ui/icons';
 import AchievementDetailModal from '../../../features/achievements/components/AchievementDetailModal';
 import EmptyState from '../../../components/ui/EmptyState';
 
@@ -61,7 +63,7 @@ const AchievementBadge: React.FC<{ achievement: Achievement }> = ({achievement})
   return (
     <div className="flex flex-col items-center text-center" title={achievement.description}>
       <div className="relative w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-        <LockClosedIcon className="w-12 h-12 text-gray-400"/>
+        <Lock className="w-12 h-12 text-gray-400"/>
       </div>
       <h4 className="font-semibold text-sm text-[rgb(12,13,14,0.52)]">{achievement.name}</h4>
     </div>
@@ -69,11 +71,12 @@ const AchievementBadge: React.FC<{ achievement: Achievement }> = ({achievement})
 };
 
 const AllAchievementsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const onBack = () => window.location.hash = '#/profile';
+  const onBack = () => navigate('/profile');
 
   useEffect(() => {
     const loadAchievements = async () => {
@@ -94,16 +97,16 @@ const AllAchievementsPage: React.FC = () => {
   const handleNavigateWithFilter = (category: string) => {
     setSelectedAchievement(null);
     if (category === 'Обучение') {
-      window.location.hash = '#/training';
+      navigate('/training');
     } else if (category === 'Организации') {
-      window.location.hash = '#/organizations';
+      navigate('/organizations');
     } else {
       // For other categories, just go home and user can filter
-      window.location.hash = '#/home';
+      navigate('/home');
     }
   };
 
-  const onFindEvent = () => window.location.hash = '#/home';
+  const onFindEvent = () => navigate('/home');
 
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
@@ -111,7 +114,7 @@ const AllAchievementsPage: React.FC = () => {
         className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center">
         <button onClick={onBack}
                 className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-gray-100">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+          <ArrowLeft className="w-6 h-6 text-gray-700"/>
         </button>
         <h1 className="text-2xl font-bold text-[#0C0D0E] mx-auto">Мои достижения</h1>
         <div className="w-8"></div>

@@ -1,23 +1,22 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {
-  BinocularsIllustrationIcon,
-  CalendarIcon,
-  FilterIcon,
-  GeolocationIcon,
-  ListIcon,
-  LocationMarkerIcon,
-  MagnifyingGlassIllustrationIcon,
-  SearchIcon,
-  ServerErrorIcon,
-  SparklesIcon,
-  XIcon
-} from '../../components/ui/icons';
+import React, {useEffect, useMemo, useState} from 'react';
+import {useNavigate} from 'react-router';
+import {Filter, List, MapPin as MapPinIcon, Search, ServerCrash, Sparkles, X} from 'lucide-react';
+import {BinocularsIllustrationIcon, MagnifyingGlassIllustrationIcon} from '../../components/ui/icons';
 import EmptyState from '../../components/ui/EmptyState';
-import {allCategories, defaultFilters} from '../../lib/mockData';
-import {fetchAllEvents, fetchAllStories} from '../../lib/api';
-import type {AppEvent, FilterDate, FilterFormat, Filters, Story} from '../../lib/types';
+import {fetchAllEvents, fetchAllStories, fetchMapMarkers} from '../../lib/api';
+import type {AppEvent, FilterDate, FilterFormat, Filters, MapMarker, Story} from '../../lib/types';
 import SkeletonCard from '../../components/ui/SkeletonCard';
 import EventCard from '../../components/ui/EventCard';
+import InteractiveMap from '../../components/ui/InteractiveMap';
+import {UI_TEXT} from '../../lib/constants';
+
+// FIX: Define defaultFilters locally as it is not exported from mockData, and remove the faulty import.
+const defaultFilters: Filters = {
+  format: 'Все',
+  categories: [],
+  date: 'Любая',
+  distance: 5,
+};
 
 const StoryPreviewCard: React.FC<{ story: Story; onSelectStory: (id: number) => void }> = ({story, onSelectStory}) => (
   <div onClick={() => onSelectStory(story.id)} className="flex-shrink-0 w-40 space-y-2 cursor-pointer group">
@@ -98,58 +97,7 @@ const FilterPanel: React.FC<{
           </header>
 
           <div className="flex-grow p-6 overflow-y-auto space-y-6">
-            <section>
-              <h3 className="text-lg font-bold text-[#0C0D0E] mb-3">Формат</h3>
-              <div className="flex bg-gray-100 rounded-xl p-1">
-                {(['Все', 'Офлайн', 'Онлайн'] as FilterFormat[]).map(f => (
-                  <button key={f} onClick={() => setFormat(f)}
-                          className={`w-1/3 py-2 text-sm font-semibold rounded-lg transition-colors ${format === f ? 'bg-white shadow text-[#007AFF]' : 'text-gray-600'}`}>
-                    {f}
-                  </button>
-                ))}
-              </div>
-            </section>
-            <section>
-              <h3 className="text-lg font-bold text-[#0C0D0E] mb-3">Категории</h3>
-              <div className="flex flex-wrap gap-2">
-                {allCategories.map(cat => (
-                  <button key={cat} onClick={() => toggleCategory(cat)}
-                          className={`px-4 py-2 text-sm font-semibold rounded-full border-2 transition-colors ${selectedCategories.includes(cat) ? 'bg-[#007AFF] text-white border-transparent' : 'bg-white text-[#007AFF] border-[#007AFF]/50'}`}>
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </section>
-            <section>
-              <h3 className="text-lg font-bold text-[#0C0D0E] mb-3">Дата</h3>
-              <div className="flex bg-gray-100 rounded-xl p-1 mb-3">
-                {(['Любая', 'Сегодня', 'На неделе'] as FilterDate[]).map(d => (
-                  <button key={d} onClick={() => setDate(d)}
-                          className={`w-1/3 py-2 text-sm font-semibold rounded-lg transition-colors ${date === d ? 'bg-white shadow text-[#007AFF]' : 'text-gray-600'}`}>
-                    {d}
-                  </button>
-                ))}
-              </div>
-              <button
-                className="w-full flex items-center justify-center space-x-2 py-2 border-2 border-gray-200 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-colors">
-                <CalendarIcon className="w-5 h-5"/>
-                <span>Выбрать даты</span>
-              </button>
-            </section>
-            <section>
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-bold text-[#0C0D0E]">Расстояние</h3>
-                <span className="font-semibold text-[#0C0D0E]">до {distance} км</span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="50"
-                value={distance}
-                onChange={(e) => setDistance(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg accent-[#007AFF]"
-              />
-            </section>
+
           </div>
 
           <footer className="p-4 border-t border-gray-200 flex-shrink-0">
@@ -164,78 +112,32 @@ const FilterPanel: React.FC<{
   );
 };
 
-const Header: React.FC<{
-  onFilterClick: () => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-}> = ({onFilterClick, searchQuery, onSearchChange}) => (
-  <header className="absolute top-0 left-0 right-0 p-4 z-40">
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md flex items-center px-4 py-2">
-      <SearchIcon className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0"/>
-      <div className="relative flex-grow">
-        <input
-          type="text"
-          placeholder="Поиск событий"
-          className="w-full bg-transparent focus:outline-none text-[#0C0D0E] placeholder-gray-400"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-        {searchQuery && (
-          <button onClick={() => onSearchChange('')}
-                  className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600"
-                  aria-label="Очистить поиск">
-            <XIcon className="w-5 h-5"/>
-          </button>
-        )}
-      </div>
-      <button onClick={onFilterClick} aria-label="Фильтры" className="ml-2 flex-shrink-0">
-        <FilterIcon className="w-6 h-6 text-gray-600"/>
-      </button>
-    </div>
-  </header>
-);
-
 const SearchResultsInfo: React.FC<{ count: number; query: string; onReset: () => void; }> = ({
                                                                                                count,
                                                                                                query,
                                                                                                onReset
                                                                                              }) => (
   <div
-    className="absolute top-24 left-4 right-4 bg-gray-100 p-3 rounded-xl flex justify-between items-center z-30 shadow-sm animate-fade-in-down">
+    className="absolute top-36 left-4 right-4 bg-gray-100 p-3 rounded-xl flex justify-between items-center z-30 shadow-sm animate-fade-in-down">
     <p className="text-sm text-gray-700">Найдено {count} по запросу: <span
       className="font-semibold text-[#0C0D0E]">"{query}"</span></p>
     <button onClick={onReset} className="text-sm font-semibold text-[#007AFF] hover:underline">
       Сбросить
     </button>
-    <style>{`
-          @keyframes fade-in-down { 0% { opacity: 0; transform: translateY(-10px); } 100% { opacity: 1; transform: translateY(0); } }
-          .animate-fade-in-down { animation: fade-in-down 0.3s ease-out; }
-        `}</style>
   </div>
 );
 
 const MapScreen: React.FC<{
-  events: AppEvent[],
-  onSwitchView: () => void;
+  markers: MapMarker[];
+  onSelectEvent: (id: number) => void;
   isSearchActive: boolean;
   onResetSearch: () => void;
   onResetFilters: () => void;
-}> = ({events, onSwitchView, isSearchActive, onResetSearch, onResetFilters}) => {
-
-  return (
-    <div className="w-full h-full">
-      <div className="absolute inset-0 z-0">
-        <iframe
-          src="https://yandex.ru/map-widget/v1/?um=constructor%3Aa4ce07ce9e1982fdf2ff91bcaab73d5e7813568038d64c30469157376330f447&amp;source=constructor"
-          width="100%"
-          height="100%"
-          frameBorder="0"
-          title="Яндекс Карта событий"
-        ></iframe>
-      </div>
-
-      {events.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center z-10 p-4 bg-white/80 backdrop-blur-sm">
+}> = ({markers, onSelectEvent, isSearchActive, onResetSearch, onResetFilters}) => {
+  if (markers.length === 0) {
+    return (
+      <div className="relative w-full h-full bg-gray-200">
+        <div className="absolute inset-0 pt-36 flex items-center justify-center z-10 p-4 bg-white/80 backdrop-blur-sm">
           {isSearchActive ? (
             <EmptyState Icon={MagnifyingGlassIllustrationIcon} title="Ничего не найдено"
                         subtitle="Возможно, в запросе опечатка? Попробуйте переформулировать."
@@ -246,123 +148,88 @@ const MapScreen: React.FC<{
                         action={{text: "Сбросить фильтры", onClick: onResetFilters, type: 'secondary'}}/>
           )}
         </div>
-      )}
-
-      <div className="absolute top-24 right-4 z-40 space-y-3">
-        <button className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-lg"
-                aria-label="Найти меня"><GeolocationIcon className="w-7 h-7 text-[#007AFF]"/></button>
-        <button onClick={onSwitchView}
-                className="w-14 h-14 bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] rounded-full flex items-center justify-center shadow-lg"
-                aria-label="Переключить на список"><ListIcon className="w-7 h-7 text-white"/></button>
-        <button
-          onClick={() => window.location.hash = '#/chat'}
-          className="w-14 h-14 bg-[linear-gradient(155deg,#BF97FF_6.6%,#526EFF_84.12%)] rounded-full flex items-center justify-center shadow-lg"
-          aria-label="Открыть Помощника Добра"
-        >
-          <SparklesIcon className="w-7 h-7 text-white"/>
-        </button>
       </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-full pt-36">
+      <InteractiveMap markers={markers} onMarkerClick={onSelectEvent}/>
     </div>
   );
 };
+
 
 const FeedScreen: React.FC<{
   events: AppEvent[],
   loading: boolean;
-  onSwitchView: () => void;
   isSearchActive: boolean;
   onResetSearch: () => void;
   onResetFilters: () => void;
   stories: Story[];
-}> = ({events, loading, onSwitchView, isSearchActive, onResetSearch, onResetFilters, stories}) => {
-
-  const onSelectEvent = (id: number) => {
-    window.location.hash = `#/events/${id}`;
-  };
-
-  const onSelectStory = (id: number) => {
-    window.location.hash = `#/stories/${id}`;
-  };
-
-  return (
-    <div className={`w-full bg-gray-50 transition-all duration-300 ${isSearchActive ? 'pt-40' : 'pt-24'}`}>
-      <main className="px-4 space-y-4">
-        {loading ? (<> <SkeletonCard/> <SkeletonCard/> <SkeletonCard/> </>)
-          : (
-            <>
-              {stories.length > 0 && <StoriesCarousel stories={stories} onSelectStory={onSelectStory}/>}
-              {events.length > 0 ? (
-                events.map(event => (<button key={event.id} onClick={() => onSelectEvent(event.id)}
-                                             className="w-full transition-transform duration-200 active:scale-95">
-                  <EventCard event={event}/></button>))
+  onSelectEvent: (id: number) => void;
+  onSelectStory: (id: number) => void;
+}> = ({events, loading, isSearchActive, onResetSearch, onResetFilters, stories, onSelectEvent, onSelectStory}) => (
+  <div className={`w-full bg-gray-50 transition-all duration-300 pt-36`}>
+    <main className="px-4 space-y-4">
+      {loading ? (<> <SkeletonCard/> <SkeletonCard/> <SkeletonCard/> </>)
+        : (
+          <>
+            {stories.length > 0 && <StoriesCarousel stories={stories} onSelectStory={onSelectStory}/>}
+            {events.length > 0 ? (
+              events.map(event => (<button key={event.id} onClick={() => onSelectEvent(event.id)}
+                                           className="w-full transition-transform duration-200 active:scale-95">
+                <EventCard event={event}/></button>))
+            ) : (
+              isSearchActive ? (
+                <EmptyState Icon={MagnifyingGlassIllustrationIcon} title="Ничего не найдено"
+                            subtitle="Возможно, в запросе опечатка? Попробуйте переформулировать."
+                            action={{text: "Сбросить поиск", onClick: onResetSearch, type: 'secondary'}}/>
               ) : (
-                isSearchActive ? (
-                  <EmptyState Icon={MagnifyingGlassIllustrationIcon} title="Ничего не найдено"
-                              subtitle="Возможно, в запросе опечатка? Попробуйте переформулировать."
-                              action={{text: "Сбросить поиск", onClick: onResetSearch, type: 'secondary'}}/>
-                ) : (
-                  <EmptyState Icon={BinocularsIllustrationIcon} title="По этим фильтрам тихо"
-                              subtitle="Попробуйте изменить параметры или расширить радиус поиска."
-                              action={{text: "Сбросить фильтры", onClick: onResetFilters, type: 'secondary'}}/>
-                )
-              )}
-            </>
-          )}
-      </main>
+                <EmptyState Icon={BinocularsIllustrationIcon} title="По этим фильтрам тихо"
+                            subtitle="Попробуйте изменить параметры или расширить радиус поиска."
+                            action={{text: "Сбросить фильтры", onClick: onResetFilters, type: 'secondary'}}/>
+              )
+            )}
+          </>
+        )}
+    </main>
+  </div>
+);
 
-      <div className="absolute top-24 right-4 z-40 space-y-3">
-        <button onClick={onSwitchView}
-                className="w-14 h-14 bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] rounded-full flex items-center justify-center shadow-lg"
-                aria-label="Переключить на карту">
-          <LocationMarkerIcon className="w-7 h-7 text-white"/>
-        </button>
-        <button
-          onClick={() => window.location.hash = '#/chat'}
-          className="w-14 h-14 bg-[linear-gradient(155deg,#BF97FF_6.6%,#526EFF_84.12%)] rounded-full flex items-center justify-center shadow-lg"
-          aria-label="Открыть Помощника Добра"
-        >
-          <SparklesIcon className="w-7 h-7 text-white"/>
-        </button>
-      </div>
-    </div>
-  );
-};
-
-const HomePage: React.FC = () => {
+export default function HomePage() {
+  const navigate = useNavigate();
   const [view, setView] = useState<'map' | 'feed'>('map');
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<Filters>(defaultFilters);
   const [searchQuery, setSearchQuery] = useState('');
   const [allEvents, setAllEvents] = useState<AppEvent[]>([]);
   const [allStories, setAllStories] = useState<Story[]>([]);
+  const [allMarkers, setAllMarkers] = useState<MapMarker[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadEvents = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const events = await fetchAllEvents();
-      setAllEvents(events);
-    } catch (err) {
-      setError("Не удалось загрузить события. Проверьте ваше интернет-соединение и попробуйте снова.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    loadEvents();
-    const loadStories = async () => {
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const stories = await fetchAllStories();
+        const [events, stories, markers] = await Promise.all([
+          fetchAllEvents(),
+          fetchAllStories(),
+          fetchMapMarkers()
+        ]);
+        setAllEvents(events);
         setAllStories(stories.slice(0, 5));
+        setAllMarkers(markers);
       } catch (err) {
-        console.error("Failed to load stories for carousel");
+        setError("Не удалось загрузить данные. Проверьте ваше интернет-соединение и попробуйте снова.");
+      } finally {
+        setLoading(false);
       }
     };
-    loadStories();
-  }, [loadEvents]);
+    loadData();
+  }, []);
 
   const filteredEvents = useMemo(() => {
     const baseFiltered = allEvents.filter(event => {
@@ -375,47 +242,121 @@ const HomePage: React.FC = () => {
     return baseFiltered.filter(event => event.title.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [appliedFilters, searchQuery, allEvents]);
 
+  const filteredMarkers = useMemo(() => {
+    const eventIds = new Set(filteredEvents.map(e => e.id));
+    return allMarkers.filter(m => eventIds.has(m.id));
+  }, [filteredEvents, allMarkers]);
+
   const handleApplyFilters = (newFilters: Filters) => {
     setAppliedFilters(newFilters);
     setIsFilterPanelOpen(false);
   };
 
   const handleResetFilters = () => setAppliedFilters(defaultFilters);
+  const onSelectEvent = (id: number) => navigate(`/events/${id}`);
+  const onSelectStory = (id: number) => navigate(`/stories/${id}`);
   const isSearchActive = searchQuery.length > 0;
 
   if (error && !loading) {
     return (
       <div className="w-full h-full flex items-center justify-center p-4">
-        <EmptyState Icon={ServerErrorIcon} title="Что-то пошло не так" subtitle={error}
-                    action={{text: 'Попробовать снова', onClick: loadEvents, type: 'primary'}}/>
+        <EmptyState Icon={ServerCrash} title="Что-то пошло не так" subtitle={error}
+                    action={{
+                      text: 'Попробовать снова', onClick: () => {
+                        window.location.reload();
+                      }, type: 'primary'
+                    }}/>
       </div>
     )
   }
 
   return (
     <div className="w-full h-full relative">
-      <Header onFilterClick={() => setIsFilterPanelOpen(true)} searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}/>
+      <header className="absolute top-0 left-0 right-0 p-4 z-40 space-y-3">
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => navigate('/chat')}
+            className="bg-blue-100 text-blue-600 font-semibold py-2 px-4 rounded-full flex items-center space-x-2 shadow-sm transition-transform hover:scale-105 active:scale-95"
+            aria-label="Открыть Помощника"
+          >
+            <Sparkles className="w-5 h-5"/>
+            <span>{UI_TEXT.ASSISTANT_NAME}</span>
+          </button>
+
+          <div className="bg-gray-100 p-1 rounded-full flex items-center space-x-1 shadow-sm">
+            <button
+              onClick={() => setView('feed')}
+              className={`px-4 py-1.5 rounded-full flex items-center space-x-2 text-sm font-semibold transition-all duration-200 ${
+                view === 'feed' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-600'
+              }`}
+              aria-pressed={view === 'feed'}
+            >
+              <List className="w-5 h-5"/>
+              <span>Список</span>
+            </button>
+            <button
+              onClick={() => setView('map')}
+              className={`px-4 py-1.5 rounded-full flex items-center space-x-2 text-sm font-semibold transition-all duration-200 ${
+                view === 'map' ? 'bg-white text-[#007AFF] shadow-sm border border-gray-300' : 'text-gray-600'
+              }`}
+              aria-pressed={view === 'map'}
+            >
+              <MapPinIcon className="w-5 h-5"/>
+              <span>Карта</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md flex items-center px-4 py-2">
+          <Search className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0"/>
+          <div className="relative flex-grow">
+            <input
+              type="text"
+              placeholder="Поиск событий"
+              className="w-full bg-transparent focus:outline-none text-[#0C0D0E] placeholder-gray-400"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')}
+                      className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600"
+                      aria-label="Очистить поиск">
+                <X className="w-5 h-5"/>
+              </button>
+            )}
+          </div>
+          <button onClick={() => setIsFilterPanelOpen(true)} aria-label="Фильтры" className="ml-2 flex-shrink-0">
+            <Filter className="w-6 h-6 text-gray-600"/>
+          </button>
+        </div>
+      </header>
+
       {isSearchActive && (
         <SearchResultsInfo count={filteredEvents.length} query={searchQuery} onReset={() => setSearchQuery('')}/>)}
+
       {view === 'map' ? (
-        <MapScreen events={filteredEvents} onSwitchView={() => setView('feed')} isSearchActive={isSearchActive}
-                   onResetSearch={() => setSearchQuery('')} onResetFilters={handleResetFilters}/>
+        <MapScreen
+          markers={filteredMarkers}
+          onSelectEvent={onSelectEvent}
+          isSearchActive={isSearchActive}
+          onResetSearch={() => setSearchQuery('')}
+          onResetFilters={handleResetFilters}
+        />
       ) : (
         <FeedScreen
           events={filteredEvents}
           loading={loading}
-          onSwitchView={() => setView('map')}
           isSearchActive={isSearchActive}
           onResetSearch={() => setSearchQuery('')}
           onResetFilters={handleResetFilters}
           stories={allStories}
+          onSelectEvent={onSelectEvent}
+          onSelectStory={onSelectStory}
         />
       )}
+
       <FilterPanel isOpen={isFilterPanelOpen} onClose={() => setIsFilterPanelOpen(false)} onApply={handleApplyFilters}
                    initialFilters={appliedFilters} eventCount={filteredEvents.length}/>
     </div>
   );
 };
-
-export default HomePage;

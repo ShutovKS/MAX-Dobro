@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {fetchActivityHistoryEvents} from '../../../lib/api';
 import type {HistoryEvent} from '../../../lib/types';
-import {SearchIcon, XIcon} from '../../../components/ui/icons';
+import {Search, X} from 'lucide-react';
 
 const SelectEventModal: React.FC<{
   isOpen: boolean;
@@ -44,14 +44,14 @@ const SelectEventModal: React.FC<{
           <button onClick={onClose}
                   className="w-12 h-10 flex items-center justify-center text-gray-500 hover:text-gray-800"
                   aria-label="Закрыть">
-            <XIcon className="w-6 h-6"/>
+            <X className="w-6 h-6"/>
           </button>
         </header>
 
         <div className="p-4 flex-shrink-0">
           <div className="relative">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <SearchIcon className="w-5 h-5 text-gray-400"/>
+                            <Search className="w-5 h-5 text-gray-400"/>
                         </span>
             <input
               type="text"

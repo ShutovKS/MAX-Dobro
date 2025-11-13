@@ -1,6 +1,6 @@
 import React from 'react';
 import type {OrganizationEvent} from '../../../lib/types';
-import {DotsHorizontalIcon, PencilIcon, UserGroupIcon} from '../../../components/ui/icons';
+import {MoreHorizontal, Pencil, Users} from 'lucide-react';
 
 interface EventManagementCardProps {
   event: OrganizationEvent;
@@ -32,7 +32,7 @@ const EventManagementCard: React.FC<EventManagementCardProps> = ({event, onSelec
 
       {event.status !== 'draft' && (
         <div className="flex items-center space-x-2 text-sm text-[rgb(12,13,14,0.52)] mb-4">
-          <UserGroupIcon className="w-5 h-5"/>
+          <Users className="w-5 h-5"/>
           <span className="font-semibold text-[#0C0D0E]">{event.participantCount} / {event.capacity}</span>
           <span>участников</span>
           {event.newApplications > 0 && (
@@ -52,13 +52,13 @@ const EventManagementCard: React.FC<EventManagementCardProps> = ({event, onSelec
           onClick={(e) => handleButtonClick(e, () => onMore(event.id))}
           className="p-2 rounded-lg hover:bg-gray-200"
         >
-          <DotsHorizontalIcon className="w-6 h-6 text-gray-600"/>
+          <MoreHorizontal className="w-6 h-6 text-gray-600"/>
         </button>
         <button
           onClick={(e) => handleButtonClick(e, onEdit)}
           className="flex items-center space-x-2 font-semibold py-2 px-4 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors"
         >
-          <PencilIcon className="w-5 h-5"/>
+          <Pencil className="w-5 h-5"/>
           <span>{event.status === 'draft' ? 'Завершить' : 'Редактировать'}</span>
         </button>
       </div>

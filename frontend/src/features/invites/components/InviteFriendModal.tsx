@@ -1,7 +1,8 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import type {AppEvent} from '../../../lib/types';
-import {mockFriends} from '../../../lib/mockData';
-import {CalendarIcon, ListIcon, SearchIcon, XIcon} from '../../../components/ui/icons';
+import type {AppEvent, Friend} from '../../../lib/types';
+import {fetchFriends} from '../../../lib/api';
+import {Calendar, List, Search, X} from 'lucide-react';
+import {MODAL_TRANSITION_DURATION} from '../../../lib/constants';
 
 const CheckboxIcon: React.FC<{ checked: boolean }> = ({checked}) => {
   if (checked) {
@@ -29,13 +30,25 @@ const InviteFriendModal: React.FC<{
   onClose: () => void;
   onSend: () => void;
 }> = ({isOpen, event, onClose, onSend}) => {
+  const [allFriends, setAllFriends] = useState<Friend[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFriends, setSelectedFriends] = useState<number[]>([]);
 
+  useEffect(() => {
+    if (isOpen) {
+      fetchFriends().then(setAllFriends);
+    } else {
+      setTimeout(() => {
+        setSearchQuery('');
+        setSelectedFriends([]);
+      }, MODAL_TRANSITION_DURATION);
+    }
+  }, [isOpen]);
+
   const filteredFriends = useMemo(() => {
-    if (!searchQuery) return mockFriends;
-    return mockFriends.filter(friend => friend.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [searchQuery]);
+    if (!searchQuery) return allFriends;
+    return allFriends.filter(friend => friend.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [searchQuery, allFriends]);
 
   const toggleFriend = (id: number) => {
     setSelectedFriends(prev =>
@@ -48,17 +61,6 @@ const InviteFriendModal: React.FC<{
       onSend();
     }
   };
-
-  // Reset state on close
-  useEffect(() => {
-    if (!isOpen) {
-      // Add a small delay to allow animation to finish before clearing
-      setTimeout(() => {
-        setSearchQuery('');
-        setSelectedFriends([]);
-      }, 300);
-    }
-  }, [isOpen]);
 
   return (
     <div
@@ -73,10 +75,8 @@ const InviteFriendModal: React.FC<{
         style={{height: '85vh'}}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <header className="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
           <div className="w-12"></div>
-          {/* Spacer */}
           <div className="text-center">
             <div className="w-10 h-1.5 bg-gray-300 rounded-full mx-auto mb-2"></div>
             <h2 id="invite-friend-title" className="text-xl font-bold text-[#0C0D0E]">Пригласить друзей</h2>
@@ -84,27 +84,25 @@ const InviteFriendModal: React.FC<{
           <button onClick={onClose}
                   className="w-12 h-10 flex items-center justify-center text-gray-500 hover:text-gray-800"
                   aria-label="Закрыть">
-            <XIcon className="w-6 h-6"/>
+            <X className="w-6 h-6"/>
           </button>
         </header>
 
         <div className="p-6 pb-2 flex-shrink-0">
-          {/* Event Preview */}
           <div className="bg-gray-50 p-3 rounded-xl mb-4">
             <div className="flex items-center space-x-3">
-              <ListIcon className="w-5 h-5 text-gray-500 flex-shrink-0"/>
+              <List className="w-5 h-5 text-gray-500 flex-shrink-0"/>
               <span className="font-semibold text-sm text-[#0C0D0E] truncate">{event.title}</span>
             </div>
             <div className="flex items-center space-x-3 mt-1.5">
-              <CalendarIcon className="w-5 h-5 text-gray-500 flex-shrink-0"/>
+              <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0"/>
               <span className="text-sm text-gray-700">{event.date}</span>
             </div>
           </div>
 
-          {/* Search Bar */}
           <div className="relative">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <SearchIcon className="w-5 h-5 text-gray-400"/>
+                            <Search className="w-5 h-5 text-gray-400"/>
                         </span>
             <input
               type="text"
@@ -116,7 +114,6 @@ const InviteFriendModal: React.FC<{
           </div>
         </div>
 
-        {/* Friends List */}
         <main className="flex-grow overflow-y-auto px-6">
           <div className="divide-y divide-gray-100">
             {filteredFriends.map(friend => (
@@ -133,7 +130,6 @@ const InviteFriendModal: React.FC<{
           </div>
         </main>
 
-        {/* Sticky Footer */}
         <footer className="p-4 border-t border-gray-100 flex-shrink-0 bg-white">
           <button
             onClick={handleSend}

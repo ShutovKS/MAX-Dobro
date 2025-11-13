@@ -1,18 +1,6 @@
 import React, {useState} from 'react';
-import {
-  AnimalFriendIcon,
-  ArtVolunteerIcon,
-  CheckCircleIcon,
-  ElderlyHelperIcon,
-  NatureProtectorIcon
-} from '../../components/ui/icons';
-
-const interests = [
-  {id: 'nature', title: 'Защитник природы', Icon: NatureProtectorIcon},
-  {id: 'animals', title: 'Друг животных', Icon: AnimalFriendIcon},
-  {id: 'seniors', title: 'Помощник старшим', Icon: ElderlyHelperIcon},
-  {id: 'art', title: 'Арт-волонтер', Icon: ArtVolunteerIcon},
-];
+import {CheckCircle} from 'lucide-react';
+import {ONBOARDING_INTERESTS} from '../../lib/constants';
 
 interface InterestCardProps {
   title: string;
@@ -29,8 +17,8 @@ const InterestCard: React.FC<InterestCardProps> = ({title, Icon, isSelected, onC
       aria-pressed={isSelected}
     >
       {isSelected && (
-        <div className="absolute top-3 right-3 text-white bg-[#007AFF] rounded-full">
-          <CheckCircleIcon className="w-6 h-6"/>
+        <div className="absolute top-3 right-3 text-[#007AFF]">
+          <CheckCircle className="w-6 h-6 fill-white"/>
         </div>
       )}
       <div className="flex-grow flex items-center justify-center">
@@ -61,7 +49,7 @@ const OnboardingPage: React.FC<{ onComplete: () => void }> = ({onComplete}) => {
         </div>
 
         <div className="w-full max-w-sm grid grid-cols-2 gap-4">
-          {interests.map(interest => (
+          {ONBOARDING_INTERESTS.map(interest => (
             <InterestCard
               key={interest.id}
               title={interest.title}
