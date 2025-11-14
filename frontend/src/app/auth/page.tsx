@@ -144,6 +144,9 @@ const LoginView: React.FC<{
           </div>
         </div>
       </div>
+      <div className="absolute bottom-4 text-xs text-gray-400">
+        API Mode: {process.env.VITE_API_MODE}
+      </div>
     </div>
   );
 };

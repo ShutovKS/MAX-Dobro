@@ -1,10 +1,10 @@
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      VITE_API_MODE: 'real' | 'mock';
-      VITE_API_BASE_URL: string;
-      VITE_SUPABASE_URL: string;
-      VITE_SUPABASE_ANON_KEY: string;
+      readonly VITE_API_MODE: 'real' | 'mock';
+      readonly VITE_API_BASE_URL: string;
+      readonly VITE_SUPABASE_URL: string;
+      readonly VITE_SUPABASE_ANON_KEY: string;
     }
   }
 }

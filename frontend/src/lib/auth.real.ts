@@ -15,7 +15,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// 2. Вспомогательная функция для маппинга данных Supabase в наш тип User
 const mapSupabaseUserToAppUser = (supabaseUser: any, backendProfile: any): User => {
   return {
     ...backendProfile,
@@ -23,7 +22,6 @@ const mapSupabaseUserToAppUser = (supabaseUser: any, backendProfile: any): User 
   };
 };
 
-// 3. Реализуем основные функции
 export const login = async (email: string, password: string): Promise<{ user: User; token: string }> => {
   const {data, error} = await supabase.auth.signInWithPassword({email, password});
 
