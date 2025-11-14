@@ -19,7 +19,7 @@ import type {
   WeeklyChallenge
 } from './types';
 
-const API_BASE_URL = process.env.API_BASE_URL;
+const API_BASE_URL = process.env.VITE_API_BASE_URL;
 
 const getAuthToken = async (): Promise<string | null> => {
   if (!supabase) return null;

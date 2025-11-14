@@ -1,11 +1,10 @@
-// Fix: Augment NodeJS.ProcessEnv to avoid redeclaring 'process'.
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      API_MODE: 'real' | 'mock';
-      API_BASE_URL: string;
-      SUPABASE_URL: string;
-      SUPABASE_ANON_KEY: string;
+      VITE_API_MODE: 'real' | 'mock';
+      VITE_API_BASE_URL: string;
+      VITE_SUPABASE_URL: string;
+      VITE_SUPABASE_ANON_KEY: string;
     }
   }
 }

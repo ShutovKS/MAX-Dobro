@@ -1,9 +1,14 @@
 import {createClient} from '@supabase/supabase-js';
 import type {User} from './types';
 
+const API_BASE_URL = process.env.VITE_API_BASE_URL;
+if (!API_BASE_URL) {
+  throw new Error("API_BASE_URL must be provided in environment variables");
+}
+
 // 1. Создаем клиент Supabase
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Supabase URL and Anon Key must be provided in environment variables");
@@ -27,7 +32,7 @@ export const login = async (email: string, password: string): Promise<{ user: Us
     throw new Error(error?.message || 'Authentication failed');
   }
 
-  const profileResponse = await fetch(`${process.env.API_BASE_URL}/profile/me`, {
+  const profileResponse = await fetch(`${API_BASE_URL}/profile/me`, {
     headers: {'Authorization': `Bearer ${data.session.access_token}`}
   });
 
@@ -66,7 +71,7 @@ export const register = async (userData: {
 
   await new Promise(resolve => setTimeout(resolve, 1500));
 
-  const profileResponse = await fetch(`${process.env.API_BASE_URL}/profile/me`, {
+  const profileResponse = await fetch(`${API_BASE_URL}/profile/me`, {
     headers: {'Authorization': `Bearer ${data.session.access_token}`}
   });
 
@@ -98,7 +103,7 @@ export const getCurrentSession = async (): Promise<{ user: User; token: string }
   }
 
   try {
-    const profileResponse = await fetch(`${process.env.API_BASE_URL}/profile/me`, {
+    const profileResponse = await fetch(`${API_BASE_URL}/profile/me`, {
       headers: {'Authorization': `Bearer ${data.session.access_token}`}
     });
 
