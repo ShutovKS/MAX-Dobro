@@ -21,6 +21,7 @@ import { EventChatsModule } from './event-chats/event-chats.module';
 import { FriendsModule } from './friends/friends.module';
 import { ChallengesModule } from './challenges/challenges.module';
 import { MapModule } from './map/map.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { MapModule } from './map/map.module';
     FriendsModule,
     ChallengesModule,
     MapModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

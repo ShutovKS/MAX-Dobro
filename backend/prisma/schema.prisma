@@ -34,6 +34,7 @@ model User {
   friends   Friendship[] @relation("UserFriends")
   friendOf  Friendship[] @relation("FriendOf")
   challenges UserChallenge[]
+  reviews    Review[]
 
   supabaseUserId String @unique @map("supabase_user_id")
 
@@ -58,6 +59,7 @@ model Organization {
   updatedAt     DateTime @updatedAt
   events        Event[]
   subscribers   UserOrganizationSubscription[]
+  reviews       Review[]
 
   @@map("organizations")
 }
@@ -96,6 +98,7 @@ model Event {
   participants    EventParticipant[]
   stories         Story[]
   chat            EventChat?
+  reviews         Review[]
 
   @@map("events")
 }
@@ -358,4 +361,20 @@ model KarmaLog {
 
   @@index([createdAt(sort: Desc)])
   @@map("karma_logs")
+}
+
+model Review {
+  id             Int          @id @default(autoincrement())
+  rating         Int
+  text           String?      @db.Text
+  createdAt      DateTime     @default(now())
+  authorId       Int
+  author         User         @relation(fields: [authorId], references: [id])
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  eventId        Int
+  event          Event        @relation(fields: [eventId], references: [id])
+
+  @@unique([authorId, eventId], name: "user_event_review_unique")
+  @@map("reviews")
 }

@@ -52,7 +52,7 @@ export class EventsController {
   @ApiResponse({
     status: 200,
     description: 'List of events.',
-    type: [() => EventEntity],
+    type: [EventEntity],
   })
   findAll(@Query() paginationQuery: PaginationQueryDto) {
     return this.eventsService.findAll(paginationQuery);

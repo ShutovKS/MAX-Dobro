@@ -25,11 +25,15 @@ import { EventEntity } from '../events/entities/event.entity';
 import { OrganizationEntity } from './entities/organization.entity';
 import { OrganizationStatEntity } from './entities/organization-stat.entity';
 import { OrganizationsService } from './organizations.service';
+import { ReviewsService } from '../reviews/reviews.service';
+import { ReviewEntity } from '../reviews/entities/review.entity';
 
 @ApiTags('Organizations')
 @Controller('organizations')
 export class OrganizationsController {
-  constructor(private readonly organizationsService: OrganizationsService) {}
+  constructor(private readonly organizationsService: OrganizationsService,
+    private readonly reviewsService: ReviewsService
+  ) {}
 
   @Get()
   @UseGuards(OptionalAuthGuard)
@@ -38,7 +42,7 @@ export class OrganizationsController {
   @ApiResponse({
     status: 200,
     description: 'List of organizations.',
-    type: [() => OrganizationEntity],
+    type: [OrganizationEntity],
   })
   findAll(
     @Query() pagination: PaginationQueryDto,
@@ -114,8 +118,17 @@ export class OrganizationsController {
   })
   @ApiResponse({ status: 404, description: 'Organization not found.' })
   getDashboardStats(@Param('id', ParseIntPipe) id: number) {
-    // В будущем здесь можно добавить проверку прав, что текущий пользователь
-    // является администратором организации 'id'
     return this.organizationsService.getDashboardStats(id);
+  }
+
+  @Get(':id/reviews')
+  @ApiOperation({ summary: "Get an organization's reviews" })
+  @ApiResponse({ status: 200, type: [ReviewEntity] })
+  @ApiResponse({ status: 404, description: 'Organization not found.' })
+  getReviews(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() pagination: PaginationQueryDto,
+  ) {
+    return this.reviewsService.findAllForOrganization(id, pagination);
   }
 }
