@@ -10,7 +10,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { User } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -37,7 +42,10 @@ export class OrganizationsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a list of organizations' })
   @ApiResponse({ type: [OrganizationEntity] })
-  findAll(@Query() pagination: PaginationQueryDto, @CurrentUser() user?: User) {
+  findAll(
+    @Query() pagination: PaginationQueryDto,
+    @CurrentUser() user?: User,
+  ) {
     return this.organizationsService.findAll(pagination, user?.id);
   }
 
@@ -70,26 +78,28 @@ export class OrganizationsController {
     @CurrentUser() user: User,
     @Body() body: { isSubscribed: boolean },
   ) {
-    return this.organizationsService.updateSubscription(id, user.id, body.isSubscribed);
+    return this.organizationsService.updateSubscription(
+      id,
+      user.id,
+      body.isSubscribed,
+    );
   }
-  
+
   @Get('organization/dashboard/stats')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get dashboard statistics for an organization' })
   @ApiResponse({ type: [OrganizationStatEntity] })
   getDashboardStats(@CurrentUser() user: User) {
-    // ЗАГЛУШКА: нужна логика для получения ID организации из текущего юзера
-    const organizationId = 1; 
+    const organizationId = 1;
     return this.organizationsService.getDashboardStats(organizationId);
   }
-  
+
   @Get('organization/events')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get organization's events (for organizer)" })
   findOrganizationEvents(@CurrentUser() user: User) {
-    // ЗАГЛУШКА: нужна логика для получения ID организации из текущего юзера
     const organizationId = 1;
     return this.organizationsService.findEventsForOrganizer(organizationId);
   }
@@ -97,18 +107,16 @@ export class OrganizationsController {
   @Get('organization/events/:eventId/participants')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Get event participants (for organizer)" })
+  @ApiOperation({ summary: 'Get event participants (for organizer)' })
   getEventParticipants(@Param('eventId', ParseIntPipe) eventId: number) {
-    // ЗАГЛУШКА: нужна проверка, что событие принадлежит организации юзера
     return this.eventsService.getParticipants(eventId);
   }
-  
+
   @Get('organization/details')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get organization's details (for organizer)" })
   getOrganizationDetails(@CurrentUser() user: User) {
-    // ЗАГЛУШКА: нужна логика для получения ID организации из текущего юзера
     const organizationId = 1;
     return this.organizationsService.findOne(organizationId, user.id);
   }

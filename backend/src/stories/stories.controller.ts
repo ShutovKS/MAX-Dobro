@@ -64,7 +64,10 @@ export class StoriesController {
   @ApiOperation({ summary: 'Unlike a story' })
   @ApiResponse({ status: 204, description: 'Story unliked successfully.' })
   @ApiResponse({ status: 404, description: 'Like not found.' })
-  unlikeStory(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+  unlikeStory(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: User,
+  ) {
     return this.storiesService.unlikeStory(id, user.id);
   }
 }

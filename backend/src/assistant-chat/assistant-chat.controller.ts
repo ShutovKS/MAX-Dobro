@@ -17,8 +17,8 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
 import { AssistantChatService } from './assistant-chat.service';
-import { ChatMessageEntity } from './entities/chat-message.entity';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { ChatMessageEntity } from './entities/chat-message.entity';
 
 @ApiTags('Chat')
 @Controller('assistant-chat')

@@ -21,6 +21,7 @@ import {
 import type { User } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
 import { PublicUserEntity } from '../users/entities/public-user.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
@@ -28,7 +29,6 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { EventParticipantEntity } from './entities/event-participant.entity';
 import { EventEntity } from './entities/event.entity';
 import { EventsService } from './events.service';
-import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
 
 @ApiTags('Events')
 @Controller('events')
@@ -70,10 +70,7 @@ export class EventsController {
     type: EventEntity,
   })
   @ApiResponse({ status: 404, description: 'Event not found.' })
-  findOne(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user?: User,
-  ) {
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: User) {
     return this.eventsService.findOne(id, user?.id);
   }
 

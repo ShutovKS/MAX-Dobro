@@ -11,9 +11,9 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import { ProfileEntity } from './entities/profile.entity';
 import { UserAchievementEntity } from './entities/user-achievement.entity';
 import { UserCertificateEntity } from './entities/user-certificate.entity';
+import { UserCourseEntity } from './entities/user-course.entity';
 import { UserEventsEntity } from './entities/user-events.entity';
 import { UserRewardEntity } from './entities/user-reward.entity';
-import { UserCourseEntity } from './entities/user-course.entity';
 import { AuthGuard } from './guards/auth.guard';
 
 @ApiTags('Profile')
@@ -90,7 +90,7 @@ export class ProfileController {
     return this.authService.getUserAchievements(user.id);
   }
 
-   @Get('me/courses')
+  @Get('me/courses')
   @ApiOperation({ summary: "Get current user's courses with progress" })
   @ApiResponse({
     status: 200,
