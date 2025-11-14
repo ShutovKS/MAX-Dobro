@@ -9,8 +9,11 @@ import type { User } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { ProfileEntity } from './entities/profile.entity';
-import { UserEventsEntity } from './entities/user-events.entity';
+import { UserAchievementEntity } from './entities/user-achievement.entity';
 import { UserCertificateEntity } from './entities/user-certificate.entity';
+import { UserEventsEntity } from './entities/user-events.entity';
+import { UserRewardEntity } from './entities/user-reward.entity';
+import { UserCourseEntity } from './entities/user-course.entity';
 import { AuthGuard } from './guards/auth.guard';
 
 @ApiTags('Profile')
@@ -29,18 +32,27 @@ export class ProfileController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 404, description: 'User profile not found.' })
-  async getMe(@CurrentUser() user: User): Promise<ProfileEntity> {
+  async getMe(@CurrentUser() user: User): Promise<any> {
     const fullProfile = await this.authService.getProfile(user.id);
 
     if (!fullProfile) {
       throw new NotFoundException('User profile could not be found.');
     }
-    const levelName = this.authService.calculateLevel(fullProfile.karmaPoints);
+    const levelInfo = this.authService.calculateLevel(fullProfile.karmaPoints);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { supabaseUserId, ...profileData } = fullProfile;
+    const stats = [
+      { id: '1', value: String(fullProfile.totalHours), label: 'Часы' },
+      { id: '2', value: String(fullProfile.karmaPoints), label: 'Карма' },
+    ];
 
-    return { ...profileData, levelName };
+    return {
+      ...fullProfile,
+      name: `${fullProfile.firstName || ''} ${fullProfile.lastName || ''}`.trim(),
+      level: levelInfo.level,
+      progress: levelInfo.progress,
+      nextLevel: levelInfo.nextLevel,
+      stats,
+    };
   }
 
   @Get('me/events')
@@ -52,7 +64,7 @@ export class ProfileController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   getMyEvents(@CurrentUser() user: User) {
-    return this.authService.getUserEvents(user.id, user.supabaseUserId);
+    return this.authService.getUserEvents(user.id);
   }
 
   @Get('me/certificates')
@@ -60,5 +72,32 @@ export class ProfileController {
   @ApiResponse({ status: 200, type: [UserCertificateEntity] })
   getMyCertificates(@CurrentUser() user: User) {
     return this.authService.getUserCertificates(user.id);
+  }
+
+  @Get('me/rewards')
+  @ApiOperation({ summary: "Get current user's purchased rewards" })
+  @ApiResponse({ status: 200, type: [UserRewardEntity] })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  getMyRewards(@CurrentUser() user: User) {
+    return this.authService.getUserRewards(user.id);
+  }
+
+  @Get('me/achievements')
+  @ApiOperation({ summary: "Get current user's unlocked achievements" })
+  @ApiResponse({ status: 200, type: [UserAchievementEntity] })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  getMyAchievements(@CurrentUser() user: User) {
+    return this.authService.getUserAchievements(user.id);
+  }
+
+   @Get('me/courses')
+  @ApiOperation({ summary: "Get current user's courses with progress" })
+  @ApiResponse({
+    status: 200,
+    description: "A list of user's courses with their completion status.",
+    type: [UserCourseEntity],
+  })
+  getMyCourses(@CurrentUser() user: User) {
+    return this.authService.getUserCourses(user.id);
   }
 }

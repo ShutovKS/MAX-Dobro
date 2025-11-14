@@ -7,10 +7,41 @@ import { Prisma } from '@prisma/client';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrganizationEntity } from './entities/organization.entity';
+import { EventEntity } from '../events/entities/event.entity';
+import { OrganizationStatEntity } from './entities/organization-stat.entity';
 
 @Injectable()
 export class OrganizationsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private getOrgInclude() {
+    return {
+      _count: {
+        select: { subscribers: true },
+      },
+    };
+  }
+
+  private mapToEntity(
+    org: Prisma.OrganizationGetPayload<{
+      include: { _count: { select: { subscribers: true } } };
+    }>,
+    isSubscribed?: boolean,
+  ): OrganizationEntity {
+    const { _count, ...rest } = org;
+    const entity: OrganizationEntity = {
+      ...rest,
+      rating: rest.rating,
+      reviewCount: rest.reviewCount,
+      subscribers: _count.subscribers,
+    };
+
+    if (isSubscribed !== undefined) {
+      entity.isSubscribed = isSubscribed;
+    }
+
+    return entity;
+  }
 
   async findAll(
     pagination: PaginationQueryDto,
@@ -23,33 +54,35 @@ export class OrganizationsService {
       skip,
       take: limit,
       orderBy: { name: 'asc' },
+      include: this.getOrgInclude(),
     });
 
     if (!userId) {
-      return organizations;
+      return organizations.map((org) => this.mapToEntity(org));
     }
 
-    const subscriptions = await this.prisma.userOrganizationSubscription.findMany(
-      {
-        where: { userId },
+    const subscriptions =
+      await this.prisma.userOrganizationSubscription.findMany({
+        where: {
+          userId,
+          organizationId: { in: organizations.map((o) => o.id) },
+        },
         select: { organizationId: true },
-      },
+      });
+
+    const subscribedIds = new Set(
+      subscriptions.map((sub) => sub.organizationId),
     );
 
-    const subscribedIds = new Set(subscriptions.map((sub) => sub.organizationId));
-
-    return organizations.map((org) => ({
-      ...org,
-      isSubscribed: subscribedIds.has(org.id),
-    }));
+    return organizations.map((org) =>
+      this.mapToEntity(org, subscribedIds.has(org.id)),
+    );
   }
 
-  async findOne(
-    id: number,
-    userId?: number,
-  ): Promise<OrganizationEntity | null> {
+  async findOne(id: number, userId?: number): Promise<OrganizationEntity> {
     const organization = await this.prisma.organization.findUnique({
       where: { id },
+      include: this.getOrgInclude(),
     });
 
     if (!organization) {
@@ -57,7 +90,7 @@ export class OrganizationsService {
     }
 
     if (!userId) {
-      return organization;
+      return this.mapToEntity(organization);
     }
 
     const subscription =
@@ -65,7 +98,37 @@ export class OrganizationsService {
         where: { userId_organizationId: { userId, organizationId: id } },
       });
 
-    return { ...organization, isSubscribed: !!subscription };
+    return this.mapToEntity(organization, !!subscription);
+  }
+
+  async findEvents(
+    organizationId: number,
+    pagination: PaginationQueryDto,
+  ): Promise<EventEntity[]> {
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+
+    const organization = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+    });
+
+    if (!organization) {
+      throw new NotFoundException(
+        `Organization with ID ${organizationId} not found.`,
+      );
+    }
+
+    return this.prisma.event.findMany({
+      skip,
+      take: limit,
+      where: { organizationId },
+      include: {
+        _count: {
+          select: { participants: true },
+        },
+      },
+      orderBy: { date: 'asc' },
+    });
   }
 
   async subscribe(organizationId: number, userId: number): Promise<void> {
@@ -114,5 +177,51 @@ export class OrganizationsService {
       }
       throw error;
     }
+  }
+
+  async getDashboardStats(organizationId: number) {
+    const organization = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      include: {
+        _count: {
+          select: { subscribers: true, events: true },
+        },
+      },
+    });
+
+    if (!organization) {
+      throw new NotFoundException(
+        `Organization with ID ${organizationId} not found.`,
+      );
+    }
+
+    const stats: OrganizationStatEntity[] = [
+      {
+        id: 'subscribers',
+        label: 'Подписчики',
+        value: organization._count.subscribers.toLocaleString('ru-RU'),
+        change: '+5', // Mocked data
+      },
+      {
+        id: 'events_total',
+        label: 'Всего событий',
+        value: organization._count.events.toLocaleString('ru-RU'),
+        change: '+1', // Mocked data
+      },
+      {
+        id: 'rating',
+        label: 'Рейтинг',
+        value: organization.rating?.toFixed(1) ?? 'N/A',
+        change: '-0.1', // Mocked data
+      },
+      {
+        id: 'reviews',
+        label: 'Отзывы',
+        value: organization.reviewCount.toLocaleString('ru-RU'),
+        change: '+12', // Mocked data
+      },
+    ];
+
+    return stats;
   }
 }

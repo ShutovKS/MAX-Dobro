@@ -21,12 +21,14 @@ import {
 import type { User } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { PublicUserEntity } from '../users/entities/public-user.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { EventParticipantEntity } from './entities/event-participant.entity';
 import { EventEntity } from './entities/event.entity';
 import { EventsService } from './events.service';
+import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
 
 @ApiTags('Events')
 @Controller('events')
@@ -40,7 +42,7 @@ export class EventsController {
   @ApiResponse({
     status: 201,
     description: 'The event has been successfully created.',
-    type: EventEntity,
+    type: () => EventEntity,
   })
   create(@Body() createEventDto: CreateEventDto) {
     return this.eventsService.create(createEventDto);
@@ -58,6 +60,8 @@ export class EventsController {
   }
 
   @Get(':id')
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a single event by its ID' })
   @ApiParam({ name: 'id', required: true, description: 'Event ID' })
   @ApiResponse({
@@ -66,8 +70,23 @@ export class EventsController {
     type: EventEntity,
   })
   @ApiResponse({ status: 404, description: 'Event not found.' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.eventsService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user?: User,
+  ) {
+    return this.eventsService.findOne(id, user?.id);
+  }
+
+  @Get(':id/participants')
+  @ApiOperation({ summary: 'Get a list of event participants' })
+  @ApiResponse({
+    status: 200,
+    description: "List of event's participants.",
+    type: [() => PublicUserEntity],
+  })
+  @ApiResponse({ status: 404, description: 'Event not found.' })
+  getParticipants(@Param('id', ParseIntPipe) id: number) {
+    return this.eventsService.getParticipants(id);
   }
 
   @Patch(':id')
@@ -77,7 +96,7 @@ export class EventsController {
   @ApiResponse({
     status: 200,
     description: 'The event has been successfully updated.',
-    type: EventEntity,
+    type: () => EventEntity,
   })
   @ApiResponse({ status: 404, description: 'Event not found.' })
   update(
@@ -108,7 +127,7 @@ export class EventsController {
   @ApiResponse({
     status: 201,
     description: 'Successfully registered for the event.',
-    type: EventParticipantEntity,
+    type: () => EventParticipantEntity,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 404, description: 'Event not found.' })
@@ -144,7 +163,9 @@ export class EventsController {
   @Patch(':eventId/participants/:userId')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update participant status (organization admin only)' })
+  @ApiOperation({
+    summary: 'Update participant status (organization admin only)',
+  })
   updateParticipantStatus(
     @Param('eventId', ParseIntPipe) eventId: number,
     @Param('userId', ParseIntPipe) userId: number,

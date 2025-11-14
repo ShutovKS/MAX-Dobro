@@ -1,5 +1,4 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { EventEntity } from '../events/entities/event.entity';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface SupabaseUserPayload {
@@ -7,8 +6,10 @@ interface SupabaseUserPayload {
   email?: string;
   raw_user_meta_data?: {
     name?: string;
+    avatar_url?: string;
   };
 }
+
 @Injectable()
 export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
@@ -26,12 +27,30 @@ export class AuthService {
     });
   }
 
-  calculateLevel(karmaPoints: number): string {
-    if (karmaPoints <= 100) return 'Новичок';
-    if (karmaPoints <= 500) return 'Активист';
-    if (karmaPoints <= 1500) return 'Лидер';
-    if (karmaPoints <= 5000) return 'Мастер';
-    return 'Амбассадор';
+  calculateLevel(karmaPoints: number) {
+    const levels = [
+      { name: 'Новичок', threshold: 0 },
+      { name: 'Активист', threshold: 101 },
+      { name: 'Лидер', threshold: 501 },
+      { name: 'Мастер', threshold: 1501 },
+      { name: 'Амбассадор', threshold: 5001 },
+    ];
+
+    const current =
+      [...levels].reverse().find((l) => karmaPoints >= l.threshold) ??
+      levels[0];
+    const next = levels.find((l) => karmaPoints < l.threshold);
+
+    const progress = next
+      ? (karmaPoints - current.threshold) /
+        (next.threshold - current.threshold)
+      : 1;
+
+    return {
+      level: current.name,
+      progress: Math.min(1, Math.max(0, progress)),
+      nextLevel: next?.name ?? null,
+    };
   }
 
   async createLocalUserAfterSignUp(payload: SupabaseUserPayload) {
@@ -39,12 +58,19 @@ export class AuthService {
       throw new InternalServerErrorException('Email is required');
     }
 
+    const fullName = payload.raw_user_meta_data?.name ?? '';
+    const nameParts = fullName.split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ');
+
     try {
       return await this.prisma.user.create({
         data: {
           supabaseUserId: payload.id,
           email: payload.email,
-          name: payload.raw_user_meta_data?.name,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          avatarUrl: payload.raw_user_meta_data?.avatar_url,
         },
       });
     } catch (error) {
@@ -53,43 +79,114 @@ export class AuthService {
     }
   }
 
-  async getUserEvents(userId: number, supabaseUserId: string) {
-    return this.prisma.fromUser(supabaseUserId, async (prisma) => {
-      const participations = await prisma.eventParticipant.findMany({
-        where: { userId },
+  async getUserEvents(userId: number) {
+    const participations = await this.prisma.eventParticipant.findMany({
+      where: { userId },
+      include: {
+        event: {
+          include: {
+            _count: {
+              select: { participants: true },
+            },
+            organization: {
+              select: { name: true },
+            }
+          },
+        },
+      },
+      orderBy: {
+        event: {
+          date: 'asc',
+        },
+      },
+    });
+
+    const now = new Date();
+    const upcoming: any[] = [];
+    const past: any[] = [];
+    
+    const mapToHistoryEvent = (participation: any) => {
+      const { event, ...restParticipation } = participation;
+      const { organization, durationHours, karmaPoints, ...restEvent } = event;
+
+      return {
+        ...restEvent,
+        location: event.location ?? '',
+        organizationName: organization.name,
+        participantCount: event._count.participants,
+        rewards: {
+          hours: durationHours,
+          karma: karmaPoints,
+        },
+        // 'role' пока не реализовано, можно вернуть null или не включать
+      };
+    };
+
+    for (const p of participations) {
+      const historyEvent = mapToHistoryEvent(p);
+      if (p.event.date >= now) {
+        upcoming.push({ ...historyEvent, status: 'upcoming' });
+      } else {
+        past.push({ ...historyEvent, status: 'past' });
+      }
+    }
+    
+    return [...upcoming, ...past.reverse()];
+  }
+
+  async getUserCourses(userId: number) {
+    const [allCourses, userCertificates] = await Promise.all([
+      this.prisma.course.findMany({
         include: {
-          event: {
+          lessons: {
             include: {
-              _count: {
-                select: { participants: true },
+              questions: {
+                include: {
+                  answers: {
+                    select: { id: true, answer: true },
+                  },
+                },
               },
             },
           },
         },
-        orderBy: {
-          event: {
-            date: 'asc',
-          },
-        },
+      }),
+      this.prisma.userCertificate.findMany({
+        where: { userId },
+        select: { courseId: true },
+      }),
+    ]);
+
+    const completedCourseIds = new Set(
+      userCertificates.map((cert) => cert.courseId),
+    );
+
+    return allCourses.map((course) => {
+      const isCompleted = completedCourseIds.has(course.id);
+      
+      const status = isCompleted ? 'completed' : 'not-started';
+      const progress = isCompleted ? 1 : 0;
+      
+      const { lessons, ...courseData } = course;
+      
+      lessons.forEach((lesson) => {
+        lesson.questions.forEach((question) => {
+          // @ts-expect-error
+          question.id = question.id.toString();
+        });
       });
 
-      const now = new Date();
-      const upcoming: EventEntity[] = [];
-      const past: EventEntity[] = [];
-
-      for (const p of participations) {
-        if (p.event.date >= now) {
-          upcoming.push(p.event);
-        } else {
-          past.push(p.event);
-        }
-      }
-
-      return { upcoming, past };
+      return {
+        ...courseData,
+        hasCertificate: true,
+        status,
+        progress,
+        program: lessons,
+      };
     });
   }
-
-   async getUserCertificates(userId: number) {
+  
+  async getUserCertificates(userId: number) {
     return this.prisma.userCertificate.findMany({
       where: { userId },
       include: {
@@ -97,6 +194,30 @@ export class AuthService {
       },
       orderBy: {
         completedAt: 'desc',
+      },
+    });
+  }
+
+  async getUserRewards(userId: number) {
+    return this.prisma.userReward.findMany({
+      where: { userId },
+      include: {
+        reward: true,
+      },
+      orderBy: {
+        purchasedAt: 'desc',
+      },
+    });
+  }
+
+  async getUserAchievements(userId: number) {
+    return this.prisma.userAchievement.findMany({
+      where: { userId },
+      include: {
+        achievement: true,
+      },
+      orderBy: {
+        unlockedAt: 'desc',
       },
     });
   }

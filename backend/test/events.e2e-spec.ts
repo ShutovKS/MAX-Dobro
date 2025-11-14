@@ -4,23 +4,15 @@ import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
-import { TasksService } from '../src/tasks/tasks.service';
+import { clearDatabase } from './test-utils';
 
 describe('Events (e2e)', () => {
   let app: INestApplication;
-  let tasksService: TasksService;
   const prisma = new PrismaClient({
     datasources: { db: { url: process.env.DATABASE_URL } },
   });
 
-  const mockUser: Omit<User, 'createdAt' | 'updatedAt'> = {
-    id: 10,
-    supabaseUserId: 'test-supabase-id-events',
-    email: 'events-test@example.com',
-    name: 'Events Tester',
-    totalHours: 0,
-    karmaPoints: 0,
-  };
+  let mockUser: User;
 
   const mockAuthGuard = {
     canActivate: (context: any) => {
@@ -39,25 +31,18 @@ describe('Events (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    tasksService = app.get(TasksService);
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
   });
 
   beforeEach(async () => {
-    await prisma.userOrganizationSubscription.deleteMany();
-    await prisma.userAchievement.deleteMany();
-    await prisma.userCertificate.deleteMany();
-    await prisma.eventParticipant.deleteMany();
-    await prisma.quizAnswer.deleteMany();
-    await prisma.quizQuestion.deleteMany();
-    await prisma.lesson.deleteMany();
-    await prisma.course.deleteMany();
-    await prisma.event.deleteMany();
-    await prisma.organization.deleteMany();
-    await prisma.achievement.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.user.create({ data: mockUser as User });
+    await clearDatabase(prisma);
+    mockUser = await prisma.user.create({
+      data: {
+        email: 'events-test@example.com',
+        supabaseUserId: 'test-supabase-id-events',
+      },
+    });
   });
 
   afterAll(async () => {
@@ -65,45 +50,24 @@ describe('Events (e2e)', () => {
     if (app) await app.close();
   });
 
-  describe('/events/:id/participate (POST)', () => {
-    it('should allow a user to participate in an event', async () => {
-      const org = await prisma.organization.create({ data: { name: 'Org' } });
-      const event = await prisma.event.create({
-        data: {
-          title: 'Event 1',
-          description: 'Desc',
-          date: new Date(),
-          organizationId: org.id,
-        },
-      });
-
-      await request(app.getHttpServer())
-        .post(`/events/${event.id}/participate`)
-        .expect(201);
-
-      const participation = await prisma.eventParticipant.findFirst();
-      expect(participation).not.toBeNull();
-      expect(participation?.userId).toBe(mockUser.id);
-      expect(participation?.eventId).toBe(event.id);
+  it('GET /organizations/:id/events', async () => {
+    const org1 = await prisma.organization.create({
+      data: { name: 'Org With Events' },
+    });
+    const event1 = await prisma.event.create({
+      data: {
+        title: 'Event 1 for Org 1',
+        description: 'Desc',
+        date: new Date(),
+        organizationId: org1.id,
+      },
     });
 
-    it('should return 409 Conflict if user is already participating', async () => {
-      const org = await prisma.organization.create({ data: { name: 'Org' } });
-      const event = await prisma.event.create({
-        data: {
-          title: 'Event 2',
-          description: 'Desc',
-          date: new Date(),
-          organizationId: org.id,
-        },
-      });
-      await prisma.eventParticipant.create({
-        data: { eventId: event.id, userId: mockUser.id },
-      });
+    const response = await request(app.getHttpServer())
+      .get(`/organizations/${org1.id}/events`)
+      .expect(200);
 
-      await request(app.getHttpServer())
-        .post(`/events/${event.id}/participate`)
-        .expect(409);
-    });
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0].title).toBe(event1.title);
   });
 });

@@ -4,6 +4,7 @@ import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
+import { clearDatabase } from './test-utils';
 
 describe('Profile (e2e)', () => {
   let app: INestApplication;
@@ -15,14 +16,8 @@ describe('Profile (e2e)', () => {
     },
   });
 
-  const mockUser: Omit<User, 'createdAt' | 'updatedAt'> = {
-    id: 1,
-    supabaseUserId: 'test-supabase-id-profile',
-    email: 'profile-test@example.com',
-    name: 'Test User',
-    totalHours: 0,
-    karmaPoints: 0,
-  };
+  let mockUser: User;
+  const authToken = 'Bearer test-token';
 
   const mockAuthGuard = {
     canActivate: (context: any) => {
@@ -46,19 +41,16 @@ describe('Profile (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.userOrganizationSubscription.deleteMany();
-    await prisma.userAchievement.deleteMany();
-    await prisma.userCertificate.deleteMany();
-    await prisma.eventParticipant.deleteMany();
-    await prisma.quizAnswer.deleteMany();
-    await prisma.quizQuestion.deleteMany();
-    await prisma.lesson.deleteMany();
-    await prisma.course.deleteMany();
-    await prisma.event.deleteMany();
-    await prisma.organization.deleteMany();
-    await prisma.achievement.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.user.create({ data: mockUser as User });
+    await clearDatabase(prisma);
+    mockUser = await prisma.user.create({
+      data: {
+        email: 'profile-test@example.com',
+        supabaseUserId: 'test-supabase-id-profile',
+        firstName: 'Test',
+        lastName: 'User',
+        karmaPoints: 125,
+      },
+    });
   });
 
   afterAll(async () => {
@@ -69,13 +61,13 @@ describe('Profile (e2e)', () => {
   });
 
   it('/profile/me (GET) - should return current user profile', async () => {
-    return request(app.getHttpServer())
+    const { body } = await request(app.getHttpServer())
       .get('/profile/me')
-      .expect(200)
-      .expect((res) => {
-        expect(res.body.id).toBe(mockUser.id);
-        expect(res.body.email).toBe(mockUser.email);
-        expect(res.body).toHaveProperty('levelName');
-      });
+      .set('Authorization', authToken)
+      .expect(200);
+
+    expect(body.email).toBe(mockUser.email);
+    expect(body.name).toBe('Test User');
+    expect(body.level).toBe('Активист');
   });
 });

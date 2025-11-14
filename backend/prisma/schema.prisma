@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,30 +10,59 @@ datasource db {
 
 // Модель пользователя
 model User {
-  id             Int      @id @default(autoincrement())
-  email          String   @unique
-  name           String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  totalHours     Int      @default(0)
-  karmaPoints    Int      @default(0)
-  participations EventParticipant[]
-  achievements   UserAchievement[]
-  certificates   UserCertificate[]
-  subscriptions  UserOrganizationSubscription[]
+  id                Int                  @id @default(autoincrement())
+  email             String               @unique
+  firstName         String?              @map("first_name")
+  lastName          String?              @map("last_name")
+  avatarUrl         String?
+  about             String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  totalHours        Int                  @default(0)
+  karmaPoints       Int                  @default(0)
+  participations    EventParticipant[]
+  achievements      UserAchievement[]
+  certificates      UserCertificate[]
+  subscriptions     UserOrganizationSubscription[]
+  rewards           UserReward[]
+  stories           Story[]
+  comments          Comment[]
+  likes             StoryLike[]
+  karmaLogs         KarmaLog[]
+  assistantMessages AssistantChatMessage[] @relation("UserToAssistantMessages")
+  eventChatMessages EventChatMessage[]     @relation("UserToEventMessages")
+  friends   Friendship[] @relation("UserFriends")
+  friendOf  Friendship[] @relation("FriendOf")
+  challenges UserChallenge[]
+  reviews    Review[]
 
   supabaseUserId String @unique @map("supabase_user_id")
+
+  @@index([karmaPoints(sort: Desc)])
+  @@map("users")
 }
 
 // Модель организации
 model Organization {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  events      Event[]
-  subscribers UserOrganizationSubscription[]
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  fullDescription String?  @db.Text
+  category      String?
+  logoUrl       String?  @map("logo_url")
+  isVerified    Boolean  @default(false) @map("is_verified")
+  coverImageUrl String?  @map("cover_image_url")
+  websiteUrl    String?  @map("website_url")
+  address       String?
+  rating        Float?   @default(0)
+  reviewCount   Int      @default(0) @map("review_count")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  events        Event[]
+  subscribers   UserOrganizationSubscription[]
+  reviews       Review[]
+
+  @@map("organizations")
 }
 
 // Модель для подписок
@@ -58,6 +84,10 @@ model Event {
   description     String
   date            DateTime
   location        String?
+  category        String?
+  requirements    String?
+  latitude        Float?
+  longitude       Float?
   maxParticipants Int?
   durationHours   Int?
   status          String   @default("PLANNED")
@@ -66,7 +96,12 @@ model Event {
   updatedAt       DateTime @updatedAt
   organizationId  Int
   organization    Organization       @relation(fields: [organizationId], references: [id])
+  recommendedCourseId Int?
+  recommendedCourse   Course?   @relation("RecommendedCourseForEvent", fields: [recommendedCourseId], references: [id], onUpdate: NoAction, onDelete: SetNull)
   participants    EventParticipant[]
+  stories         Story[]
+  chat            EventChat?
+  reviews         Review[]
 
   @@map("events")
 }
@@ -110,23 +145,29 @@ model UserAchievement {
   @@map("user_achievements")
 }
 
+// Модель курса
 model Course {
-  id          Int      @id @default(autoincrement())
-  title       String   @unique
-  description String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id           Int               @id @default(autoincrement())
+  title        String            @unique
+  description  String
+  duration     String?
+  category     String?
+  level        String?
+  icon         String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
   lessons      Lesson[]
   certificates UserCertificate[]
+  events       Event[]           @relation("RecommendedCourseForEvent")
 
   @@map("courses")
 }
 
+// Модель урока
 model Lesson {
   id        Int      @id @default(autoincrement())
   title     String
-  content   String   @db.Text // Используем Text для длинного контента
+  content   String   @db.Text
   courseId  Int
   course    Course   @relation(fields: [courseId], references: [id])
   questions QuizQuestion[]
@@ -134,26 +175,29 @@ model Lesson {
   @@map("lessons")
 }
 
+// Модель вопроса в квизе
 model QuizQuestion {
-  id       Int    @id @default(autoincrement())
+  id       Int          @id @default(autoincrement())
   question String
   lessonId Int
-  lesson   Lesson @relation(fields: [lessonId], references: [id])
+  lesson   Lesson       @relation(fields: [lessonId], references: [id])
   answers  QuizAnswer[]
 
   @@map("quiz_questions")
 }
 
+// Модель ответа в квизе
 model QuizAnswer {
-  id         Int     @id @default(autoincrement())
+  id         Int          @id @default(autoincrement())
   answer     String
-  isCorrect  Boolean @default(false)
+  isCorrect  Boolean      @default(false)
   questionId Int
   question   QuizQuestion @relation(fields: [questionId], references: [id])
 
   @@map("quiz_answers")
 }
 
+// Модель сертификата пользователя
 model UserCertificate {
   userId      Int
   user        User     @relation(fields: [userId], references: [id])
@@ -163,4 +207,178 @@ model UserCertificate {
 
   @@id([userId, courseId])
   @@map("user_certificates")
+}
+
+// Модель дружбы
+model Friendship {
+  userId    Int
+  user      User     @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+  friendId  Int
+  friend    User     @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, friendId])
+  @@map("friendships")
+}
+
+// Модель челленджа
+model Challenge {
+  id            Int             @id @default(autoincrement())
+  title         String
+  description   String
+  reward        String
+  criteriaType  String
+  criteriaValue Int
+  criteriaMeta  String?
+  period        String
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  users         UserChallenge[]
+
+  @@map("challenges")
+}
+
+// Модель прогресса пользователя по челленджу
+model UserChallenge {
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId Int
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  progress    Int       @default(0)
+  completedAt DateTime?
+
+  @@id([userId, challengeId])
+  @@map("user_challenges")
+}
+
+// Модель награды в магазине
+model Reward {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String
+  imageUrl    String?
+  price       Int
+  category    String?
+  users       UserReward[]
+
+  @@map("rewards")
+}
+
+// Связующая таблица для купленных наград
+model UserReward {
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  rewardId    Int
+  reward      Reward   @relation(fields: [rewardId], references: [id])
+  purchasedAt DateTime @default(now())
+
+  @@id([userId, rewardId])
+  @@map("user_rewards")
+}
+
+// Модель истории
+model Story {
+  id        Int       @id @default(autoincrement())
+  imageUrl  String    @map("image_url")
+  text      String    @db.Text
+  createdAt DateTime  @default(now())
+  authorId  Int
+  author    User      @relation(fields: [authorId], references: [id])
+  eventId   Int
+  event     Event     @relation(fields: [eventId], references: [id])
+  comments  Comment[]
+  likes     StoryLike[]
+
+  @@map("stories")
+}
+
+// Модель лайка
+model StoryLike {
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  storyId   Int
+  story     Story    @relation(fields: [storyId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@id([userId, storyId])
+  @@map("story_likes")
+}
+
+// Модель комментария
+model Comment {
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now())
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  storyId   Int
+  story     Story    @relation(fields: [storyId], references: [id])
+
+  @@map("comments")
+}
+
+// Модель сообщения в чате c AI-ассистентом
+model AssistantChatMessage {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  sender    String
+  type      String   @default("text")
+  payload   Json?
+  createdAt DateTime @default(now())
+  authorId  Int
+  author    User     @relation("UserToAssistantMessages", fields: [authorId], references: [id])
+
+  @@map("chat_messages")
+}
+
+// Модель чата для мероприятия
+model EventChat {
+  id       Int                @id @default(autoincrement())
+  eventId  Int                @unique
+  event    Event              @relation(fields: [eventId], references: [id])
+  messages EventChatMessage[]
+
+  @@map("event_chats")
+}
+
+// Модель сообщения в чате мероприятия
+model EventChatMessage {
+  id        Int       @id @default(autoincrement())
+  text      String    @db.Text
+  createdAt DateTime  @default(now())
+  authorId  Int
+  author    User      @relation("UserToEventMessages", fields: [authorId], references: [id])
+  chatId    Int
+  chat      EventChat @relation(fields: [chatId], references: [id])
+
+  @@map("event_chat_messages")
+}
+
+// Модель логов кармы
+model KarmaLog {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  points      Int
+  description String?
+  createdAt   DateTime  @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@map("karma_logs")
+}
+
+model Review {
+  id             Int          @id @default(autoincrement())
+  rating         Int
+  text           String?      @db.Text
+  createdAt      DateTime     @default(now())
+  authorId       Int
+  author         User         @relation(fields: [authorId], references: [id])
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  eventId        Int
+  event          Event        @relation(fields: [eventId], references: [id])
+
+  @@unique([authorId, eventId], name: "user_event_review_unique")
+  @@map("reviews")
 }
