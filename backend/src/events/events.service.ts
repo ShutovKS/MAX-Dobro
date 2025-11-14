@@ -36,6 +36,7 @@ export class EventsService {
     const { organization, durationHours, karmaPoints, ...rest } = event;
     return {
       ...rest,
+      location: rest.location ?? '',
       organizationName: organization.name,
       participantCount: event._count.participants,
       rewards: {
