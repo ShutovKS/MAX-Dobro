@@ -46,13 +46,13 @@ describe('Challenges (e2e)', () => {
     if (app) await app.close();
   });
 
-  it('GET /challenges/weekly - should return null if no active weekly challenge', async () => {
+  it('GET /challenges/weekly - should return an empty object if no active weekly challenge', async () => {
     await request(app.getHttpServer())
       .get('/challenges/weekly')
       .set('Authorization', authToken)
       .expect(200)
       .then((response) => {
-        expect(response.body).toBe('');
+        expect(response.body).toEqual({});
       });
   });
 

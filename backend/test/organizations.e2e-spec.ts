@@ -4,6 +4,7 @@ import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
+import { OptionalAuthGuard } from '../src/auth/guards/optional-auth.guard';
 import { clearDatabase } from './test-utils';
 
 describe('Organizations (e2e)', () => {
@@ -15,18 +16,32 @@ describe('Organizations (e2e)', () => {
   let mockUser: User;
   const authToken = 'Bearer test-token';
 
+  const mockGuard = {
+    canActivate: (context: any) => {
+      const req = context.switchToHttp().getRequest();
+      req.user = mockUser;
+      return true;
+    },
+  };
+
+  const mockOptionalGuard = {
+    canActivate: (context: any) => {
+      const req = context.switchToHttp().getRequest();
+      if (req.headers.authorization) {
+        req.user = mockUser;
+      }
+      return true;
+    },
+  };
+
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
       .overrideGuard(AuthGuard)
-      .useValue({
-        canActivate: (context: any) => {
-          const req = context.switchToHttp().getRequest();
-          req.user = mockUser;
-          return true;
-        },
-      })
+      .useValue(mockGuard)
+      .overrideGuard(OptionalAuthGuard)
+      .useValue(mockOptionalGuard)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -67,7 +82,9 @@ describe('Organizations (e2e)', () => {
   });
 
   it('POST & DELETE /organizations/:id/subscribe - should subscribe and unsubscribe user', async () => {
-    const org = await prisma.organization.create({ data: { name: 'Org to sub' } });
+    const org = await prisma.organization.create({
+      data: { name: 'Org to sub' },
+    });
 
     await request(app.getHttpServer())
       .post(`/organizations/${org.id}/subscribe`)
