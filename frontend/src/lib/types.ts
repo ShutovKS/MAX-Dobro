@@ -1,3 +1,15 @@
+// Fix: Augment NodeJS.ProcessEnv to avoid redeclaring 'process'.
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      API_MODE: 'real' | 'mock';
+      API_BASE_URL: string;
+      SUPABASE_URL: string;
+      SUPABASE_ANON_KEY: string;
+    }
+  }
+}
+
 import React from 'react';
 
 export type AppEvent = {
@@ -157,6 +169,7 @@ export type User = {
   progress: number;
   nextLevel: string;
   role: 'volunteer' | 'organization';
+  organizationId?: number;
   stats: { id: string; value: string; label: string; Icon: React.FC<React.SVGProps<SVGSVGElement>>; }[];
   achievements: { id: number; name: string; Icon: React.FC<React.SVGProps<SVGSVGElement>>; }[];
   navigation: { id: string; label: string; Icon: React.FC<React.SVGProps<SVGSVGElement>>; }[];

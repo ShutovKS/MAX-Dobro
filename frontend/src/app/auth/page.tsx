@@ -10,7 +10,7 @@ const Spinner: React.FC = () => (
 );
 
 const LoginView: React.FC<{
-  onAuthSuccess: (user: User) => void,
+  onAuthSuccess: (session: { user: User; token: string }) => void,
   onSwitchToRegister: () => void,
   onSwitchToForgotPassword: () => void
 }> = ({onAuthSuccess, onSwitchToRegister, onSwitchToForgotPassword}) => {
@@ -22,12 +22,12 @@ const LoginView: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  const handleLoginAttempt = async (loginFn: () => Promise<{ user: User }>) => {
+  const handleLoginAttempt = async (loginFn: () => Promise<{ user: User; token: string }>) => {
     setLoginError('');
     setIsLoading(true);
     try {
-      const {user} = await loginFn();
-      onAuthSuccess(user);
+      const session = await loginFn();
+      onAuthSuccess(session);
     } catch (err) {
       setLoginError(MESSAGES.AUTH.LOGIN_ERROR);
     } finally {
@@ -149,7 +149,7 @@ const LoginView: React.FC<{
 };
 
 const RegisterView: React.FC<{
-  onRegisterSuccess: (user: User) => void,
+  onRegisterSuccess: (session: { user: User; token: string }) => void,
   onSwitchToLogin: () => void
 }> = ({onRegisterSuccess, onSwitchToLogin}) => {
   const [formData, setFormData] = useState({firstName: '', lastName: '', email: '', password: '', confirmPassword: ''});
@@ -184,8 +184,8 @@ const RegisterView: React.FC<{
       setIsLoading(true);
       setRegisterError('');
       try {
-        const {user} = await register(formData);
-        onRegisterSuccess(user);
+        const session = await register(formData);
+        onRegisterSuccess(session);
       } catch (err) {
         setRegisterError(MESSAGES.AUTH.REGISTER_ERROR);
         setIsLoading(false);
@@ -353,7 +353,7 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({onBackToLo
 type AuthMode = 'login' | 'register' | 'forgotPassword';
 
 interface AuthPageProps {
-  onAuthSuccess: (user: User) => void;
+  onAuthSuccess: (session: { user: User; token: string }) => void;
 }
 
 const AuthPage: React.FC<AuthPageProps> = ({onAuthSuccess}) => {

@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {fetchOrganizationEvents} from '../../../lib/api';
-import type {OrganizationEvent} from '../../../lib/types';
+import type {OrganizationEvent, User} from '../../../lib/types';
 import {ArrowLeft, List, Plus} from 'lucide-react';
 import EventManagementCard from '../components/EventManagementCard';
 import EmptyState from '../../../components/ui/EmptyState';
@@ -18,24 +18,29 @@ const SkeletonCard = () => (
 
 
 const EventManagementPage: React.FC<{
+  user: User;
   onBack: () => void;
   onCreateEvent: () => void;
   onEditEvent: (event: OrganizationEvent) => void;
   onManageParticipants: (event: OrganizationEvent) => void;
-}> = ({onBack, onCreateEvent, onEditEvent, onManageParticipants}) => {
+}> = ({user, onBack, onCreateEvent, onEditEvent, onManageParticipants}) => {
   const [activeTab, setActiveTab] = useState<'active' | 'past' | 'drafts'>('active');
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<OrganizationEvent[]>([]);
 
   useEffect(() => {
     const loadEvents = async () => {
+      if (!user.organizationId) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
-      const data = await fetchOrganizationEvents();
+      const data = await fetchOrganizationEvents(user.organizationId);
       setEvents(data);
       setLoading(false);
     };
     loadEvents();
-  }, []);
+  }, [user.organizationId]);
 
   const filteredEvents = useMemo(() => {
     return events.filter(event => {

@@ -9,7 +9,6 @@ import {MESSAGES, ROUTES} from '../../lib/constants';
 
 // Mock function to simulate an assistant's response without using AI
 const getMockAssistantResponse = async (text: string): Promise<ChatMessage> => {
-  // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   const textToProcess = text.toLowerCase();

@@ -16,7 +16,6 @@ const TabsLayout: React.FC<TabsLayoutProps> = ({
 
   const getActiveTab = (): Tab => {
     const pathParts = location.pathname.split('/');
-    // path is /app/home, /app/profile, etc. We want the 3rd part.
     const tabPart = pathParts[2] as Tab;
     const validTabs: Tab[] = ['home', 'training', 'organizations', 'stories', 'profile'];
     return validTabs.includes(tabPart) ? tabPart : 'home';
