@@ -1,12 +1,19 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router';
-import type {Achievement, AppEvent, Friend, Organization, ProfileSubScreen} from '../../../lib/types';
-import {fetchAllAchievements, fetchEventById, fetchFriends, fetchOrganizationById} from '../../../lib/api';
+import type {Achievement, AppEvent, Friend, MapMarker, Organization, ProfileSubScreen} from '../../../lib/types';
+import {
+  fetchAllAchievements,
+  fetchEventById,
+  fetchFriends,
+  fetchMapMarkers,
+  fetchOrganizationById
+} from '../../../lib/api';
 import {ArrowLeft, Calendar, Check, Clock, List, MapPin, MessageSquare, Share2, Star, Trophy} from 'lucide-react';
 import InviteFriendModal from '../../../features/invites/components/InviteFriendModal';
 import Toast from '../../../components/ui/Toast';
 import NewAchievementModal from '../../../components/ui/NewAchievementModal';
 import CancelModal from '../../../components/ui/CancelModal';
+import InteractiveMap from '../../../components/ui/InteractiveMap';
 import {FIRST_STEP_ACHIEVEMENT_ID, MESSAGES, MODAL_TRANSITION_DURATION} from '../../../lib/constants';
 
 const ConfirmationModal: React.FC<{
@@ -123,6 +130,7 @@ const EventDetailPage: React.FC = () => {
   const [event, setEvent] = useState<AppEvent | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [eventMarker, setEventMarker] = useState<MapMarker | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSignedUp, setIsSignedUp] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -141,10 +149,11 @@ const EventDetailPage: React.FC = () => {
       if (id) {
         setLoading(true);
         const eventId = parseInt(id, 10);
-        const [eventData, achievementsData, friendsData] = await Promise.all([
+        const [eventData, achievementsData, friendsData, markersData] = await Promise.all([
           fetchEventById(eventId),
           fetchAllAchievements(),
-          fetchFriends()
+          fetchFriends(),
+          fetchMapMarkers()
         ]);
 
         if (eventData) {
@@ -152,6 +161,9 @@ const EventDetailPage: React.FC = () => {
           setEvent(typedEventData);
           const orgData = await fetchOrganizationById(typedEventData.organizationId);
           if (orgData) setOrganization(orgData);
+
+          const marker = (markersData as MapMarker[]).find(m => m.id === typedEventData.id);
+          setEventMarker(marker || null);
         }
         setAllAchievements(achievementsData);
         setFriends(friendsData);
@@ -162,9 +174,9 @@ const EventDetailPage: React.FC = () => {
   }, [id]);
 
   const onBack = () => navigate(-1);
-  const onNavigateProfile = (screen: ProfileSubScreen) => navigate(`/profile/${screen}`);
-  const onSelectOrganization = (orgId: number) => navigate(`/organizations/${orgId}`);
-  const onOpenChat = (evt: AppEvent) => navigate(`/events/${evt.id}/chat`);
+  const onNavigateProfile = (screen: ProfileSubScreen) => navigate(`/app/profile/${screen}`);
+  const onSelectOrganization = (orgId: number) => navigate(`/app/organizations/${orgId}`);
+  const onOpenChat = (evt: AppEvent) => navigate(`/app/events/${evt.id}/chat`);
 
   const handleSignUpClick = () => setShowConfirmation(true);
   const handleConfirmSignUp = () => {
@@ -271,6 +283,20 @@ const EventDetailPage: React.FC = () => {
               </div>
             </button>
           </section>
+          {event.location !== 'Онлайн' && eventMarker && (
+            <section>
+              <h2 className="text-xl font-bold text-[#0C0D0E] mb-3">Место проведения</h2>
+              <div className="h-64 w-full rounded-2xl overflow-hidden shadow-md">
+                <InteractiveMap
+                  markers={[eventMarker]}
+                  center={eventMarker.position}
+                  zoom={15}
+                  onMarkerClick={() => {
+                  }}
+                />
+              </div>
+            </section>
+          )}
           <section>
             <h2 className="text-xl font-bold text-[#0C0D0E] mb-2">Что нужно делать?</h2>
             <p className="text-[rgb(12,13,14,0.52)] leading-relaxed">Присоединяйтесь к нам в эту субботу, чтобы сделать

@@ -43,8 +43,8 @@ const StoryDetailPage: React.FC<{
     loadStory();
   }, [id]);
 
-  const onBack = () => navigate('/stories');
-  const onSelectEvent = (eventId: number) => navigate(`/events/${eventId}`);
+  const onBack = () => navigate('/app/stories');
+  const onSelectEvent = (eventId: number) => navigate(`/app/events/${eventId}`);
 
   const handlePostComment = () => {
     if (!newComment.trim()) return;

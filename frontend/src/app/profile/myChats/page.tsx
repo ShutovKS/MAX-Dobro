@@ -41,9 +41,9 @@ const MyChatsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
 
-  const onBack = () => navigate('/profile');
-  const onSelectChat = (id: number) => navigate(`/events/${id}/chat`);
-  const onFindEvent = () => navigate('/home');
+  const onBack = () => navigate('/app/profile');
+  const onSelectChat = (id: number) => navigate(`/app/events/${id}/chat`);
+  const onFindEvent = () => navigate('/app/home');
 
   useEffect(() => {
     const loadChats = async () => {

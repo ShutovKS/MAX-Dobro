@@ -1,9 +1,8 @@
 import React, {useMemo, useState} from 'react';
-import {ArrowLeft, CheckCircle, Eye, EyeOff, Lock, Mail, RefreshCw, User as UserIcon} from 'lucide-react';
+import {ArrowLeft, Briefcase, CheckCircle, Eye, EyeOff, Lock, Mail, RefreshCw, User as UserIcon} from 'lucide-react';
 import {HeartHandIcon, MaxIcon} from '../../components/ui/icons';
 import {login, register} from '../../lib/auth';
 import type {User} from '../../lib/types';
-import {defaultUserData} from '../../lib/mockData';
 import {MESSAGES, PASSWORD_MIN_LENGTH} from '../../lib/constants';
 
 const Spinner: React.FC = () => (
@@ -23,9 +22,21 @@ const LoginView: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  const handleContinue = async () => {
-    let isValid = true;
+  const handleLoginAttempt = async (loginFn: () => Promise<{ user: User }>) => {
     setLoginError('');
+    setIsLoading(true);
+    try {
+      const {user} = await loginFn();
+      onAuthSuccess(user);
+    } catch (err) {
+      setLoginError(MESSAGES.AUTH.LOGIN_ERROR);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFormSubmit = () => {
+    let isValid = true;
     if (!email) {
       setEmailError(MESSAGES.AUTH.EMAIL_REQUIRED);
       isValid = false;
@@ -44,20 +55,12 @@ const LoginView: React.FC<{
     }
 
     if (isValid) {
-      setIsLoading(true);
-      try {
-        const {user} = await login(email, password);
-        onAuthSuccess(user);
-      } catch (err) {
-        setLoginError(MESSAGES.AUTH.LOGIN_ERROR);
-        setIsLoading(false);
-      }
+      handleLoginAttempt(() => login(email, password));
     }
   };
 
-  const handleMaxLogin = () => {
-    onAuthSuccess(defaultUserData);
-  }
+  const handleVolunteerLogin = () => handleLoginAttempt(() => login('volunteer@test.com', 'password'));
+  const handleOrganizerLogin = () => handleLoginAttempt(() => login('organizer@test.com', 'password'));
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -79,12 +82,20 @@ const LoginView: React.FC<{
           Добро пожаловать!
         </h1>
         {loginError && <p className="text-red-600 text-sm text-center mb-4 bg-red-50 p-3 rounded-lg">{loginError}</p>}
-        <div className="w-full flex flex-col items-center space-y-4">
+        <div className="w-full flex flex-col items-center space-y-3">
           <button
-            onClick={handleMaxLogin}
-            className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+            onClick={handleVolunteerLogin}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50">
             <MaxIcon className="w-6 h-6 mr-3"/>
-            Войти через MAX
+            Войти через MAX (Волонтер)
+          </button>
+          <button
+            onClick={handleOrganizerLogin}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center bg-gray-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 disabled:opacity-50">
+            <Briefcase className="w-5 h-5 mr-3"/>
+            Войти через MAX (Организатор)
           </button>
           <div className="flex items-center w-full py-2">
             <div className="flex-grow border-t border-gray-200"></div>
@@ -119,7 +130,7 @@ const LoginView: React.FC<{
             </div>
             {passwordError && <p id="password-error" className="text-red-600 text-xs mt-1 ml-1">{passwordError}</p>}
           </div>
-          <button onClick={handleContinue} disabled={isLoading}
+          <button onClick={handleFormSubmit} disabled={isLoading}
                   className="w-full bg-transparent border-2 border-[#007AFF] text-[#007AFF] font-semibold py-3 px-4 rounded-xl hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 mt-2 h-[50px] flex items-center justify-center disabled:opacity-50">
             {isLoading ? <Spinner/> : 'Продолжить'}
           </button>

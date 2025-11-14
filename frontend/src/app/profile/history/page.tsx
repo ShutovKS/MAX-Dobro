@@ -103,10 +103,10 @@ const ActivityHistoryPage: React.FC = () => {
   const [lastCancelledEvent, setLastCancelledEvent] = useState<HistoryEvent | null>(null);
   const [reviewingEvent, setReviewingEvent] = useState<HistoryEvent | null>(null);
 
-  const onBack = () => navigate('/profile');
-  const onFindEvent = () => navigate('/home');
-  const onSelectEvent = (id: number) => navigate(`/events/${id}`);
-  const onStartCreateStory = (event: HistoryEvent) => navigate(`/stories/create?eventId=${event.id}`);
+  const onBack = () => navigate('/app/profile');
+  const onFindEvent = () => navigate('/app/home');
+  const onSelectEvent = (id: number) => navigate(`/app/events/${id}`);
+  const onStartCreateStory = (event: HistoryEvent) => navigate(`/app/stories/create?eventId=${event.id}`);
 
   useEffect(() => {
     const loadHistory = async () => {

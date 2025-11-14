@@ -191,7 +191,7 @@ const OrganizationsPage: React.FC = () => {
   }, []);
 
   const onSelectOrganization = (id: number) => {
-    navigate(`/organizations/${id}`);
+    navigate(`/app/organizations/${id}`);
   };
 
   const filteredOrganizations = useMemo(() => {

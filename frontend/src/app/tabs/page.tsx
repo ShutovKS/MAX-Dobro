@@ -413,8 +413,8 @@ export default function HomePage() {
   };
 
   const handleResetFilters = () => setAppliedFilters(defaultFilters);
-  const onSelectEvent = (id: number) => navigate(`/events/${id}`);
-  const onSelectStory = (id: number) => navigate(`/stories/${id}`);
+  const onSelectEvent = (id: number) => navigate(`/app/events/${id}`);
+  const onSelectStory = (id: number) => navigate(`/app/stories/${id}`);
   const isSearchActive = searchQuery.length > 0;
 
   if (error && !loading) {
@@ -435,7 +435,7 @@ export default function HomePage() {
       <header className="absolute top-0 left-0 right-0 p-4 z-40 space-y-3">
         <div className="flex justify-between items-center">
           <button
-            onClick={() => navigate('/chat')}
+            onClick={() => navigate('/app/chat')}
             className="bg-blue-100 text-blue-600 font-semibold py-2 px-4 rounded-full flex items-center space-x-2 shadow-sm transition-transform hover:scale-105 active:scale-95"
             aria-label="Открыть Помощника"
           >

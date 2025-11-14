@@ -31,7 +31,7 @@ const StoriesPage: React.FC = () => {
   }, []);
 
   const onStartCreateStory = () => {
-    navigate('/stories/create');
+    navigate('/app/stories/create');
   };
 
   const renderContent = () => {

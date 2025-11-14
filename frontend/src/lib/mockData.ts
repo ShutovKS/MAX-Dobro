@@ -617,6 +617,7 @@ export const defaultUserData: User = {
   level: "Герой-новичок",
   progress: 65,
   nextLevel: "Опытный помощник",
+  role: 'volunteer',
   stats: [
     {id: 'hours', value: '128', label: 'часов добра', Icon: Clock},
     {id: 'karma', value: '15,200', label: 'баллов кармы', Icon: Star},
@@ -639,6 +640,18 @@ export const defaultUserData: User = {
     {id: 'rewardsStore', label: 'Магазин наград', Icon: Star},
     {id: 'switchToOrganization', label: 'Режим организатора', Icon: Briefcase},
   ],
+};
+
+export const organizationUserData: User = {
+  ...defaultUserData,
+  firstName: "Иван",
+  lastName: "Организатор",
+  avatarUrl: "https://i.pravatar.cc/150?img=20",
+  role: 'organization',
+  // Org-specific stats and navigation can be different
+  stats: [],
+  achievements: [],
+  navigation: [],
 };
 
 const firstNames = ["Александр", "Мария", "Дмитрий", "Анна", "Сергей", "Екатерина", "Андрей", "Ольга", "Алексей", "Наталья"];

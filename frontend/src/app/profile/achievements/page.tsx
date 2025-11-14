@@ -76,7 +76,7 @@ const AllAchievementsPage: React.FC = () => {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const onBack = () => navigate('/profile');
+  const onBack = () => navigate('/app/profile');
 
   useEffect(() => {
     const loadAchievements = async () => {
@@ -97,16 +97,16 @@ const AllAchievementsPage: React.FC = () => {
   const handleNavigateWithFilter = (category: string) => {
     setSelectedAchievement(null);
     if (category === 'Обучение') {
-      navigate('/training');
+      navigate('/app/training');
     } else if (category === 'Организации') {
-      navigate('/organizations');
+      navigate('/app/organizations');
     } else {
       // For other categories, just go home and user can filter
-      navigate('/home');
+      navigate('/app/home');
     }
   };
 
-  const onFindEvent = () => navigate('/home');
+  const onFindEvent = () => navigate('/app/home');
 
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">

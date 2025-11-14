@@ -9,11 +9,11 @@ const StoryCard: React.FC<{
   const navigate = useNavigate();
 
   const onSelectEvent = (id: number) => {
-    navigate(`/events/${id}`);
+    navigate(`/app/events/${id}`);
   };
 
   const onSelectStory = (id: number) => {
-    navigate(`/stories/${id}`);
+    navigate(`/app/stories/${id}`);
   };
 
   return (

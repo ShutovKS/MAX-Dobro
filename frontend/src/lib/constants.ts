@@ -41,37 +41,46 @@ export const CATEGORY_COLORS: { [key: string]: string } = {
 };
 
 export const ROUTES = {
-  HOME: '/home',
-  TRAINING: '/training',
-  ORGANIZATIONS: '/organizations',
-  STORIES: '/stories',
-  PROFILE: '/profile',
+  // Volunteer main tabs
+  HOME: '/app/home',
+  TRAINING: '/app/training',
+  ORGANIZATIONS: '/app/organizations',
+  STORIES: '/app/stories',
+  PROFILE: '/app/profile',
+
+  // Auth
   AUTH: '/auth',
   ONBOARDING: '/onboarding',
-  EVENT_DETAIL: (id: string | number) => `/events/${id}`,
-  EVENT_CHAT: (id: string | number) => `/events/${id}/chat`,
-  COURSE_DETAIL: (id: string | number) => `/courses/${id}`,
-  COURSE_LESSON: (id: string | number, subId: string | number) => `/courses/${id}/lesson/${subId}`,
-  COURSE_CERTIFICATE: (id: string | number) => `/courses/${id}/certificate`,
-  ORGANIZATION_DETAIL: (id: string | number) => `/organizations/${id}`,
-  STORY_CREATE: '/stories/create',
-  STORY_DETAIL: (id: string | number) => `/stories/${id}`,
-  REWARD_DETAIL: (id: string | number) => `/rewards/${id}`,
-  CHAT: '/chat',
-  PROFILE_ACTIVITY_HISTORY: '/profile/activityHistory',
-  PROFILE_ACHIEVEMENTS: '/profile/allAchievements',
-  PROFILE_CALENDAR: '/profile/calendar',
-  PROFILE_LEADERBOARDS: '/profile/leaderboards',
-  PROFILE_SETTINGS: '/profile/settings',
-  PROFILE_EDIT: '/profile/editProfile',
-  PROFILE_CERTIFICATES: '/profile/myCertificates',
-  PROFILE_CHATS: '/profile/myChats',
-  PROFILE_REWARDS: '/profile/rewardsStore',
-  ORGANIZATION_DASHBOARD: '/organization-dashboard',
-  ORGANIZATION_EVENTS: '/organization-events',
-  ORGANIZATION_EVENTS_CREATE: '/organization-events/create',
-  ORGANIZATION_EVENTS_EDIT: (id: string | number) => `/organization-events/edit/${id}`,
-  ORGANIZATION_EVENTS_PARTICIPANTS: (id: string | number) => `/organization-events/participants/${id}`,
+
+  // Volunteer sub-pages
+  EVENT_DETAIL: (id: string | number) => `/app/events/${id}`,
+  EVENT_CHAT: (id: string | number) => `/app/events/${id}/chat`,
+  COURSE_DETAIL: (id: string | number) => `/app/courses/${id}`,
+  COURSE_LESSON: (id: string | number, subId: string | number) => `/app/courses/${id}/lesson/${subId}`,
+  COURSE_CERTIFICATE: (id: string | number) => `/app/courses/${id}/certificate`,
+  ORGANIZATION_DETAIL: (id: string | number) => `/app/organizations/${id}`,
+  STORY_CREATE: '/app/stories/create',
+  STORY_DETAIL: (id: string | number) => `/app/stories/${id}`,
+  REWARD_DETAIL: (id: string | number) => `/app/rewards/${id}`,
+  CHAT: '/app/chat',
+
+  // Profile sub-pages (volunteer)
+  PROFILE_ACTIVITY_HISTORY: '/app/profile/activityHistory',
+  PROFILE_ACHIEVEMENTS: '/app/profile/allAchievements',
+  PROFILE_CALENDAR: '/app/profile/calendar',
+  PROFILE_LEADERBOARDS: '/app/profile/leaderboards',
+  PROFILE_SETTINGS: '/app/profile/settings',
+  PROFILE_EDIT: '/app/profile/editProfile',
+  PROFILE_CERTIFICATES: '/app/profile/myCertificates',
+  PROFILE_CHATS: '/app/profile/myChats',
+  PROFILE_REWARDS: '/app/profile/rewardsStore',
+
+  // Organization pages
+  ORGANIZATION_DASHBOARD: '/organization/dashboard',
+  ORGANIZATION_EVENTS: '/organization/events',
+  ORGANIZATION_EVENTS_CREATE: '/organization/events/create',
+  ORGANIZATION_EVENTS_EDIT: (id: string | number) => `/organization/events/edit/${id}`,
+  ORGANIZATION_EVENTS_PARTICIPANTS: (id: string | number) => `/organization/events/participants/${id}`,
 };
 
 export const MESSAGES = {

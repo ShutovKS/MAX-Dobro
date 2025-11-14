@@ -57,9 +57,9 @@ const CourseDetailPage: React.FC<{
     loadCourse();
   }, [id]);
 
-  const onBack = () => navigate('/training');
-  const onSelectLesson = (courseId: number, lessonIndex: number) => navigate(`/courses/${courseId}/lesson/${lessonIndex}`);
-  const onViewCertificate = (courseId: number) => navigate(`/courses/${courseId}/certificate`);
+  const onBack = () => navigate('/app/training');
+  const onSelectLesson = (courseId: number, lessonIndex: number) => navigate(`/app/courses/${courseId}/lesson/${lessonIndex}`);
+  const onViewCertificate = (courseId: number) => navigate(`/app/courses/${courseId}/certificate`);
 
   const handleCtaClick = () => {
     if (!course) return;

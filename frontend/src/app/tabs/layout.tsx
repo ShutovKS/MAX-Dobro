@@ -1,51 +1,37 @@
 import React from 'react';
-import {useNavigate} from 'react-router';
+import {Outlet, useLocation, useNavigate} from 'react-router';
 import TabBar from '../../components/layout/TabBar';
-import HomePage from './page';
-import CoursesPage from './courses/page';
-import OrganizationsPage from './organizations/page';
-import ProfilePage from './profile/page';
-import StoriesPage from './stories/page';
 import type {Tab, User} from '../../lib/types';
 
 interface TabsLayoutProps {
   user: User;
-  activeTab: Tab;
   onSwitchToOrganizationMode: () => void;
 }
 
 const TabsLayout: React.FC<TabsLayoutProps> = ({
-                                                 user, activeTab, onSwitchToOrganizationMode
+                                                 user, onSwitchToOrganizationMode
                                                }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const getActiveTab = (): Tab => {
+    const pathParts = location.pathname.split('/');
+    // path is /app/home, /app/profile, etc. We want the 3rd part.
+    const tabPart = pathParts[2] as Tab;
+    const validTabs: Tab[] = ['home', 'training', 'organizations', 'stories', 'profile'];
+    return validTabs.includes(tabPart) ? tabPart : 'home';
+  };
 
   const handleTabChange = (tab: Tab) => {
-    navigate(`/${tab}`);
+    navigate(`/app/${tab}`);
   }
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'home':
-        return <HomePage/>;
-      case 'training':
-        return <CoursesPage/>;
-      case 'organizations':
-        return <OrganizationsPage/>;
-      case 'stories':
-        return <StoriesPage/>;
-      case 'profile':
-        return <ProfilePage user={user} onSwitchToOrganizationMode={onSwitchToOrganizationMode}/>;
-      default:
-        return <HomePage/>;
-    }
-  };
 
   return (
     <div className="w-full h-screen font-sans antialiased relative overflow-hidden bg-[#F0F0F0]">
       <div className="w-full h-full overflow-y-auto pb-20">
-        {renderContent()}
+        <Outlet context={{user, onSwitchToOrganizationMode}}/>
       </div>
-      <TabBar activeTab={activeTab} onTabChange={handleTabChange}/>
+      <TabBar activeTab={getActiveTab()} onTabChange={handleTabChange}/>
     </div>
   );
 };

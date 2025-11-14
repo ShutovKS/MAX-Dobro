@@ -48,8 +48,8 @@ const OrganizationProfilePage: React.FC<{
     loadOrgEvents();
   }, [activeTab, organization]);
 
-  const onBack = () => navigate('/organizations');
-  const onSelectEvent = (eventId: number) => navigate(`/events/${eventId}`);
+  const onBack = () => navigate('/app/organizations');
+  const onSelectEvent = (eventId: number) => navigate(`/app/events/${eventId}`);
 
   const onToggleSubscription = async () => {
     if (!organization) return;
