@@ -4,18 +4,17 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  console.log('[MAX-DOBRO-API] --- Starting bootstrap function ---');
   const app = await NestFactory.create(AppModule);
 
-  console.log('[MAX-DOBRO-API] --- Enabling CORS ---');
   app.enableCors({
     origin: [
-      '*',
+      'https://max-dobro.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:5173',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
-  console.log('[MAX-DOBRO-API] --- CORS has been configured ---');
 
   app.useGlobalPipes(
     new ValidationPipe({
