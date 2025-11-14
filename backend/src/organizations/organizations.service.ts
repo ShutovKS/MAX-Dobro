@@ -7,7 +7,7 @@ import { Prisma } from '@prisma/client';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
 import { EventEntity } from '../events/entities/event.entity';
 import { PrismaService } from '../prisma/prisma.service';
-import { OrganizationEntity } from './entities/organization.entity';
+import { OrganizationEntity } from './dto/organization.entity';
 
 @Injectable()
 export class OrganizationsService {

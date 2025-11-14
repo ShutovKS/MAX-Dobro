@@ -29,8 +29,11 @@ model User {
   stories   Story[]
   comments  Comment[]
   likes     StoryLike[]
+  karmaLogs      KarmaLog[]
 
   supabaseUserId String @unique @map("supabase_user_id")
+
+  @@index([karmaPoints(sort: Desc)])
 }
 
 // Модель организации
@@ -261,4 +264,17 @@ model ChatMessage {
   author    User     @relation(fields: [authorId], references: [id])
 
   @@map("chat_messages")
+}
+
+// Модель логов кармы
+model KarmaLog {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  points      Int
+  description String?
+  createdAt   DateTime  @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@map("karma_logs")
 }

@@ -22,7 +22,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
 import { EventEntity } from '../events/entities/event.entity';
-import { OrganizationEntity } from './entities/organization.entity';
+import { OrganizationEntity } from './dto/organization.entity';
 import { OrganizationsService } from './organizations.service';
 
 @ApiTags('Organizations')
