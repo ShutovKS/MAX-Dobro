@@ -20,6 +20,7 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { EventChatsModule } from './event-chats/event-chats.module';
 import { FriendsModule } from './friends/friends.module';
 import { ChallengesModule } from './challenges/challenges.module';
+import { MapModule } from './map/map.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ChallengesModule } from './challenges/challenges.module';
     EventChatsModule,
     FriendsModule,
     ChallengesModule,
+    MapModule,
   ],
   controllers: [AppController],
   providers: [AppService],

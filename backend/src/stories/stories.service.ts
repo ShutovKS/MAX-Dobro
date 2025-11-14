@@ -24,12 +24,16 @@ export class StoriesService {
   }
 
   private mapStory(story: any, currentUserId?: number) {
-    const { _count, author, ...rest } = story;
-    const result = {
+    const { _count, author, event, ...rest } = story;
+    const result: any = {
       ...rest,
       author: {
         id: author.id,
         name: `${author.firstName || ''} ${author.lastName || ''}`.trim(),
+      },
+      event: {
+        id: event.id,
+        name: event.title,
       },
       commentsCount: _count.comments,
       likesCount: _count.likes,

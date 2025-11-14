@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { User } from '@prisma/client';
+import type { User } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { ChallengesService } from './challenges.service';

@@ -218,12 +218,18 @@ export class EventsService {
       },
     });
 
+    const statusMapping: Record<string, 'new' | 'confirmed' | 'rejected'> = {
+      pending: 'new',
+      approved: 'confirmed',
+      rejected: 'rejected',
+    };
+
     return participations.map((p) => ({
       id: p.user.id,
       name: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim(),
       avatarUrl: p.user.avatarUrl,
       rating: p.user.karmaPoints,
-      status: p.status,
+      status: statusMapping[p.status] || p.status,
     }));
   }
 }

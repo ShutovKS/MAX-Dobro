@@ -7,6 +7,8 @@ const FRIEND_USER_SUPABASE_ID = '0e24c3b5-2e3b-4b1a-9a0e-1e9d1e4e1e0a';
 
 async function main() {
   console.log('Start seeding...');
+
+  // --- 1. Очистка базы данных ---
   await prisma.friendship.deleteMany();
   await prisma.userChallenge.deleteMany();
   await prisma.challenge.deleteMany();
@@ -33,6 +35,7 @@ async function main() {
   await prisma.user.deleteMany();
   console.log('Database cleared.');
 
+  // --- 2. Создание пользователей ---
   const user1 = await prisma.user.create({
     data: {
       email: 'test@example.com',
@@ -41,6 +44,7 @@ async function main() {
       lastName: 'Тестер',
       karmaPoints: 500,
       totalHours: 8,
+      avatarUrl: 'https://i.pravatar.cc/150?u=test@example.com',
     },
   });
 
@@ -50,18 +54,17 @@ async function main() {
       supabaseUserId: FRIEND_USER_SUPABASE_ID,
       firstName: 'Друг',
       lastName: 'Тестера',
+      avatarUrl: 'https://i.pravatar.cc/150?u=friend@example.com',
     },
   });
   console.log('Users created.');
 
   await prisma.friendship.create({
-    data: {
-      userId: user1.id,
-      friendId: user2.id,
-    },
+    data: { userId: user1.id, friendId: user2.id },
   });
   console.log('Friendship created.');
 
+  // --- 3. Ачивки ---
   const achievement1 = await prisma.achievement.create({
     data: {
       name: 'Новичок Добра',
@@ -70,22 +73,12 @@ async function main() {
       criteriaValue: 1,
     },
   });
-  const achievement2 = await prisma.achievement.create({
-    data: {
-      name: 'Опытный Волонтер',
-      description: 'Накопить 10 часов добрых дел.',
-      criteriaType: 'TOTAL_HOURS',
-      criteriaValue: 10,
-    },
-  });
   await prisma.userAchievement.create({
-    data: {
-      userId: user1.id,
-      achievementId: achievement1.id,
-    },
+    data: { userId: user1.id, achievementId: achievement1.id },
   });
   console.log('Achievements created.');
 
+  // --- 4. Организации ---
   const org = await prisma.organization.create({
     data: {
       name: 'Фонд "Чистый Лес"',
@@ -97,6 +90,7 @@ async function main() {
   });
   console.log('Organization created.');
 
+  // --- 5. События ---
   const futureEventDate = new Date();
   futureEventDate.setDate(futureEventDate.getDate() + 7);
   const pastEventDate = new Date();
@@ -104,25 +98,32 @@ async function main() {
 
   const futureEvent = await prisma.event.create({
     data: {
-      title: 'Событие для Теста (Будущее)',
-      description: 'Это событие используется в сидах',
+      title: 'Субботник в парке "Сокольники"',
+      description: 'Убираем мусор и высаживаем новые деревья. Приносите перчатки!',
       date: futureEventDate,
       organizationId: org.id,
       durationHours: 2,
       karmaPoints: 50,
       status: 'PLANNED',
+      // Новые поля
+      category: 'Экология',
+      location: 'Парк "Сокольники", главный вход',
+      latitude: 55.8023,
+      longitude: 37.6769,
+      requirements: 'Нужна удобная одежда и обувь. Перчатки выдадим на месте.',
     },
   });
 
   const pastEvent = await prisma.event.create({
     data: {
-      title: 'Событие для Теста (Прошедшее)',
+      title: 'Сбор помощи для приюта животных',
       description: 'Это событие уже завершилось',
       date: pastEventDate,
       organizationId: org.id,
       durationHours: 3,
       karmaPoints: 75,
       status: 'COMPLETED',
+      category: 'Животные',
     },
   });
   console.log('Events created.');
@@ -137,9 +138,7 @@ async function main() {
   console.log('Event participants created.');
 
   const eventChat = await prisma.eventChat.create({
-    data: {
-      eventId: futureEvent.id,
-    },
+    data: { eventId: futureEvent.id },
   });
   await prisma.eventChatMessage.create({
     data: {
@@ -150,32 +149,39 @@ async function main() {
   });
   console.log('Event chat and messages created.');
 
-  await prisma.reward.createMany({
-    data: [
-      {
-        name: 'Фирменный стикерпак',
-        description: 'Набор наклеек для ноутбука.',
-        price: 100,
-        category: 'Значки',
-      },
-      {
-        name: 'Брендированная футболка',
-        description: 'Стильная футболка MAX Добро.',
-        price: 1000,
-        category: 'Темы оформления',
-      },
-    ],
+  // --- 6. Награды ---
+  const reward1 = await prisma.reward.create({
+    data: {
+      name: 'Фирменный стикерпак',
+      description: 'Набор наклеек для ноутбука.',
+      price: 100,
+      category: 'Значки',
+      imageUrl: 'https://via.placeholder.com/150/FFC107/000000?Text=Sticker',
+    },
+  });
+  await prisma.reward.create({
+    data: {
+      name: 'Брендированная футболка',
+      description: 'Стильная футболка MAX Добро.',
+      price: 1000,
+      category: 'Темы оформления',
+      imageUrl: 'https://via.placeholder.com/150/4CAF50/FFFFFF?Text=T-Shirt',
+    },
+  });
+  await prisma.userReward.create({
+    data: { userId: user1.id, rewardId: reward1.id },
   });
   console.log('Rewards created.');
 
+  // --- 7. Курсы и Сертификаты ---
   await prisma.course.create({
     data: {
       title: 'Основы Первой Помощи',
-      description:
-        'Курс, который научит вас базовым действиям в экстренных ситуациях.',
+      description: 'Курс, который научит вас базовым действиям.',
       duration: '3 часа',
       category: 'Медицина',
       level: 'Для новичков',
+      icon: 'first-aid', // Новое поле
       lessons: {
         create: {
           title: 'Урок 1: Оценка ситуации',
@@ -195,12 +201,26 @@ async function main() {
       },
     },
   });
-  console.log('Courses created.');
 
+  const completedCourse = await prisma.course.create({
+    data: {
+      title: 'Введение в волонтерство',
+      description: 'Узнайте все о том, как стать волонтером.',
+      duration: '1 час',
+      category: 'Обучение',
+      level: 'Для новичков',
+    },
+  });
+  await prisma.userCertificate.create({
+    data: { userId: user1.id, courseId: completedCourse.id },
+  });
+  console.log('Courses and certificates created.');
+
+  // --- 8. Истории ---
   await prisma.story.create({
     data: {
       authorId: user1.id,
-      eventId: pastEvent.id,
+      eventId: pastEvent.id, // История относится к прошедшему событию
       text: 'Это был потрясающий опыт! Спасибо всем!',
       imageUrl: 'https://placehold.co/600x400',
       comments: {
@@ -213,25 +233,7 @@ async function main() {
   });
   console.log('Stories, comments and likes created.');
 
-  await prisma.assistantChatMessage.createMany({
-    data: [
-      {
-        authorId: user1.id,
-        content: 'Это мое первое сообщение в истории чата.',
-        sender: 'USER',
-        type: 'text',
-      },
-      {
-        authorId: user1.id,
-        content: 'А это ответ ассистента с подсказками.',
-        sender: 'ASSISTANT',
-        type: 'suggestion-chips',
-        payload: { suggestions: ['Расскажи о событиях', 'Какие есть курсы?'] },
-      },
-    ],
-  });
-  console.log('Chat messages created.');
-
+  // --- 9. Челленджи ---
   const challenge = await prisma.challenge.create({
     data: {
       title: 'Эко-неделя',
@@ -239,7 +241,7 @@ async function main() {
       reward: '+150 очков кармы',
       criteriaType: 'EVENT_PARTICIPATION',
       criteriaValue: 2,
-      criteriaMeta: 'Экология', // Фильтр по категории
+      criteriaMeta: 'Экология',
       period: 'WEEKLY',
       isActive: true,
     },
@@ -252,6 +254,17 @@ async function main() {
     },
   });
   console.log('Weekly challenge created.');
+  
+  // --- 10. Логи кармы ---
+  await prisma.karmaLog.createMany({
+    data: [
+        {userId: user1.id, points: 75, description: `Участие в событии: ${pastEvent.title}`},
+        {userId: user1.id, points: 10, description: `Завершение курса: ${completedCourse.title}`},
+        {userId: user2.id, points: 20, description: 'Помощь в организации события'},
+    ]
+  })
+  console.log('Karma logs created.');
+
 
   console.log('Seeding finished.');
 }

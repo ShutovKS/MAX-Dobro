@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from '@prisma/client';
 
-export class PublicUserEntity implements Pick<User, 'id' | 'name'> {
+export class PublicUserEntity {
   @ApiProperty()
   id: number;
 

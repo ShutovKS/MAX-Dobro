@@ -22,6 +22,18 @@ export class EventEntity implements Event {
   @ApiProperty({ required: false, nullable: true })
   location: string | null;
 
+  @ApiProperty({ required: false, nullable: true })
+  category: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  requirements: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  latitude: number | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  longitude: number | null;
+
   @ApiProperty({
     required: false,
     nullable: true,

@@ -81,6 +81,10 @@ model Event {
   description     String
   date            DateTime
   location        String?
+  category        String?
+  requirements    String?
+  latitude        Float?
+  longitude       Float?
   maxParticipants Int?
   durationHours   Int?
   status          String   @default("PLANNED")
@@ -140,9 +144,10 @@ model Course {
   id           Int               @id @default(autoincrement())
   title        String            @unique
   description  String
-  duration      String?
-  category      String?
-  level         String?
+  duration     String?
+  category     String?
+  level        String?
+  icon         String?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   lessons      Lesson[]

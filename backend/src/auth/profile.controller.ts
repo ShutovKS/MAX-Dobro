@@ -39,12 +39,18 @@ export class ProfileController {
     }
     const levelInfo = this.authService.calculateLevel(fullProfile.karmaPoints);
 
+    const stats = [
+      { id: '1', value: String(fullProfile.totalHours), label: 'Часы' },
+      { id: '2', value: String(fullProfile.karmaPoints), label: 'Карма' },
+    ];
+
     return {
       ...fullProfile,
       name: `${fullProfile.firstName || ''} ${fullProfile.lastName || ''}`.trim(),
       level: levelInfo.level,
       progress: levelInfo.progress,
       nextLevel: levelInfo.nextLevel,
+      stats,
     };
   }
 
