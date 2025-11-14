@@ -4,6 +4,8 @@ import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
+import { OptionalAuthGuard } from '../src/auth/guards/optional-auth.guard';
+import { clearDatabase } from './test-utils';
 
 describe('Rewards (e2e)', () => {
   let app: INestApplication;
@@ -11,30 +13,31 @@ describe('Rewards (e2e)', () => {
     datasources: { db: { url: process.env.DATABASE_URL } },
   });
 
-  const mockUser: Omit<User, 'createdAt' | 'updatedAt'> = {
-    id: 1,
-    supabaseUserId: 'test-supabase-id-rewards',
-    email: 'rewards-test@example.com',
-    name: 'Test User',
-    totalHours: 0,
-    karmaPoints: 150,
-    avatarUrl: null,
-  };
-
-  const mockAuthGuard = {
-    canActivate: (context: any) => {
-      const request = context.switchToHttp().getRequest();
-      request.user = mockUser;
-      return true;
-    },
-  };
+  let mockUser: User;
+  const authToken = 'Bearer test-token';
 
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
       .overrideGuard(AuthGuard)
-      .useValue(mockAuthGuard)
+      .useValue({
+        canActivate: (context: any) => {
+          const req = context.switchToHttp().getRequest();
+          req.user = mockUser;
+          return !!req.headers.authorization;
+        },
+      })
+      .overrideGuard(OptionalAuthGuard)
+      .useValue({
+        canActivate: (context: any) => {
+          const req = context.switchToHttp().getRequest();
+          if (req.headers.authorization) {
+            req.user = mockUser;
+          }
+          return true;
+        },
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -43,73 +46,60 @@ describe('Rewards (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.storyLike.deleteMany();
-    await prisma.comment.deleteMany();
-    await prisma.chatMessage.deleteMany();
-    await prisma.story.deleteMany();
-    await prisma.userReward.deleteMany();
-    await prisma.reward.deleteMany();
-    await prisma.userCertificate.deleteMany();
-    await prisma.userAchievement.deleteMany();
-    await prisma.achievement.deleteMany();
-    await prisma.eventParticipant.deleteMany();
-    await prisma.userOrganizationSubscription.deleteMany();
-    await prisma.karmaLog.deleteMany();
-    await prisma.event.deleteMany();
-    await prisma.organization.deleteMany();
-    await prisma.quizAnswer.deleteMany();
-    await prisma.quizQuestion.deleteMany();
-    await prisma.lesson.deleteMany();
-    await prisma.course.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.user.create({ data: mockUser as User });
+    await clearDatabase(prisma);
+    mockUser = await prisma.user.create({
+      data: {
+        email: 'rewards-user@test.com',
+        supabaseUserId: 'supa-rewards-user',
+        karmaPoints: 200,
+      },
+    });
   });
 
   afterAll(async () => {
-    await prisma.userReward.deleteMany();
-    await prisma.reward.deleteMany();
-    await prisma.user.deleteMany();
     await prisma.$disconnect();
-    if (app) {
-      await app.close();
-    }
+    if (app) await app.close();
   });
 
-  it('/rewards (GET) - should return a list of rewards', async () => {
-    await prisma.reward.create({
-      data: { title: 'Test Reward', description: 'desc', cost: 100 },
+  it('GET /rewards - should return isPurchased flag correctly', async () => {
+    const reward1 = await prisma.reward.create({
+      data: { title: 'Reward 1', description: 'd', cost: 10 },
     });
-    return request(app.getHttpServer())
+    const reward2 = await prisma.reward.create({
+      data: { title: 'Reward 2', description: 'd', cost: 10 },
+    });
+    await prisma.userReward.create({
+      data: { userId: mockUser.id, rewardId: reward1.id },
+    });
+
+    const { body } = await request(app.getHttpServer())
       .get('/rewards')
-      .expect(200)
-      .expect((res) => {
-        expect(res.body).toBeInstanceOf(Array);
-        expect(res.body).toHaveLength(1);
-        expect(res.body[0].title).toBe('Test Reward');
-      });
+      .set('Authorization', authToken)
+      .expect(200);
+
+    expect(body.find((r) => r.id === reward1.id).isPurchased).toBe(true);
+    expect(body.find((r) => r.id === reward2.id).isPurchased).toBe(false);
   });
 
-  it('/rewards/:id/purchase (POST) - should purchase a reward if user has enough karma', async () => {
+  it('POST /rewards/:id/purchase - should succeed with enough points and fail without', async () => {
     const reward = await prisma.reward.create({
-      data: { title: 'Purchasable Reward', description: 'desc', cost: 100 },
+      data: { title: 'Test Reward', description: 'd', cost: 150 },
     });
+
     await request(app.getHttpServer())
       .post(`/rewards/${reward.id}/purchase`)
+      .set('Authorization', authToken)
       .expect(201);
-    const user = await prisma.user.findUnique({ where: { id: mockUser.id } });
-    expect(user?.karmaPoints).toBe(50);
-  });
 
-  it('/rewards/:id/purchase (POST) - should return 403 if user has not enough karma', async () => {
-    const reward = await prisma.reward.create({
-      data: {
-        title: 'Expensive Reward',
-        description: 'desc',
-        cost: 200,
-      },
+    const userAfterPurchase = await prisma.user.findUnique({
+      where: { id: mockUser.id },
     });
+    expect(userAfterPurchase).not.toBeNull();
+    expect(userAfterPurchase!.karmaPoints).toBe(50);
+
     await request(app.getHttpServer())
       .post(`/rewards/${reward.id}/purchase`)
+      .set('Authorization', authToken)
       .expect(403);
   });
 });

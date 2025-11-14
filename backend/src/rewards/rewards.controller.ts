@@ -17,6 +17,7 @@ import {
 import type { User } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
 import { RewardEntity } from './entities/reward.entity';
 import { RewardsService } from './rewards.service';
 
@@ -26,14 +27,16 @@ export class RewardsController {
   constructor(private readonly rewardsService: RewardsService) {}
 
   @Get()
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a list of all available rewards' })
   @ApiResponse({
     status: 200,
     description: 'A list of rewards.',
     type: [RewardEntity],
   })
-  findAll() {
-    return this.rewardsService.findAll();
+  findAll(@CurrentUser() user?: User) {
+    return this.rewardsService.findAll(user?.id);
   }
 
   @Post(':id/purchase')
@@ -42,9 +45,6 @@ export class RewardsController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Purchase a reward' })
   @ApiResponse({ status: 201, description: 'Reward purchased successfully.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Insufficient karma points.' })
-  @ApiResponse({ status: 404, description: 'Reward not found.' })
   purchase(
     @Param('id', ParseIntPipe) rewardId: number,
     @CurrentUser() user: User,

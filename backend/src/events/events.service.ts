@@ -180,20 +180,29 @@ export class EventsService {
     await this.findOne(eventId);
 
     const participations = await this.prisma.eventParticipant.findMany({
-      where: { eventId, status: 'approved' },
+      where: { eventId },
       select: {
         user: {
           select: {
             id: true,
             name: true,
+            avatarUrl: true,
+            karmaPoints: true,
           },
         },
+        status: true,
       },
       orderBy: {
         createdAt: 'asc',
       },
     });
 
-    return participations.map((p) => p.user);
+    return participations.map((p) => ({
+      id: p.user.id,
+      name: p.user.name,
+      avatarUrl: p.user.avatarUrl,
+      rating: p.user.karmaPoints,
+      status: p.status,
+    }));
   }
 }

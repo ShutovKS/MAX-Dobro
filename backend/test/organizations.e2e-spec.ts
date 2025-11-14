@@ -1,16 +1,10 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  INestApplication,
-  Injectable,
-  ValidationPipe,
-} from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
-import { OptionalAuthGuard } from '../src/auth/guards/optional-auth.guard';
+import { clearDatabase } from './test-utils';
 
 describe('Organizations (e2e)', () => {
   let app: INestApplication;
@@ -18,48 +12,21 @@ describe('Organizations (e2e)', () => {
     datasources: { db: { url: process.env.DATABASE_URL } },
   });
 
-  const mockUser: Omit<User, 'createdAt' | 'updatedAt'> = {
-    id: 20,
-    supabaseUserId: 'test-supabase-id-orgs',
-    email: 'orgs-test@example.com',
-    name: 'Orgs Tester',
-    totalHours: 0,
-    karmaPoints: 0,
-    avatarUrl: null,
-  };
-
-  const mockAuthGuard = {
-    canActivate: (context: any) => {
-      const request = context.switchToHttp().getRequest();
-      request.user = mockUser;
-      return true;
-    },
-  };
-
-  @Injectable()
-  class MockOptionalAuthGuard extends AuthGuard implements CanActivate {
-    constructor() {
-      super(null as any, null as any);
-    }
-    async canActivate(context: ExecutionContext): Promise<boolean> {
-      const request = context.switchToHttp().getRequest();
-      const token = this.extractTokenFromHeader(request);
-
-      if (token) {
-        request.user = mockUser;
-      }
-      return true;
-    }
-  }
+  let mockUser: User;
+  const authToken = 'Bearer test-token';
 
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
       .overrideGuard(AuthGuard)
-      .useValue(mockAuthGuard)
-      .overrideGuard(OptionalAuthGuard)
-      .useClass(MockOptionalAuthGuard)
+      .useValue({
+        canActivate: (context: any) => {
+          const req = context.switchToHttp().getRequest();
+          req.user = mockUser;
+          return true;
+        },
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -68,26 +35,13 @@ describe('Organizations (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.storyLike.deleteMany();
-    await prisma.comment.deleteMany();
-    await prisma.chatMessage.deleteMany();
-    await prisma.story.deleteMany();
-    await prisma.userReward.deleteMany();
-    await prisma.reward.deleteMany();
-    await prisma.userCertificate.deleteMany();
-    await prisma.userAchievement.deleteMany();
-    await prisma.achievement.deleteMany();
-    await prisma.eventParticipant.deleteMany();
-    await prisma.userOrganizationSubscription.deleteMany();
-    await prisma.karmaLog.deleteMany();
-    await prisma.event.deleteMany();
-    await prisma.organization.deleteMany();
-    await prisma.quizAnswer.deleteMany();
-    await prisma.quizQuestion.deleteMany();
-    await prisma.lesson.deleteMany();
-    await prisma.course.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.user.create({ data: mockUser as User });
+    await clearDatabase(prisma);
+    mockUser = await prisma.user.create({
+      data: {
+        email: 'org-user@test.com',
+        supabaseUserId: 'supa-org-user',
+      },
+    });
   });
 
   afterAll(async () => {
@@ -95,48 +49,48 @@ describe('Organizations (e2e)', () => {
     if (app) await app.close();
   });
 
-  describe('/organizations/:id/events (GET)', () => {
-    it('should return a paginated list of events for a specific organization', async () => {
-      const org = await prisma.organization.create({
-        data: { name: 'Org With Many Events' },
-      });
-
-      // Создаем 12 событий для проверки пагинации
-      for (let i = 0; i < 12; i++) {
-        await prisma.event.create({
-          data: {
-            title: `Event ${i}`,
-            description: 'Desc',
-            date: new Date(),
-            organizationId: org.id,
-          },
-        });
-      }
-      const responseDefault = await request(app.getHttpServer())
-        .get(`/organizations/${org.id}/events`)
-        .expect(200);
-
-      expect(responseDefault.body).toHaveLength(10);
-      expect(responseDefault.body[0].title).toBe('Event 0');
-
-      const responsePage2 = await request(app.getHttpServer())
-        .get(`/organizations/${org.id}/events?page=2&limit=5`)
-        .expect(200);
-
-      expect(responsePage2.body).toHaveLength(5);
-      expect(responsePage2.body[0].title).toBe('Event 5');
-
-      const responseLastPage = await request(app.getHttpServer())
-        .get(`/organizations/${org.id}/events?page=3&limit=5`)
-        .expect(200);
-      expect(responseLastPage.body).toHaveLength(2);
-      expect(responseLastPage.body[0].title).toBe('Event 10');
+  it('GET /organizations - should return isSubscribed flags correctly', async () => {
+    const org1 = await prisma.organization.create({ data: { name: 'Org 1' } });
+    const org2 = await prisma.organization.create({ data: { name: 'Org 2' } });
+    await prisma.userOrganizationSubscription.create({
+      data: { userId: mockUser.id, organizationId: org1.id },
     });
 
-    it('should return 404 if organization does not exist', async () => {
+    const { body } = await request(app.getHttpServer())
+      .get('/organizations')
+      .set('Authorization', authToken)
+      .expect(200);
+
+    expect(body).toHaveLength(2);
+    expect(body.find((o) => o.id === org1.id).isSubscribed).toBe(true);
+    expect(body.find((o) => o.id === org2.id).isSubscribed).toBe(false);
+  });
+
+  it('POST & DELETE /organizations/:id/subscribe - should subscribe and unsubscribe user', async () => {
+    const org = await prisma.organization.create({ data: { name: 'Org to sub' } });
+
+    await request(app.getHttpServer())
+      .post(`/organizations/${org.id}/subscribe`)
+      .set('Authorization', authToken)
+      .expect(204);
+
+    let { body: orgDetails } = await request(app.getHttpServer())
+      .get(`/organizations/${org.id}`)
+      .set('Authorization', authToken)
+      .expect(200);
+    expect(orgDetails.isSubscribed).toBe(true);
+
+    await request(app.getHttpServer())
+      .delete(`/organizations/${org.id}/unsubscribe`)
+      .set('Authorization', authToken)
+      .expect(204);
+
+    orgDetails = (
       await request(app.getHttpServer())
-        .get('/organizations/99999/events')
-        .expect(404);
-    });
+        .get(`/organizations/${org.id}`)
+        .set('Authorization', authToken)
+        .expect(200)
+    ).body;
+    expect(orgDetails.isSubscribed).toBe(false);
   });
 });

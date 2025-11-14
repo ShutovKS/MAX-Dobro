@@ -6,7 +6,7 @@ import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
 import { clearDatabase } from './test-utils';
 
-describe('Leaderboard (e2e)', () => {
+describe('Challenges (e2e)', () => {
   let app: INestApplication;
   const prisma = new PrismaClient({
     datasources: { db: { url: process.env.DATABASE_URL } },
@@ -37,12 +37,7 @@ describe('Leaderboard (e2e)', () => {
   beforeEach(async () => {
     await clearDatabase(prisma);
     mockUser = await prisma.user.create({
-      data: {
-        email: 'leader-test@example.com',
-        supabaseUserId: 'supa-leaderboard',
-        name: 'Current User',
-        karmaPoints: 60,
-      },
+      data: { email: 'challenges@test.com', supabaseUserId: 'supa-challenges' },
     });
   });
 
@@ -51,23 +46,43 @@ describe('Leaderboard (e2e)', () => {
     if (app) await app.close();
   });
 
-  it('/leaderboard?period=allTime (GET) should return all-time leaders', async () => {
-    await prisma.user.create({
+  it('GET /challenges/weekly - should return null if no active weekly challenge', async () => {
+    await request(app.getHttpServer())
+      .get('/challenges/weekly')
+      .set('Authorization', authToken)
+      .expect(200)
+      .then((response) => {
+        expect(response.body).toBe('');
+      });
+  });
+
+  it('GET /challenges/weekly - should return weekly challenge status for a user', async () => {
+    const challenge = await prisma.challenge.create({
       data: {
-        email: 'alltime@test.com',
-        supabaseUserId: 'supa-alltime',
-        name: 'AllTime Winner',
-        karmaPoints: 1000,
+        title: 'Eco Week',
+        description: 'Participate in 3 eco events',
+        reward: '+100 Karma',
+        criteriaType: 'EVENTS',
+        criteriaValue: 3,
+        period: 'WEEKLY',
+      },
+    });
+    await prisma.userChallenge.create({
+      data: {
+        userId: mockUser.id,
+        challengeId: challenge.id,
+        progress: 1,
       },
     });
 
     const { body } = await request(app.getHttpServer())
-      .get('/leaderboard?period=allTime')
+      .get('/challenges/weekly')
       .set('Authorization', authToken)
       .expect(200);
 
-    expect(body.topUsers[0].name).toBe('AllTime Winner');
-    expect(body.topUsers[0].karma).toBe(1000);
-    expect(body.currentUser.rank).toBe(2);
+    expect(body.title).toBe('Eco Week');
+    expect(body.progress).toBe(1);
+    expect(body.target).toBe(3);
+    expect(body.isCompleted).toBe(false);
   });
 });

@@ -54,8 +54,9 @@ export class LeaderboardService {
     });
 
     const topUsersWithRank: LeaderboardUserEntity[] = topUsers.map(
-      (user, index) => ({
+      ({ karmaPoints, ...user }, index) => ({
         ...user,
+        karma: karmaPoints,
         rank: index + 1,
       }),
     );
@@ -70,7 +71,8 @@ export class LeaderboardService {
       const rank = await this.prisma.user.count({
         where: { karmaPoints: { gt: currentUserData.karmaPoints } },
       });
-      currentUserWithRank = { ...currentUserData, rank: rank + 1 };
+      const { karmaPoints, ...rest } = currentUserData;
+      currentUserWithRank = { ...rest, karma: karmaPoints, rank: rank + 1 };
     }
 
     return { topUsers: topUsersWithRank, currentUser: currentUserWithRank };
@@ -87,7 +89,7 @@ export class LeaderboardService {
       id: number;
       name: string | null;
       avatarUrl: string | null;
-      karmaPoints: number;
+      karma: number;
       rank: bigint;
     };
 
@@ -97,7 +99,7 @@ export class LeaderboardService {
           u.id,
           u.name,
           u."avatarUrl",
-          SUM(kl.points)::int AS "karmaPoints",
+          SUM(kl.points)::int AS "karma",
           RANK() OVER (ORDER BY SUM(kl.points) DESC, u.id ASC) AS "rank"
         FROM "karma_logs" kl
         JOIN "User" u ON u.id = kl."userId"

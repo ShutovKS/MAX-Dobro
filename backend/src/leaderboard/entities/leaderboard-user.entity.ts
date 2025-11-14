@@ -18,5 +18,5 @@ export class LeaderboardUserEntity {
   avatarUrl: string | null;
 
   @ApiProperty({ description: "User's total karma points" })
-  karmaPoints: number;
+  karma: number;
 }

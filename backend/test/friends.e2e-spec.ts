@@ -6,13 +6,14 @@ import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
 import { clearDatabase } from './test-utils';
 
-describe('Leaderboard (e2e)', () => {
+describe('Friends (e2e)', () => {
   let app: INestApplication;
   const prisma = new PrismaClient({
     datasources: { db: { url: process.env.DATABASE_URL } },
   });
 
   let mockUser: User;
+  let friendUser: User;
   const authToken = 'Bearer test-token';
 
   beforeAll(async () => {
@@ -37,11 +38,13 @@ describe('Leaderboard (e2e)', () => {
   beforeEach(async () => {
     await clearDatabase(prisma);
     mockUser = await prisma.user.create({
+      data: { email: 'main@test.com', supabaseUserId: 'supa-main' },
+    });
+    friendUser = await prisma.user.create({
       data: {
-        email: 'leader-test@example.com',
-        supabaseUserId: 'supa-leaderboard',
-        name: 'Current User',
-        karmaPoints: 60,
+        email: 'friend@test.com',
+        supabaseUserId: 'supa-friend',
+        name: 'Friend User',
       },
     });
   });
@@ -51,23 +54,27 @@ describe('Leaderboard (e2e)', () => {
     if (app) await app.close();
   });
 
-  it('/leaderboard?period=allTime (GET) should return all-time leaders', async () => {
-    await prisma.user.create({
-      data: {
-        email: 'alltime@test.com',
-        supabaseUserId: 'supa-alltime',
-        name: 'AllTime Winner',
-        karmaPoints: 1000,
-      },
+  it('GET /friends - should return a list of friends', async () => {
+    await prisma.friendship.create({
+      data: { userId: mockUser.id, friendId: friendUser.id },
     });
 
     const { body } = await request(app.getHttpServer())
-      .get('/leaderboard?period=allTime')
+      .get('/friends')
       .set('Authorization', authToken)
       .expect(200);
 
-    expect(body.topUsers[0].name).toBe('AllTime Winner');
-    expect(body.topUsers[0].karma).toBe(1000);
-    expect(body.currentUser.rank).toBe(2);
+    expect(body).toHaveLength(1);
+    expect(body[0].id).toBe(friendUser.id);
+    expect(body[0].name).toBe('Friend User');
+  });
+
+  it('GET /friends - should return an empty list if user has no friends', async () => {
+    const { body } = await request(app.getHttpServer())
+      .get('/friends')
+      .set('Authorization', authToken)
+      .expect(200);
+
+    expect(body).toEqual([]);
   });
 });

@@ -6,33 +6,27 @@ import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
 import { clearDatabase } from './test-utils';
 
-describe('Profile (e2e)', () => {
+describe('Assistant Chat (e2e)', () => {
   let app: INestApplication;
   const prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
+    datasources: { db: { url: process.env.DATABASE_URL } },
   });
 
   let mockUser: User;
   const authToken = 'Bearer test-token';
-
-  const mockAuthGuard = {
-    canActivate: (context: any) => {
-      const request = context.switchToHttp().getRequest();
-      request.user = mockUser;
-      return true;
-    },
-  };
 
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
       .overrideGuard(AuthGuard)
-      .useValue(mockAuthGuard)
+      .useValue({
+        canActivate: (context: any) => {
+          const req = context.switchToHttp().getRequest();
+          req.user = mockUser;
+          return true;
+        },
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -44,28 +38,26 @@ describe('Profile (e2e)', () => {
     await clearDatabase(prisma);
     mockUser = await prisma.user.create({
       data: {
-        email: 'profile-test@example.com',
-        supabaseUserId: 'test-supabase-id-profile',
-        name: 'Test User',
-        karmaPoints: 125,
+        email: 'assistant-chat-user@test.com',
+        supabaseUserId: 'supa-assistant-chat-user',
       },
     });
   });
 
   afterAll(async () => {
     await prisma.$disconnect();
-    if (app) {
-      await app.close();
-    }
+    if (app) await app.close();
   });
 
-  it('/profile/me (GET) - should return current user profile', async () => {
-    const { body } = await request(app.getHttpServer())
-      .get('/profile/me')
+  it('POST /assistant-chat/messages - should return suggestions', async () => {
+    const dto = { text: 'Привет!' };
+    const response = await request(app.getHttpServer())
+      .post('/assistant-chat/messages')
       .set('Authorization', authToken)
-      .expect(200);
-      
-    expect(body.email).toBe(mockUser.email);
-    expect(body.levelName).toBe('Активист');
+      .send(dto)
+      .expect(201);
+
+    expect(response.body.sender).toBe('assistant');
+    expect(response.body.type).toBe('suggestion-chips');
   });
 });

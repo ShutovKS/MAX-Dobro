@@ -5,7 +5,7 @@ import { AchievementsModule } from './achievements/achievements.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { ChatModule } from './chat/chat.module';
+import { AssistantChatModule } from './assistant-chat/assistant-chat.module';
 import { EventsModule } from './events/events.module';
 import { LearningModule } from './learning/learning.module';
 import { OrganizationsModule } from './organizations/organizations.module';
@@ -16,6 +16,10 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { EventChatsModule } from './event-chats/event-chats.module';
+import { FriendsModule } from './friends/friends.module';
+import { ChallengesModule } from './challenges/challenges.module';
 
 @Module({
   imports: [
@@ -33,7 +37,11 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     OrganizationsModule,
     RewardsModule,
     StoriesModule,
-    ChatModule,
+    AssistantChatModule,
+    LeaderboardModule,
+    EventChatsModule,
+    FriendsModule,
+    ChallengesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

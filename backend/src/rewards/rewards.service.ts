@@ -4,17 +4,35 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RewardEntity } from './entities/reward.entity';
 
 @Injectable()
 export class RewardsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return this.prisma.reward.findMany({
-      orderBy: {
-        cost: 'asc',
-      },
+  async findAll(userId?: number): Promise<RewardEntity[]> {
+    const rewards = await this.prisma.reward.findMany({
+      orderBy: { cost: 'asc' },
     });
+
+    let userRewardIds: Set<number> = new Set();
+    if (userId) {
+      const userRewards = await this.prisma.userReward.findMany({
+        where: { userId },
+        select: { rewardId: true },
+      });
+      userRewardIds = new Set(userRewards.map((ur) => ur.rewardId));
+    }
+
+    return rewards.map((r) => ({
+      id: r.id,
+      name: r.title,
+      description: r.description,
+      price: r.cost,
+      imageUrl: r.icon,
+      category: r.category ?? 'Разное',
+      isPurchased: userId ? userRewardIds.has(r.id) : undefined,
+    }));
   }
 
   async purchase(rewardId: number, userId: number) {
@@ -32,7 +50,6 @@ export class RewardsService {
       });
 
       if (!user) {
-        // This case should ideally not be hit if AuthGuard is working
         throw new NotFoundException(`User with ID ${userId} not found.`);
       }
 

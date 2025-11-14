@@ -8,10 +8,9 @@ const OTHER_USER_SUPABASE_ID = '0e24c3b5-2e3b-4b1a-9a0e-1e9d1e4e1e0a';
 async function main() {
   console.log('Start seeding...');
 
-  // 1. Очистка
   await prisma.storyLike.deleteMany();
   await prisma.comment.deleteMany();
-  await prisma.chatMessage.deleteMany();
+  await prisma.assistantChatMessage.deleteMany();
   await prisma.story.deleteMany();
   await prisma.userReward.deleteMany();
   await prisma.reward.deleteMany();
@@ -28,7 +27,6 @@ async function main() {
   await prisma.course.deleteMany();
   await prisma.user.deleteMany();
 
-  // 2. Создание пользователей
   const user1 = await prisma.user.create({
     data: {
       email: 'test@example.com',
@@ -48,7 +46,6 @@ async function main() {
   });
   console.log('Test user 2 created.');
 
-  // 3. Создание достижений
   await prisma.achievement.createMany({
     data: [
       {
@@ -66,11 +63,11 @@ async function main() {
     ],
   });
 
-  // 4. Создание организации и события
   const org = await prisma.organization.create({
     data: {
       name: 'Фонд "Чистый Лес"',
-      description: 'Мы занимаемся защитой и восстановлением лесов по всей стране.',
+      description:
+        'Мы занимаемся защитой и восстановлением лесов по всей стране.',
       category: 'Экология',
       logoUrl: 'https://placehold.co/100x100/a7e9af/333?text=CL',
       isVerified: true,
@@ -81,7 +78,7 @@ async function main() {
       reviewCount: 152,
     },
   });
-  
+
   console.log('Organization created.');
 
   const futureEventDate = new Date();
@@ -99,7 +96,6 @@ async function main() {
     },
   });
 
-  // 5. Регистрация пользователя на событие
   await prisma.eventParticipant.create({
     data: {
       userId: user1.id,
@@ -108,7 +104,6 @@ async function main() {
     },
   });
 
-  // 6. Создание наград
   await prisma.reward.createMany({
     data: [
       {
@@ -127,7 +122,6 @@ async function main() {
   });
   console.log('Rewards created.');
 
-  // 7. Создание курсов
   console.log('Creating courses...');
   await prisma.course.create({
     data: {
@@ -171,9 +165,8 @@ async function main() {
   });
   console.log('Courses created.');
 
-  // 8. Создание историй, комментариев и лайков
   console.log('Creating stories, comments, and likes...');
-  const story = await prisma.story.create({
+  await prisma.story.create({
     data: {
       authorId: user1.id,
       eventId: event.id,
@@ -190,10 +183,10 @@ async function main() {
       likes: {
         create: [
           {
-            userId: user1.id, // Текущий пользователь лайкает свой пост
+            userId: user1.id,
           },
           {
-            userId: user2.id, // И другой пользователь тоже
+            userId: user2.id,
           },
         ],
       },
@@ -201,9 +194,8 @@ async function main() {
   });
   console.log('Stories, comments and likes created.');
 
-  // 9. Создание чата и сообщений
   console.log('Creating chat messages for chatbot...');
-  await prisma.chatMessage.createMany({
+  await prisma.assistantChatMessage.createMany({
     data: [
       {
         authorId: user1.id,

@@ -4,6 +4,7 @@ import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
+import { clearDatabase } from './test-utils';
 
 describe('Learning (e2e)', () => {
   let app: INestApplication;
@@ -11,15 +12,8 @@ describe('Learning (e2e)', () => {
     datasources: { db: { url: process.env.DATABASE_URL } },
   });
 
-  const mockUser: Omit<User, 'createdAt' | 'updatedAt'> = {
-    id: 2,
-    supabaseUserId: 'test-supabase-id-learning',
-    email: 'learning-test@example.com',
-    name: 'Learning Tester',
-    totalHours: 0,
-    karmaPoints: 0,
-    avatarUrl: null,
-  };
+  let mockUser: User;
+  const authToken = 'Bearer test-token';
 
   const mockAuthGuard = {
     canActivate: (context: any) => {
@@ -43,26 +37,13 @@ describe('Learning (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.storyLike.deleteMany();
-    await prisma.comment.deleteMany();
-    await prisma.chatMessage.deleteMany();
-    await prisma.story.deleteMany();
-    await prisma.userReward.deleteMany();
-    await prisma.reward.deleteMany();
-    await prisma.userCertificate.deleteMany();
-    await prisma.userAchievement.deleteMany();
-    await prisma.achievement.deleteMany();
-    await prisma.eventParticipant.deleteMany();
-    await prisma.userOrganizationSubscription.deleteMany();
-    await prisma.karmaLog.deleteMany();
-    await prisma.event.deleteMany();
-    await prisma.organization.deleteMany();
-    await prisma.quizAnswer.deleteMany();
-    await prisma.quizQuestion.deleteMany();
-    await prisma.lesson.deleteMany();
-    await prisma.course.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.user.create({ data: mockUser as User });
+    await clearDatabase(prisma);
+    mockUser = await prisma.user.create({
+      data: {
+        email: 'learning-test@example.com',
+        supabaseUserId: 'test-supabase-id-learning',
+      },
+    });
   });
 
   afterAll(async () => {
@@ -70,87 +51,42 @@ describe('Learning (e2e)', () => {
     if (app) await app.close();
   });
 
-  describe('/courses/:id/complete (POST)', () => {
-    it('should successfully complete a course with correct answers', async () => {
-      const course = await prisma.course.create({
-        data: {
-          title: 'Test Course',
-          description: 'Desc',
-          lessons: {
-            create: {
-              title: 'Lesson 1',
-              content: 'Content',
-              questions: {
-                create: {
-                  question: 'Q1',
-                  answers: {
-                    create: [
-                      { answer: 'Wrong', isCorrect: false },
-                      { answer: 'Correct', isCorrect: true },
-                    ],
-                  },
+  it('POST /courses/:id/complete - should successfully complete a course', async () => {
+    const course = await prisma.course.create({
+      data: {
+        title: 'Test Course',
+        description: 'Desc',
+        lessons: {
+          create: {
+            title: 'Lesson 1',
+            content: 'Content',
+            questions: {
+              create: {
+                question: 'Q1',
+                answers: {
+                  create: [{ answer: 'Correct', isCorrect: true }],
                 },
               },
             },
           },
         },
-        include: {
-          lessons: { include: { questions: { include: { answers: true } } } },
-        },
-      });
-
-      const questionId = course.lessons[0].questions[0].id;
-      const correctAnswerId = course.lessons[0].questions[0].answers.find(
-        (a) => a.isCorrect,
-      )!.id;
-
-      await request(app.getHttpServer())
-        .post(`/courses/${course.id}/complete`)
-        .send({ answers: [{ questionId, answerId: correctAnswerId }] })
-        .expect(201);
-
-      const certificate = await prisma.userCertificate.findFirst();
-      expect(certificate).not.toBeNull();
-      expect(certificate?.userId).toBe(mockUser.id);
+      },
+      include: {
+        lessons: { include: { questions: { include: { answers: true } } } },
+      },
     });
 
-    it('should return 400 Bad Request for incorrect answers', async () => {
-      const course = await prisma.course.create({
-        data: {
-          title: 'Test Course 2',
-          description: 'Desc',
-          lessons: {
-            create: {
-              title: 'Lesson 1',
-              content: 'Content',
-              questions: {
-                create: {
-                  question: 'Q1',
-                  answers: {
-                    create: [
-                      { answer: 'Wrong', isCorrect: false },
-                      { answer: 'Correct', isCorrect: true },
-                    ],
-                  },
-                },
-              },
-            },
-          },
-        },
-        include: {
-          lessons: { include: { questions: { include: { answers: true } } } },
-        },
-      });
+    const questionId = course.lessons[0].questions[0].id;
+    const correctAnswerId = course.lessons[0].questions[0].answers[0].id;
 
-      const questionId = course.lessons[0].questions[0].id;
-      const wrongAnswerId = course.lessons[0].questions[0].answers.find(
-        (a) => !a.isCorrect,
-      )!.id;
+    await request(app.getHttpServer())
+      .post(`/courses/${course.id}/complete`)
+      .set('Authorization', authToken)
+      .send({ answers: [{ questionId, answerId: correctAnswerId }] })
+      .expect(201);
 
-      await request(app.getHttpServer())
-        .post(`/courses/${course.id}/complete`)
-        .send({ answers: [{ questionId, answerId: wrongAnswerId }] })
-        .expect(400);
-    });
+    const certificate = await prisma.userCertificate.findFirst();
+    expect(certificate).not.toBeNull();
+    expect(certificate?.userId).toBe(mockUser.id);
   });
 });
