@@ -33,11 +33,15 @@ export class EventsService {
   private mapEvent(
     event: Prisma.EventGetPayload<typeof this.eventWithDetails>,
   ) {
-    const { organization, ...rest } = event;
+    const { organization, durationHours, karmaPoints, ...rest } = event;
     return {
       ...rest,
       organizationName: organization.name,
-      category: organization.category,
+      participantCount: event._count.participants,
+      rewards: {
+        hours: durationHours,
+        karma: karmaPoints,
+      },
     };
   }
 
@@ -84,7 +88,10 @@ export class EventsService {
     try {
       const updatedEvent = await this.prisma.event.update({
         where: { id },
-        data: updateEventDto,
+        data: {
+          ...updateEventDto,
+          date: updateEventDto.date ? new Date(updateEventDto.date) : undefined,
+        },
         ...this.eventWithDetails,
       });
       return this.mapEvent(updatedEvent);

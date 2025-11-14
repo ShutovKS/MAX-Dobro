@@ -12,7 +12,9 @@ export class StoriesService {
 
   private getStoryInclude(currentUserId?: number) {
     return {
-      author: { select: { id: true, firstName: true, lastName: true } },
+      author: {
+        select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+      },
       event: { select: { id: true, title: true } },
       _count: {
         select: { comments: true, likes: true },
@@ -24,19 +26,21 @@ export class StoriesService {
   }
 
   private mapStory(story: any, currentUserId?: number) {
-    const { _count, author, event, ...rest } = story;
+    const { _count, author, event, createdAt, ...rest } = story;
     const result: any = {
       ...rest,
       author: {
         id: author.id,
         name: `${author.firstName || ''} ${author.lastName || ''}`.trim(),
+        avatarUrl: author.avatarUrl,
       },
       event: {
         id: event.id,
         name: event.title,
       },
-      commentsCount: _count.comments,
-      likesCount: _count.likes,
+      timestamp: createdAt.toISOString(),
+      likes: _count.likes,
+      comments: _count.comments,
     };
 
     if (currentUserId) {
@@ -61,7 +65,14 @@ export class StoriesService {
         ...this.getStoryInclude(currentUserId),
         comments: {
           include: {
-            author: { select: { id: true, firstName: true, lastName: true } },
+            author: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
+              },
+            },
           },
           orderBy: { createdAt: 'asc' },
         },
@@ -73,16 +84,21 @@ export class StoriesService {
     }
 
     const mappedStory = this.mapStory(story, currentUserId);
-    mappedStory.comments = story.comments.map((comment: any) => {
-      const { firstName, lastName, ...authorRest } = comment.author;
+
+    mappedStory.commentsData = story.comments.map((comment: any) => {
+      const { firstName, lastName, avatarUrl } = comment.author;
       return {
-        ...comment,
+        id: comment.id,
+        text: comment.text,
+        timestamp: comment.createdAt.toISOString(),
         author: {
-          ...authorRest,
           name: `${firstName || ''} ${lastName || ''}`.trim(),
+          avatarUrl: avatarUrl,
         },
       };
     });
+
+    delete mappedStory.comments;
 
     return mappedStory;
   }
