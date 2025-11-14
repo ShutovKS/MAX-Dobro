@@ -10,7 +10,7 @@ async function bootstrap() {
     origin: [
       'https://max-dobro.vercel.app',
       'http://localhost:3000',
-      'http://localhost:5173',
+      'https://mvqcvuhuhngolsewmlob.supabase.co',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
