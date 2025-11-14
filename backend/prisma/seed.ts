@@ -10,8 +10,6 @@ async function main() {
 
   // 1. Очистка (в порядке, обратном созданию, чтобы избежать ошибок внешних ключей)
   await prisma.chatMessage.deleteMany();
-  await prisma.chatParticipant.deleteMany();
-  await prisma.chat.deleteMany();
   await prisma.story.deleteMany();
   await prisma.userReward.deleteMany();
   await prisma.reward.deleteMany();
@@ -20,6 +18,7 @@ async function main() {
   await prisma.achievement.deleteMany();
   await prisma.eventParticipant.deleteMany();
   await prisma.event.deleteMany();
+  await prisma.userOrganizationSubscription.deleteMany();
   await prisma.organization.deleteMany();
   await prisma.quizAnswer.deleteMany();
   await prisma.quizQuestion.deleteMany();
@@ -38,7 +37,8 @@ async function main() {
   });
   console.log('Test user 1 created.');
 
-  const user2 = await prisma.user.create({
+  // Второй пользователь остается для других тестов (например, подписки)
+  await prisma.user.create({
     data: {
       email: 'friend@example.com',
       supabaseUserId: OTHER_USER_SUPABASE_ID,
@@ -65,27 +65,27 @@ async function main() {
     ],
   });
 
-  // 4. Создание организации и "просроченного" события
+  // 4. Создание организации и события
   const org = await prisma.organization.create({
     data: { name: 'Организация для Теста Кармы' },
   });
 
-  const pastEventDate = new Date();
-  pastEventDate.setHours(pastEventDate.getHours() - 4);
+  const futureEventDate = new Date();
+  futureEventDate.setDate(futureEventDate.getDate() + 7);
 
   const event = await prisma.event.create({
     data: {
-      title: 'Событие для Теста Кармы',
-      description: 'Это событие уже должно было завершиться',
-      date: pastEventDate,
+      title: 'Будущее событие для Теста Бота',
+      description: 'Это событие должно быть найдено ассистентом',
+      date: futureEventDate,
       organizationId: org.id,
-      durationHours: 1,
-      karmaPoints: 100,
+      durationHours: 2,
+      karmaPoints: 50,
       status: 'PLANNED',
     },
   });
 
-  // 5. Регистрация пользователя на это событие
+  // 5. Регистрация пользователя на событие
   await prisma.eventParticipant.create({
     data: {
       userId: user1.id,
@@ -177,20 +177,25 @@ async function main() {
   console.log('Stories created.');
 
   // 9. Создание чата и сообщений
-  await prisma.chat.create({
-    data: {
-      participants: {
-        create: [{ userId: user1.id }, { userId: user2.id }],
+  console.log('Creating chat messages for chatbot...');
+  await prisma.chatMessage.createMany({
+    data: [
+      {
+        authorId: user1.id,
+        content: 'Это мое первое сообщение в истории чата.',
+        sender: 'USER',
+        type: 'text',
       },
-      messages: {
-        create: [
-          { authorId: user1.id, content: 'Привет! Как дела?' },
-          { authorId: user2.id, content: 'Привет! Все отлично, спасибо!' },
-        ],
+      {
+        authorId: user1.id,
+        content: 'А это ответ ассистента с подсказками.',
+        sender: 'ASSISTANT',
+        type: 'suggestion-chips',
+        payload: { suggestions: ['Расскажи о событиях', 'Какие есть курсы?'] },
       },
-    },
+    ],
   });
-  console.log('Chat and messages created.');
+  console.log('Chat messages created.');
 
   console.log('Seeding finished.');
 }

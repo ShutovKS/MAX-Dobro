@@ -25,7 +25,6 @@ model User {
   certificates   UserCertificate[]
   subscriptions  UserOrganizationSubscription[]
   rewards        UserReward[]
-  chats          ChatParticipant[]
   messages       ChatMessage[]
 
   supabaseUserId String @unique @map("supabase_user_id")
@@ -203,35 +202,14 @@ model Story {
   @@map("stories")
 }
 
-// Модель чата
-model Chat {
-  id           Int      @id @default(autoincrement())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  participants ChatParticipant[]
-  messages     ChatMessage[]
-
-  @@map("chats")
-}
-
-// Связь пользователей с чатами
-model ChatParticipant {
-  userId Int
-  user   User @relation(fields: [userId], references: [id])
-  chatId Int
-  chat   Chat @relation(fields: [chatId], references: [id])
-
-  @@id([userId, chatId])
-  @@map("chat_participants")
-}
-
 // Модель сообщения в чате
 model ChatMessage {
   id        Int      @id @default(autoincrement())
   content   String   @db.Text
+  sender    String // "USER" или "ASSISTANT"
+  type      String   @default("text") // text, event-card, suggestion-chips
+  payload   Json?
   createdAt DateTime @default(now())
-  chatId    Int
-  chat      Chat     @relation(fields: [chatId], references: [id])
   authorId  Int
   author    User     @relation(fields: [authorId], references: [id])
 

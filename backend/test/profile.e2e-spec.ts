@@ -46,6 +46,8 @@ describe('Profile (e2e)', () => {
   });
 
   beforeEach(async () => {
+    await prisma.userReward.deleteMany();
+    await prisma.reward.deleteMany();
     await prisma.userOrganizationSubscription.deleteMany();
     await prisma.userAchievement.deleteMany();
     await prisma.userCertificate.deleteMany();
@@ -76,6 +78,57 @@ describe('Profile (e2e)', () => {
         expect(res.body.id).toBe(mockUser.id);
         expect(res.body.email).toBe(mockUser.email);
         expect(res.body).toHaveProperty('levelName');
+      });
+  });
+
+  it('/profile/me/rewards (GET) - should return users purchased rewards', async () => {
+    const reward = await prisma.reward.create({
+      data: { title: 'Test Reward', description: 'desc', cost: 100 },
+    });
+
+    await prisma.userReward.create({
+      data: {
+        userId: mockUser.id,
+        rewardId: reward.id,
+      },
+    });
+
+    return request(app.getHttpServer())
+      .get('/profile/me/rewards')
+      .expect(200)
+      .expect((res) => {
+        expect(res.body).toBeInstanceOf(Array);
+        expect(res.body).toHaveLength(1);
+        expect(res.body[0].rewardId).toBe(reward.id);
+        expect(res.body[0].reward.title).toBe(reward.title);
+      });
+  });
+
+  it('/profile/me/achievements (GET) - should return users unlocked achievements', async () => {
+    const achievement = await prisma.achievement.create({
+      data: {
+        name: 'Tester Pro',
+        description: 'You are a pro tester',
+        criteriaType: 'TEST',
+        criteriaValue: 1,
+      },
+    });
+
+    await prisma.userAchievement.create({
+      data: {
+        userId: mockUser.id,
+        achievementId: achievement.id,
+      },
+    });
+
+    return request(app.getHttpServer())
+      .get('/profile/me/achievements')
+      .expect(200)
+      .expect((res) => {
+        expect(res.body).toBeInstanceOf(Array);
+        expect(res.body).toHaveLength(1);
+        expect(res.body[0].achievementId).toBe(achievement.id);
+        expect(res.body[0].achievement.name).toBe(achievement.name);
       });
   });
 });

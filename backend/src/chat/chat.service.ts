@@ -1,177 +1,123 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { ChatListItemEntity } from './dto/chat-list-item.entity';
-import { CreateChatDto } from './dto/create-chat.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 
 @Injectable()
 export class ChatService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async startChat(initiatorId: number, dto: CreateChatDto) {
-    const { recipientId } = dto;
+  private async mapMessage(
+    message: Prisma.ChatMessageGetPayload<{}>,
+  ): Promise<any> {
+    const { payload, content, sender, type, ...rest } = message;
 
-    if (initiatorId === recipientId) {
-      throw new BadRequestException('You cannot start a chat with yourself.');
-    }
+    const mappedMessage: any = {
+      ...rest,
+      text: content,
+      sender: sender.toLowerCase(),
+      type: type,
+    };
 
-    const existingChat = await this.prisma.chat.findFirst({
-      where: {
-        AND: [
-          { participants: { some: { userId: initiatorId } } },
-          { participants: { some: { userId: recipientId } } },
-        ],
-      },
-    });
-
-    if (existingChat) {
-      return existingChat;
-    }
-
-    return this.prisma.chat.create({
-      data: {
-        participants: {
-          create: [{ userId: initiatorId }, { userId: recipientId }],
-        },
-      },
-    });
-  }
-
-  async createMessage(
-    chatId: number,
-    authorId: number,
-    dto: CreateMessageDto,
-  ) {
-    const isParticipant = await this.prisma.chatParticipant.findUnique({
-      where: {
-        userId_chatId: {
-          userId: authorId,
-          chatId,
-        },
-      },
-    });
-
-    if (!isParticipant) {
-      throw new ForbiddenException('You are not a participant of this chat.');
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      const message = await tx.chatMessage.create({
-        data: {
-          chatId,
-          authorId,
-          content: dto.content,
-        },
+    if (type === 'event-card' && payload && (payload as any).eventId) {
+      mappedMessage.event = await this.prisma.event.findUnique({
+        where: { id: (payload as any).eventId },
+        include: { _count: { select: { participants: true } } },
       });
-
-      await tx.chat.update({
-        where: { id: chatId },
-        data: { updatedAt: new Date() },
-      });
-
-      return message;
-    });
-  }
-
-  async findUserChats(userId: number): Promise<ChatListItemEntity[]> {
-    const chats = await this.prisma.chat.findMany({
-      where: {
-        participants: {
-          some: {
-            userId,
-          },
-        },
-      },
-      include: {
-        participants: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        messages: {
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
-        },
-      },
-      orderBy: {
-        updatedAt: 'desc',
-      },
-    });
-
-    return chats
-      .map((chat) => {
-        const recipient = chat.participants.find((p) => p.userId !== userId)
-          ?.user;
-        const lastMessage = chat.messages[0] ?? null;
-
-        if (!recipient) {
-          return null;
-        }
-
-        return {
-          id: chat.id,
-          updatedAt: chat.updatedAt,
-          recipient: recipient,
-          lastMessage: lastMessage
-            ? {
-                content: lastMessage.content,
-                createdAt: lastMessage.createdAt,
-              }
-            : null,
-        };
-      })
-      .filter((chat): chat is ChatListItemEntity => chat !== null);
-  }
-
-  async findMessages(
-    chatId: number,
-    userId: number,
-    pagination: PaginationQueryDto,
-  ) {
-    const isParticipant = await this.prisma.chatParticipant.findUnique({
-      where: {
-        userId_chatId: {
-          userId,
-          chatId,
-        },
-      },
-    });
-
-    if (!isParticipant) {
-      throw new ForbiddenException('You are not a participant of this chat.');
     }
 
+    if (type === 'course-card' && payload && (payload as any).courseId) {
+      mappedMessage.course = await this.prisma.course.findUnique({
+        where: { id: (payload as any).courseId },
+      });
+    }
+
+    if (
+      type === 'suggestion-chips' &&
+      payload &&
+      (payload as any).suggestions
+    ) {
+      mappedMessage.suggestions = (payload as any).suggestions;
+    }
+
+    return mappedMessage;
+  }
+
+  async findUserMessages(userId: number, pagination: PaginationQueryDto) {
     const { page = 1, limit = 20 } = pagination;
     const skip = (page - 1) * limit;
 
-    return this.prisma.chatMessage.findMany({
-      where: { chatId },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+    const messages = await this.prisma.chatMessage.findMany({
+      where: { authorId: userId },
+      orderBy: { createdAt: 'desc' },
       skip,
       take: limit,
     });
+
+    return Promise.all(messages.map((msg) => this.mapMessage(msg)));
+  }
+
+  async postMessage(authorId: number, dto: CreateMessageDto) {
+    await this.prisma.chatMessage.create({
+      data: {
+        authorId,
+        content: dto.text,
+        sender: 'USER',
+        type: 'text',
+      },
+    });
+
+    const userText = dto.text.toLowerCase();
+    let assistantResponse;
+
+    if (userText.includes('событи')) {
+      const firstEvent = await this.prisma.event.findFirst({
+        where: { date: { gte: new Date() } },
+        orderBy: { date: 'asc' },
+      });
+
+      if (firstEvent) {
+        assistantResponse = await this.prisma.chatMessage.create({
+          data: {
+            authorId,
+            sender: 'ASSISTANT',
+            content: `Нашел для вас ближайшее событие: "${firstEvent.title}". Интересно?`,
+            type: 'event-card',
+            payload: { eventId: firstEvent.id },
+          },
+        });
+      }
+    } else if (userText.includes('курс')) {
+      const firstCourse = await this.prisma.course.findFirst({
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (firstCourse) {
+        assistantResponse = await this.prisma.chatMessage.create({
+          data: {
+            authorId,
+            sender: 'ASSISTANT',
+            content: `Могу предложить вам курс: "${firstCourse.title}". Хотите узнать подробнее?`,
+            type: 'course-card',
+            payload: { courseId: firstCourse.id },
+          },
+        });
+      }
+    }
+
+    if (!assistantResponse) {
+      assistantResponse = await this.prisma.chatMessage.create({
+        data: {
+          authorId,
+          sender: 'ASSISTANT',
+          content: 'Я пока не понял ваш запрос. Может, вас интересуют события или курсы?',
+          type: 'suggestion-chips',
+          payload: { suggestions: ['Ближайшие события', 'Доступные курсы'] },
+        },
+      });
+    }
+
+    return this.mapMessage(assistantResponse);
   }
 }

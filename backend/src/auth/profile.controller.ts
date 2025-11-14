@@ -9,8 +9,9 @@ import type { User } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { ProfileEntity } from './entities/profile.entity';
-import { UserEventsEntity } from './entities/user-events.entity';
+import { UserAchievementEntity } from './entities/user-achievement.entity';
 import { UserCertificateEntity } from './entities/user-certificate.entity';
+import { UserEventsEntity } from './entities/user-events.entity';
 import { UserRewardEntity } from './entities/user-reward.entity';
 import { AuthGuard } from './guards/auth.guard';
 
@@ -69,5 +70,13 @@ export class ProfileController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   getMyRewards(@CurrentUser() user: User) {
     return this.authService.getUserRewards(user.id);
+  }
+
+  @Get('me/achievements')
+  @ApiOperation({ summary: "Get current user's unlocked achievements" })
+  @ApiResponse({ status: 200, type: [UserAchievementEntity] })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  getMyAchievements(@CurrentUser() user: User) {
+    return this.authService.getUserAchievements(user.id);
   }
 }

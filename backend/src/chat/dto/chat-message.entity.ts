@@ -1,23 +1,37 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { ChatMessage } from '@prisma/client';
-import { PublicUserEntity } from '../../users/entities/public-user.entity';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CourseEntity } from '../../learning/entities/course.entity';
+import { EventEntity } from '../../events/entities/event.entity';
 
-export class ChatMessageEntity implements ChatMessage {
+export class ChatMessageEntity {
   @ApiProperty()
   id: number;
-  
-  @ApiProperty()
-  content: string;
-  
-  @ApiProperty()
-  createdAt: Date;
-  
-  @ApiProperty()
-  chatId: number;
-  
-  @ApiProperty()
-  authorId: number;
-  
-  @ApiProperty({ type: () => PublicUserEntity })
-  author: PublicUserEntity;
+
+  @ApiPropertyOptional({ description: 'The main text content of the message' })
+  text?: string;
+
+  @ApiProperty({ enum: ['user', 'assistant'] })
+  sender: 'user' | 'assistant';
+
+  @ApiProperty({
+    enum: ['text', 'event-card', 'course-card', 'suggestion-chips', 'loading'],
+  })
+  type: string;
+
+  @ApiPropertyOptional({
+    description: 'Event data, if the message type is "event-card"',
+    type: () => EventEntity,
+  })
+  event?: EventEntity;
+
+  @ApiPropertyOptional({
+    description: 'Course data, if the message type is "course-card"',
+    type: () => CourseEntity,
+  })
+  course?: CourseEntity;
+
+  @ApiPropertyOptional({
+    description: 'A list of suggestions, if the message type is "suggestion-chips"',
+    type: [String],
+  })
+  suggestions?: string[];
 }

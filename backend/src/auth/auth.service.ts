@@ -112,4 +112,16 @@ export class AuthService {
       },
     });
   }
+
+  async getUserAchievements(userId: number) {
+    return this.prisma.userAchievement.findMany({
+      where: { userId },
+      include: {
+        achievement: true,
+      },
+      orderBy: {
+        unlockedAt: 'desc',
+      },
+    });
+  }
 }
