@@ -1,7 +1,9 @@
-import React from 'react';
-import type {ProfileSubScreen, User} from '../../../lib/types';
-import {AnimalFriendIcon, ChevronRightIcon, SettingsIcon} from '../../../components/ui/icons';
+import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router';
+import type {ProfileSubScreen, User, WeeklyChallenge} from '../../../lib/types';
+import {ChevronRight, Settings} from 'lucide-react';
 import WeeklyChallengeWidget from '../../../features/challenges/components/WeeklyChallengeWidget';
+import {fetchWeeklyChallenge} from '../../../lib/api';
 
 const StatCard: React.FC<{
   value: string;
@@ -33,29 +35,31 @@ const AchievementBadge: React.FC<{ achievement: User['achievements'][0] }> = Rea
   </div>
 ));
 
-const mockChallenge = {
-  title: "Челлендж недели",
-  description: "Помогите животным 1 раз",
-  reward: "Награда: +100 баллов кармы ✨",
-  Icon: AnimalFriendIcon,
-  progress: 0,
-  target: 1,
-  filterCategory: "Животные",
-};
-
 const ProfilePage: React.FC<{ user: User; onSwitchToOrganizationMode: () => void; }> = ({
                                                                                           user,
                                                                                           onSwitchToOrganizationMode
                                                                                         }) => {
+  const navigate = useNavigate();
+  const [challenge, setChallenge] = useState<WeeklyChallenge | null>(null);
+
+  useEffect(() => {
+    const loadChallenge = async () => {
+      try {
+        const challengeData = await fetchWeeklyChallenge();
+        setChallenge(challengeData);
+      } catch (error) {
+        console.error("Failed to fetch weekly challenge", error);
+      }
+    };
+    loadChallenge();
+  }, []);
 
   const onNavigate = (screen: ProfileSubScreen) => {
-    window.location.hash = `#/profile/${screen}`;
+    navigate(`/profile/${screen}`);
   };
 
   const onFindEvent = (category?: string) => {
-    // A more robust solution would involve passing query params
-    // For now, we just navigate to the home page for filtering
-    window.location.hash = '#/home';
+    navigate('/home');
   };
 
   const handleStatClick = (statId: string) => {
@@ -80,7 +84,7 @@ const ProfilePage: React.FC<{ user: User; onSwitchToOrganizationMode: () => void
       <header className="p-6 flex justify-between items-center">
         <h1 className="text-[28px] font-bold text-[#0C0D0E]">Мой путь</h1>
         <button onClick={() => onNavigate('settings')} className="text-gray-500 hover:text-[#007AFF]">
-          <SettingsIcon className="w-6 h-6"/>
+          <Settings className="w-6 h-6"/>
         </button>
       </header>
 
@@ -117,13 +121,15 @@ const ProfilePage: React.FC<{ user: User; onSwitchToOrganizationMode: () => void
         </div>
       </section>
 
-      <section className="px-6 mb-6">
-        <WeeklyChallengeWidget
-          challenge={mockChallenge}
-          isCompleted={false}
-          onCtaClick={onFindEvent}
-        />
-      </section>
+      {challenge && (
+        <section className="px-6 mb-6">
+          <WeeklyChallengeWidget
+            challenge={challenge}
+            isCompleted={challenge.isCompleted}
+            onCtaClick={onFindEvent}
+          />
+        </section>
+      )}
 
       <section className="mb-6">
         <div className="flex justify-between items-center px-6 mb-3">
@@ -164,7 +170,7 @@ const ProfilePage: React.FC<{ user: User; onSwitchToOrganizationMode: () => void
                   <item.Icon className="w-6 h-6 text-gray-500"/>
                   <span className="font-semibold text-[#0C0D0E]">{item.label}</span>
                 </div>
-                <ChevronRightIcon className="w-5 h-5 text-gray-400"/>
+                <ChevronRight className="w-5 h-5 text-gray-400"/>
               </button>
             );
           })}

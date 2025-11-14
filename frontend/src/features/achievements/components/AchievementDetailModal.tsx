@@ -1,6 +1,6 @@
 import React from 'react';
 import type {Achievement} from '../../../lib/types';
-import {LockClosedIcon} from '../../../components/ui/icons';
+import {Lock} from 'lucide-react';
 
 const AchievementDetailModal: React.FC<{
   achievement: Achievement | null;
@@ -22,11 +22,10 @@ const AchievementDetailModal: React.FC<{
     >
       <div
         className="bg-white rounded-t-2xl shadow-xl p-6 w-full max-w-lg text-center flex flex-col items-center space-y-4 transition-transform duration-300 translate-y-0"
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1.5 bg-gray-300 rounded-full"></div>
 
-        {/* Unlocked State */}
         {achievement.unlocked ? (
           <>
             <div
@@ -42,11 +41,10 @@ const AchievementDetailModal: React.FC<{
             </button>
           </>
         ) : (
-          /* Locked State */
           <>
             <div
               className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center -mt-20 mb-2 animate-pop-in">
-              <LockClosedIcon className="w-20 h-20 text-gray-400"/>
+              <Lock className="w-20 h-20 text-gray-400"/>
             </div>
             <h2 className="text-2xl font-bold text-[rgb(12,13,14,0.52)]">{achievement.name}</h2>
             <p className="text-[#0C0D0E] font-medium max-w-sm">{achievement.description}</p>
@@ -70,13 +68,6 @@ const AchievementDetailModal: React.FC<{
           </>
         )}
       </div>
-      <style>{`
-                @keyframes pop-in { 
-                    0% { transform: scale(0.8); opacity: 0; } 
-                    100% { transform: scale(1); opacity: 1; } 
-                }
-                .animate-pop-in { animation: pop-in 0.3s ease-out; }
-            `}</style>
     </div>
   );
 };

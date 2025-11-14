@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
-import {CheckCircleIcon} from './icons';
+import {CheckCircle} from 'lucide-react';
+import {TOAST_DURATION} from '../../lib/constants';
 
 interface ToastProps {
   message: string;
@@ -14,7 +15,7 @@ const Toast: React.FC<ToastProps> = ({
                                        message,
                                        show,
                                        onClose,
-                                       duration = 5000, // 5 seconds as per spec
+                                       duration = TOAST_DURATION,
                                        type = 'info',
                                        onUndo,
                                      }) => {
@@ -31,7 +32,7 @@ const Toast: React.FC<ToastProps> = ({
     if (onUndo) {
       onUndo();
     }
-    onClose(); // Close toast immediately when undo is clicked
+    onClose();
   };
 
   return (
@@ -40,7 +41,7 @@ const Toast: React.FC<ToastProps> = ({
     >
       <div className="bg-gray-800 text-white py-3 px-4 rounded-2xl shadow-lg flex flex-col items-start space-y-2">
         <div className="flex items-center space-x-3">
-          {type === 'success' && <CheckCircleIcon className="w-6 h-6 text-[#1ABE43]"/>}
+          {type === 'success' && <CheckCircle className="w-6 h-6 text-[#1ABE43]" fill="currentColor"/>}
           <span className="text-sm">{message}</span>
         </div>
         {onUndo && (

@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import type {User} from '../../../lib/types';
-import {CameraIcon} from '../../../components/ui/icons';
+import {Camera} from 'lucide-react';
+import {AVATAR_DEFAULTS} from '../../../lib/constants';
 
 const EditProfilePage: React.FC<{
   user: User;
@@ -35,8 +36,8 @@ const EditProfilePage: React.FC<{
   };
 
   const handleChangePhoto = () => {
-    const newImgId = Math.floor(Math.random() * 70);
-    setAvatar(`https://i.pravatar.cc/150?img=${newImgId}`);
+    const newImgId = Math.floor(Math.random() * AVATAR_DEFAULTS.MAX_PRAVATAR_ID);
+    setAvatar(`https://i.pravatar.cc/${AVATAR_DEFAULTS.SIZE}?img=${newImgId}`);
   }
 
   return (
@@ -61,7 +62,7 @@ const EditProfilePage: React.FC<{
           </div>
           <button onClick={handleChangePhoto}
                   className="flex items-center space-x-2 text-lg font-medium text-[#007AFF]">
-            <CameraIcon className="w-5 h-5"/>
+            <Camera className="w-5 h-5"/>
             <span>Изменить фото</span>
           </button>
         </section>

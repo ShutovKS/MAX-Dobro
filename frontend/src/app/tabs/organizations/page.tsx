@@ -1,11 +1,12 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {defaultOrganizationFilters, organizationCategories} from '../../../lib/mockData';
+import {useNavigate} from 'react-router';
 import {fetchAllOrganizations, updateOrganizationSubscription} from '../../../lib/api';
 import type {Organization, OrganizationFilters} from '../../../lib/types';
-import {CheckIcon, EmptySearchIcon, FilterIcon, SearchIcon, VerifiedIcon} from '../../../components/ui/icons';
+import {BadgeCheck, Check, Filter, Search, SearchX} from 'lucide-react';
 import SubscribeModal from '../../../components/ui/SubscribeModal';
 import Toast from '../../../components/ui/Toast';
 import EmptyState from '../../../components/ui/EmptyState';
+import {DEFAULT_ORGANIZATION_FILTERS, MESSAGES, ORGANIZATION_CATEGORIES} from '../../../lib/constants';
 
 const OrganizationSkeletonCell: React.FC = () => (
   <div className="flex items-center space-x-4 p-4 animate-pulse">
@@ -30,7 +31,7 @@ const OrganizationCell: React.FC<{
       <div className="flex-1">
         <div className="flex items-center space-x-1.5">
           <h3 className="font-bold text-md text-[#0C0D0E]">{organization.name}</h3>
-          {organization.isVerified && <VerifiedIcon className="w-5 h-5 text-[#007AFF]"/>}
+          {organization.isVerified && <BadgeCheck className="w-5 h-5 text-[#007AFF] fill-current"/>}
         </div>
         <p className="text-sm text-[rgb(12,13,14,0.52)]">{organization.description}</p>
       </div>
@@ -45,7 +46,7 @@ const OrganizationCell: React.FC<{
     >
       {organization.isSubscribed ? (
         <>
-          <CheckIcon className="w-4 h-4"/>
+          <Check className="w-4 h-4"/>
           <span>Вы подписаны</span>
         </>
       ) : (
@@ -74,9 +75,9 @@ const OrganizationFilterPanel: React.FC<{
   };
 
   const handleReset = () => {
-    setCity(defaultOrganizationFilters.city);
-    setSelectedCategories(defaultOrganizationFilters.categories);
-    setVerifiedOnly(defaultOrganizationFilters.verifiedOnly);
+    setCity(DEFAULT_ORGANIZATION_FILTERS.city);
+    setSelectedCategories(DEFAULT_ORGANIZATION_FILTERS.categories);
+    setVerifiedOnly(DEFAULT_ORGANIZATION_FILTERS.verifiedOnly);
   };
 
   const handleApply = () => {
@@ -122,7 +123,7 @@ const OrganizationFilterPanel: React.FC<{
             <section>
               <h3 className="text-lg font-bold text-[#0C0D0E] mb-3">Направления</h3>
               <div className="flex flex-wrap gap-2">
-                {organizationCategories.map(cat => (
+                {ORGANIZATION_CATEGORIES.map(cat => (
                   <button key={cat} onClick={() => toggleCategory(cat)}
                           className={`px-4 py-2 text-sm font-semibold rounded-full border-2 transition-colors ${selectedCategories.includes(cat) ? 'bg-[#007AFF] text-white border-transparent' : 'bg-white text-[#007AFF] border-[#007AFF]/50'}`}>
                     {cat}
@@ -160,11 +161,12 @@ const OrganizationFilterPanel: React.FC<{
 };
 
 const OrganizationsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState<OrganizationFilters>(defaultOrganizationFilters);
+  const [appliedFilters, setAppliedFilters] = useState<OrganizationFilters>(DEFAULT_ORGANIZATION_FILTERS);
   const [subscribingOrg, setSubscribingOrg] = useState<Organization | null>(null);
   const [toast, setToast] = useState<{ show: boolean; message: string; onUndo?: () => void }>({
     show: false,
@@ -189,7 +191,7 @@ const OrganizationsPage: React.FC = () => {
   }, []);
 
   const onSelectOrganization = (id: number) => {
-    window.location.hash = `#/organizations/${id}`;
+    navigate(`/organizations/${id}`);
   };
 
   const filteredOrganizations = useMemo(() => {
@@ -224,7 +226,7 @@ const OrganizationsPage: React.FC = () => {
     setOrganizations(prevOrgs => prevOrgs.map(org => org.id === id ? {...org, isSubscribed: true} : org));
 
     setSubscribingOrg(null);
-    setToast({show: true, message: `Вы подписались на "${name}"`, onUndo: () => handleUndoSubscription(id)});
+    setToast({show: true, message: MESSAGES.TOASTS.SUBSCRIBED(name), onUndo: () => handleUndoSubscription(id)});
   };
 
   const handleUndoSubscription = async (orgId: number) => {
@@ -245,7 +247,7 @@ const OrganizationsPage: React.FC = () => {
         </header>
         <div className="px-6 pb-4 flex items-center space-x-2">
           <div className="relative flex-grow">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><SearchIcon
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><Search
               className="w-5 h-5 text-gray-400"/></span>
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                    placeholder="Найти по названию"
@@ -254,7 +256,7 @@ const OrganizationsPage: React.FC = () => {
           </div>
           <button onClick={() => setIsFilterPanelOpen(true)} aria-label="Фильтры"
                   className="flex-shrink-0 p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
-            <FilterIcon className="w-6 h-6 text-gray-600"/>
+            <Filter className="w-6 h-6 text-gray-600"/>
           </button>
         </div>
         <main className="flex-grow">
@@ -267,7 +269,7 @@ const OrganizationsPage: React.FC = () => {
                                                                  onSubscribe={handleSubscribeClick}
                                                                  onSelect={onSelectOrganization}/>)
             ) : (
-              <div className="pt-10"><EmptyState Icon={EmptySearchIcon} title="Организации не найдены"
+              <div className="pt-10"><EmptyState Icon={SearchX} title="Организации не найдены"
                                                  subtitle="По вашим фильтрам ничего не найдено. Попробуйте изменить параметры."/>
               </div>
             )}

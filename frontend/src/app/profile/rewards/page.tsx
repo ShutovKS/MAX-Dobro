@@ -1,9 +1,11 @@
 import React, {useMemo, useState} from 'react';
+import {useNavigate} from 'react-router';
 import type {RewardItem, User} from '../../../lib/types';
-import {ArrowLeftIcon, CheckCircleIcon, EmptyShelfIllustrationIcon, SparklesIcon} from '../../../components/ui/icons';
+import {ArrowLeft, CheckCircle, Sparkles} from 'lucide-react';
+import {EmptyShelfIllustrationIcon} from '../../../components/ui/icons';
 import EmptyState from '../../../components/ui/EmptyState';
+import {REWARD_CATEGORIES} from '../../../lib/constants';
 
-// Reward Card Skeleton
 const RewardCardSkeleton: React.FC = () => (
   <div className="bg-white rounded-2xl shadow-sm p-3 animate-pulse">
     <div className="aspect-square bg-gray-200 rounded-xl mb-2"></div>
@@ -12,7 +14,6 @@ const RewardCardSkeleton: React.FC = () => (
   </div>
 );
 
-// Reward Card Component
 const RewardCard: React.FC<{ reward: RewardItem; onSelect: () => void; }> = ({reward, onSelect}) => {
   return (
     <button onClick={onSelect}
@@ -21,20 +22,19 @@ const RewardCard: React.FC<{ reward: RewardItem; onSelect: () => void; }> = ({re
         <img src={reward.imageUrl} alt={reward.name} className="w-full h-full object-cover rounded-xl"/>
         {reward.isPurchased && (
           <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
-            <CheckCircleIcon className="w-12 h-12 text-white/80"/>
+            <CheckCircle className="w-12 h-12 text-white/80"/>
           </div>
         )}
       </div>
       <h3 className="font-bold text-[#0C0D0E] truncate">{reward.name}</h3>
       <div className="flex items-center space-x-1 font-bold text-[#007AFF]">
-        <SparklesIcon className="w-5 h-5"/>
+        <Sparkles className="w-5 h-5"/>
         <span>{reward.price.toLocaleString('ru-RU')}</span>
       </div>
     </button>
   );
 };
 
-// Main Page Component
 interface RewardsStorePageProps {
   user: User;
   rewards: RewardItem[];
@@ -42,10 +42,11 @@ interface RewardsStorePageProps {
 }
 
 const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBack}) => {
-  const [selectedCategory, setSelectedCategory] = useState<'Все' | 'Значки' | 'Темы оформления'>('Все');
+  const navigate = useNavigate();
+  const [selectedCategory, setSelectedCategory] = useState<typeof REWARD_CATEGORIES[number]>('Все');
 
   const onSelectReward = (reward: RewardItem) => {
-    window.location.hash = `#/rewards/${reward.id}`;
+    navigate(`/rewards/${reward.id}`);
   };
 
   const karmaBalance = useMemo(() => {
@@ -58,7 +59,6 @@ const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBac
     return rewards.filter(r => r.category === selectedCategory);
   }, [selectedCategory, rewards]);
 
-  const categories: ('Все' | 'Значки' | 'Темы оформления')[] = ['Все', 'Значки', 'Темы оформления'];
   const loading = rewards.length === 0;
 
   return (
@@ -67,27 +67,25 @@ const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBac
         className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center">
         <button onClick={onBack}
                 className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-gray-100">
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+          <ArrowLeft className="w-6 h-6 text-gray-700"/>
         </button>
         <h1 className="text-2xl font-bold text-[#0C0D0E] mx-auto">Магазин наград</h1>
         <div className="w-8"></div>
       </header>
 
       <main className="flex-grow overflow-y-auto p-6 space-y-6">
-        {/* User Balance */}
         <section
           className="bg-[linear-gradient(155deg,#BF97FF_6.6%,#526EFF_84.12%)] text-white rounded-2xl shadow-lg p-6 text-center">
           <p className="font-semibold opacity-80">Ваш баланс:</p>
           <div className="flex items-center justify-center space-x-2 mt-1">
-            <SparklesIcon className="w-8 h-8 text-yellow-300"/>
+            <Sparkles className="w-8 h-8 text-yellow-300"/>
             <span className="text-4xl font-bold">{karmaBalance.toLocaleString('ru-RU')}</span>
           </div>
         </section>
 
-        {/* Category Filters */}
         <section>
           <div className="flex space-x-2 overflow-x-auto pb-2">
-            {categories.map(cat => (
+            {REWARD_CATEGORIES.map(cat => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
@@ -98,7 +96,6 @@ const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBac
           </div>
         </section>
 
-        {/* Items Grid */}
         <section>
           {loading ? (
             <div className="grid grid-cols-2 gap-4">

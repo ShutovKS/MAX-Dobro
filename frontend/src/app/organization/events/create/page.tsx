@@ -1,58 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import type {OrganizationEvent} from '../../../../lib/types';
-import {allCategories} from '../../../../lib/mockData';
 import {fetchOrganizationEvents} from '../../../../lib/api';
-import {ArrowLeftIcon, CameraIcon, MapPinIcon, UserGroupIcon} from '../../../../components/ui/icons';
-
-const toDateTimeLocal = (dateString?: string): string => {
-  if (!dateString) return '';
-  try {
-    const monthMap: { [key: string]: number } = {
-      'января': 0,
-      'февраля': 1,
-      'марта': 2,
-      'апреля': 3,
-      'мая': 4,
-      'июня': 5,
-      'июля': 6,
-      'августа': 7,
-      'сентября': 8,
-      'октября': 9,
-      'ноября': 10,
-      'декабря': 11
-    };
-    const parts = dateString.replace(',', '').split(' ');
-    if (parts.length < 3) return '';
-
-    const day = parseInt(parts[0], 10);
-    const month = monthMap[parts[1].toLowerCase()];
-    const time = parts[2].split(':');
-    const hour = parseInt(time[0], 10);
-    const minute = parseInt(time[1], 10);
-
-    if (isNaN(day) || month === undefined || isNaN(hour) || isNaN(minute)) return '';
-
-    const now = new Date();
-    const currentYear = now.getFullYear();
-
-    let eventDate = new Date(currentYear, month, day, hour, minute);
-
-    // If the parsed date is in the past (e.g., event is "Jan" but we are in "Dec"), assume it's for the next year.
-    if (eventDate < now) {
-      eventDate.setFullYear(currentYear + 1);
-    }
-
-    const ten = (i: number) => (i < 10 ? '0' : '') + i;
-    const YYYY = eventDate.getFullYear();
-    const MM = ten(eventDate.getMonth() + 1);
-    const DD = ten(eventDate.getDate());
-    const HH = ten(eventDate.getHours());
-    const mm = ten(eventDate.getMinutes());
-    return `${YYYY}-${MM}-${DD}T${HH}:${mm}`;
-  } catch {
-    return '';
-  }
-};
+import {parseRuDateToDateTimeLocal} from '../../../../lib/dateUtils';
+import {ArrowLeft, Camera, MapPin, Users} from 'lucide-react';
+import {EVENT_CATEGORIES} from '../../../../lib/constants';
 
 const FormSection: React.FC<{ title: string; children: React.ReactNode }> = ({title, children}) => (
   <section className="bg-white rounded-2xl shadow-sm">
@@ -99,7 +50,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
   const [title, setTitle] = useState(event?.title || '');
   const [category, setCategory] = useState<string | null>(null);
   const [description, setDescription] = useState('');
-  const [startDate, setStartDate] = useState(toDateTimeLocal(event?.date));
+  const [startDate, setStartDate] = useState(parseRuDateToDateTimeLocal(event?.date));
   const [endDate, setEndDate] = useState('');
   const [format, setFormat] = useState<'Офлайн' | 'Онлайн'>('Офлайн');
   const [address, setAddress] = useState('');
@@ -114,10 +65,8 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
         const existingEvent = allOrgEvents.find(e => e.id === event.id);
         if (existingEvent) {
           setTitle(existingEvent.title);
-          setStartDate(toDateTimeLocal(existingEvent.date));
+          setStartDate(parseRuDateToDateTimeLocal(existingEvent.date));
           setVolunteerCount(existingEvent.capacity.toString());
-          // NOTE: The mock data for OrganizationEvent is simple. In a real app,
-          // you would pre-fill all other fields like description, category, etc. here.
         }
       };
       loadEventData();
@@ -151,12 +100,11 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
           <button onClick={onBack}
                   className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 -ml-2"
                   aria-label="Назад">
-            <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+            <ArrowLeft className="w-6 h-6 text-gray-700"/>
           </button>
         </div>
         <h1 className="text-lg font-bold text-[#0C0D0E]">{event ? 'Редактирование события' : 'Новое событие'}</h1>
         <div className="w-10"></div>
-        {/* Spacer to balance the back button */}
       </header>
 
       <main className="flex-grow overflow-y-auto p-4 space-y-4 pb-28">
@@ -169,13 +117,13 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
           <InputField label="Обложка">
             <button
               className="w-full aspect-[16/9] bg-gray-100 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-200 border-2 border-dashed border-gray-300">
-              <CameraIcon className="w-8 h-8 mb-2"/>
+              <Camera className="w-8 h-8 mb-2"/>
               <span className="font-semibold">Загрузить фото</span>
             </button>
           </InputField>
           <InputField label="Категория события*">
             <div className="flex flex-wrap gap-2">
-              {allCategories.map(cat => (
+              {EVENT_CATEGORIES.map(cat => (
                 <button key={cat} onClick={() => setCategory(cat)}
                         className={`px-4 py-2 text-sm font-semibold rounded-full border-2 transition-colors ${category === cat ? 'bg-[#007AFF] text-white border-transparent' : 'bg-white text-[#007AFF] border-[#007AFF]/50'}`}>
                   {cat}
@@ -207,7 +155,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
           {format === 'Офлайн' && (
             <InputField label="Адрес*">
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><MapPinIcon
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><MapPin
                   className="w-5 h-5 text-gray-400"/></span>
                 <input type="text" value={address} onChange={e => setAddress(e.target.value)}
                        placeholder="Укажите место на карте"
@@ -220,7 +168,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
         <FormSection title="Требования к волонтерам">
           <InputField label="Количество волонтеров">
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><UserGroupIcon
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><Users
                 className="w-5 h-5 text-gray-400"/></span>
               <input type="number" value={volunteerCount} onChange={e => setVolunteerCount(e.target.value)}
                      placeholder="10"

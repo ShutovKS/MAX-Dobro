@@ -1,18 +1,14 @@
 import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router';
 import {fetchActivityHistoryEvents} from '../../../lib/api';
 import type {HistoryEvent} from '../../../lib/types';
-import {
-  ArrowLeftIcon,
-  CheckCircleIcon,
-  DownloadIcon,
-  EmptyCalendarIllustrationIcon,
-  ListIcon,
-  UserCircleIcon
-} from '../../../components/ui/icons';
+import {ArrowLeft, CheckCircle, Download, List, UserCircle} from 'lucide-react';
+import {EmptyCalendarIllustrationIcon} from '../../../components/ui/icons';
 import Toast from '../../../components/ui/Toast';
 import ReviewModal from '../../../features/reviews/components/ReviewModal';
 import EmptyState from '../../../components/ui/EmptyState';
 import CancelModal from '../../../components/ui/CancelModal';
+import {MESSAGES} from '../../../lib/constants';
 
 const UpcomingEventCard: React.FC<{
   event: HistoryEvent;
@@ -55,7 +51,7 @@ const PastEventCard: React.FC<{
       <div className="relative w-16 h-16 flex-shrink-0 bg-gray-100 rounded-xl flex items-center justify-center">
         <event.Icon className="w-10 h-10 text-gray-400"/>
         <div className="absolute -top-1 -right-1 bg-[#1ABE43] text-white rounded-full print:hidden">
-          <CheckCircleIcon className="w-5 h-5"/>
+          <CheckCircle className="w-5 h-5"/>
         </div>
       </div>
       <div className="flex-1 text-left">
@@ -63,7 +59,7 @@ const PastEventCard: React.FC<{
         <p className="text-sm text-gray-500 mt-1">{event.date}</p>
         {event.role && (
           <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
-            <UserCircleIcon className="w-4 h-4"/>
+            <UserCircle className="w-4 h-4"/>
             <span>Роль: {event.role}</span>
           </div>
         )}
@@ -89,6 +85,7 @@ const PastEventCard: React.FC<{
 );
 
 const ActivityHistoryPage: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [loading, setLoading] = useState(true);
   const [allEvents, setAllEvents] = useState<HistoryEvent[]>([]);
@@ -106,10 +103,10 @@ const ActivityHistoryPage: React.FC = () => {
   const [lastCancelledEvent, setLastCancelledEvent] = useState<HistoryEvent | null>(null);
   const [reviewingEvent, setReviewingEvent] = useState<HistoryEvent | null>(null);
 
-  const onBack = () => window.location.hash = '#/profile';
-  const onFindEvent = () => window.location.hash = '#/home';
-  const onSelectEvent = (id: number) => window.location.hash = `#/events/${id}`;
-  const onStartCreateStory = (event: HistoryEvent) => window.location.hash = `#/stories/create?eventId=${event.id}`;
+  const onBack = () => navigate('/profile');
+  const onFindEvent = () => navigate('/home');
+  const onSelectEvent = (id: number) => navigate(`/events/${id}`);
+  const onStartCreateStory = (event: HistoryEvent) => navigate(`/stories/create?eventId=${event.id}`);
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -132,7 +129,7 @@ const ActivityHistoryPage: React.FC = () => {
 
     setToast({
       show: true,
-      message: "Ваша запись отменена",
+      message: MESSAGES.TOASTS.SIGNUP_CANCELLED,
       onUndo: handleUndoCancel,
       type: 'info'
     });
@@ -149,7 +146,7 @@ const ActivityHistoryPage: React.FC = () => {
     setReviewingEvent(null);
     setToast({
       show: true,
-      message: "Спасибо за ваш отзыв!",
+      message: MESSAGES.TOASTS.REVIEW_THANKS,
       type: "success",
     });
   };
@@ -168,12 +165,12 @@ const ActivityHistoryPage: React.FC = () => {
           className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex justify-between items-center print:hidden">
           <button onClick={onBack}
                   className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-gray-100">
-            <ArrowLeftIcon className="w-6 h-6 text-gray-700"/>
+            <ArrowLeft className="w-6 h-6 text-gray-700"/>
           </button>
           <h1 className="text-2xl font-bold text-[#0C0D0E]">История активностей</h1>
           <button onClick={() => window.print()}
                   className="flex items-center space-x-1.5 text-sm font-semibold text-[#007AFF]">
-            <DownloadIcon className="w-5 h-5"/>
+            <Download className="w-5 h-5"/>
             <span>Выгрузить в PDF</span>
           </button>
         </header>
@@ -229,7 +226,7 @@ const ActivityHistoryPage: React.FC = () => {
                                                        onStoryClick={() => onStartCreateStory(event)}/>)
               ) : (
                 <div className="flex flex-col items-center justify-center text-center p-8 h-full">
-                  <ListIcon className="w-24 h-24 text-gray-300 mb-4"/>
+                  <List className="w-24 h-24 text-gray-300 mb-4"/>
                   <h3 className="font-bold text-xl text-[#0C0D0E]">История пока пуста</h3>
                   <p className="text-gray-500 max-w-xs mt-1">Ваши завершенные дела появятся здесь после первого
                     участия.</p>
@@ -261,17 +258,6 @@ const ActivityHistoryPage: React.FC = () => {
         onClose={() => setReviewingEvent(null)}
         onSubmit={handleReviewSubmit}
       />
-      <style>{`
-                @media print {
-                    body * { visibility: hidden; }
-                    #activity-history-screen, #activity-history-screen * { visibility: visible; }
-                    #activity-history-screen { position: absolute; left: 0; top: 0; width: 100%; height: auto; background-color: white !important; font-size: 12px; }
-                    main { overflow: visible; padding: 1rem; }
-                    .print\\:hidden { display: none !important; }
-                    .hidden.print\\:block { display: block !important; }
-                    .event-card-print { box-shadow: none; border: 1px solid #e5e7eb; margin-bottom: 1rem; page-break-inside: avoid; }
-                }
-            `}</style>
     </>
   );
 };
