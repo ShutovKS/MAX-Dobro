@@ -1,7 +1,7 @@
 import * as realAuth from './auth.real';
 import * as mockAuth from './auth.mock';
 
-const isReal = process.env.VITE_API_MODE === 'real';
+const isReal = import.meta.env.VITE_API_MODE === 'real';
 
 const auth = isReal ? realAuth : mockAuth;
 
