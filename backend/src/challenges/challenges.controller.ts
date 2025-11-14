@@ -6,7 +6,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { ChallengesService } from './challenges.service';
 
 @ApiTags('Challenges')
-@Controller('challenges')
+@Controller('challenge')
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class ChallengesController {

@@ -80,4 +80,15 @@ export class EventChatsService {
       };
     });
   }
+
+  async findChatMessagesByEventId(eventId: number, pagination: PaginationQueryDto) {
+    const chat = await this.prisma.eventChat.findUnique({
+      where: { eventId },
+    });
+
+    if (!chat) {
+      throw new NotFoundException(`Chat for event with ID ${eventId} not found.`);
+    }
+    return this.findChatMessages(chat.id, pagination);
+  }
 }

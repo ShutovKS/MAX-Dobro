@@ -9,5 +9,6 @@ import { EventsService } from './events.service';
   imports: [AuthModule, SupabaseModule, TasksModule],
   controllers: [EventsController],
   providers: [EventsService],
+  exports: [EventsService],
 })
 export class EventsModule {}

@@ -131,52 +131,24 @@ export class OrganizationsService {
     });
   }
 
-  async subscribe(organizationId: number, userId: number): Promise<void> {
-    try {
-      await this.prisma.userOrganizationSubscription.create({
-        data: {
-          userId,
-          organizationId,
-        },
+  async updateSubscription(organizationId: number, userId: number, isSubscribed: boolean) {
+    if (isSubscribed) {
+      try {
+        await this.prisma.userOrganizationSubscription.create({
+          data: { userId, organizationId },
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        } else {
+          throw error;
+        }
+      }
+    } else {
+      await this.prisma.userOrganizationSubscription.deleteMany({
+        where: { userId, organizationId },
       });
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new ConflictException('User is already subscribed.');
-      }
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2003'
-      ) {
-        throw new NotFoundException(
-          `Organization with ID ${organizationId} not found.`,
-        );
-      }
-      throw error;
     }
-  }
-
-  async unsubscribe(organizationId: number, userId: number): Promise<void> {
-    try {
-      await this.prisma.userOrganizationSubscription.delete({
-        where: {
-          userId_organizationId: {
-            userId,
-            organizationId,
-          },
-        },
-      });
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException('Subscription not found.');
-      }
-      throw error;
-    }
+    return { success: true };
   }
 
   async getDashboardStats(organizationId: number) {

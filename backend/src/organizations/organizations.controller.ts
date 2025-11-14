@@ -1,6 +1,6 @@
 import {
+  Body,
   Controller,
-  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -21,18 +21,20 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
-import { EventEntity } from '../events/entities/event.entity';
+import { ReviewEntity } from '../reviews/entities/review.entity';
+import { ReviewsService } from '../reviews/reviews.service';
 import { OrganizationEntity } from './entities/organization.entity';
 import { OrganizationStatEntity } from './entities/organization-stat.entity';
 import { OrganizationsService } from './organizations.service';
-import { ReviewsService } from '../reviews/reviews.service';
-import { ReviewEntity } from '../reviews/entities/review.entity';
+import { EventsService } from '../events/events.service';
 
 @ApiTags('Organizations')
 @Controller('organizations')
 export class OrganizationsController {
-  constructor(private readonly organizationsService: OrganizationsService,
-    private readonly reviewsService: ReviewsService
+  constructor(
+    private readonly organizationsService: OrganizationsService,
+    private readonly reviewsService: ReviewsService,
+    private readonly eventsService: EventsService,
   ) {}
 
   @Get()
@@ -44,10 +46,7 @@ export class OrganizationsController {
     description: 'List of organizations.',
     type: [OrganizationEntity],
   })
-  findAll(
-    @Query() pagination: PaginationQueryDto,
-    @CurrentUser() user?: User,
-  ) {
+  findAll(@Query() pagination: PaginationQueryDto, @CurrentUser() user?: User) {
     return this.organizationsService.findAll(pagination, user?.id);
   }
 
@@ -55,7 +54,7 @@ export class OrganizationsController {
   @UseGuards(OptionalAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a single organization by ID' })
-  @ApiResponse({ status: 200, type: () => OrganizationEntity })
+  @ApiResponse({ status: 200, type: OrganizationEntity })
   @ApiResponse({ status: 404, description: 'Organization not found.' })
   findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: User) {
     return this.organizationsService.findOne(id, user?.id);
@@ -63,12 +62,7 @@ export class OrganizationsController {
 
   @Get(':id/events')
   @ApiOperation({ summary: "Get a list of an organization's events" })
-  @ApiResponse({
-    status: 200,
-    description: "List of organization's events.",
-    type: [() => EventEntity],
-  })
-  @ApiResponse({ status: 404, description: 'Organization not found.' })
+  @ApiResponse({ status: 200 })
   findEvents(
     @Param('id', ParseIntPipe) id: number,
     @Query() pagination: PaginationQueryDto,
@@ -76,46 +70,11 @@ export class OrganizationsController {
     return this.organizationsService.findEvents(id, pagination);
   }
 
-  @Post(':id/subscribe')
-  @UseGuards(AuthGuard)
-  @ApiBearerAuth()
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Subscribe to an organization' })
-  @ApiResponse({ status: 204, description: 'Successfully subscribed.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 404, description: 'Organization not found.' })
-  @ApiResponse({ status: 409, description: 'Already subscribed.' })
-  subscribe(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: User,
-  ) {
-    return this.organizationsService.subscribe(id, user.id);
-  }
-
-  @Delete(':id/unsubscribe')
-  @UseGuards(AuthGuard)
-  @ApiBearerAuth()
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Unsubscribe from an organization' })
-  @ApiResponse({ status: 204, description: 'Successfully unsubscribed.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 404, description: 'Subscription not found.' })
-  unsubscribe(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: User,
-  ) {
-    return this.organizationsService.unsubscribe(id, user.id);
-  }
-
   @Get(':id/dashboard')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Get dashboard statistics for an organization" })
-  @ApiResponse({
-    status: 200,
-    description: "A list of dashboard statistics.",
-    type: [OrganizationStatEntity],
-  })
+  @ApiOperation({ summary: 'Get dashboard statistics for an organization' })
+  @ApiResponse({ status: 200, type: [OrganizationStatEntity] })
   @ApiResponse({ status: 404, description: 'Organization not found.' })
   getDashboardStats(@Param('id', ParseIntPipe) id: number) {
     return this.organizationsService.getDashboardStats(id);
@@ -130,5 +89,40 @@ export class OrganizationsController {
     @Query() pagination: PaginationQueryDto,
   ) {
     return this.reviewsService.findAllForOrganization(id, pagination);
+  }
+
+  @Post(':id/subscription')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update subscription status for an organization' })
+  updateSubscription(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: User,
+    @Body() body: { isSubscribed: boolean },
+  ) {
+    return this.organizationsService.updateSubscription(
+      id,
+      user.id,
+      body.isSubscribed,
+    );
+  }
+
+  @Get('/organization/events')
+  @ApiOperation({ summary: "Get organization's events (for organizer)" })
+  findOrganizationEvents() {
+    return this.organizationsService.findEvents(1, {});
+  }
+
+  @Get('/organization/events/:id/participants')
+  @ApiOperation({ summary: "Get event participants (for organizer)" })
+  getEventParticipants(@Param('id', ParseIntPipe) id: number) {
+    return this.eventsService.getParticipants(id);
+  }
+
+  @Get('/organization/details')
+  @ApiOperation({ summary: "Get organization's details (for organizer)" })
+  getOrganizationDetails() {
+    return this.organizationsService.findOne(1);
   }
 }
