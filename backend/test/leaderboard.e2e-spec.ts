@@ -40,7 +40,8 @@ describe('Leaderboard (e2e)', () => {
       data: {
         email: 'leader-test@example.com',
         supabaseUserId: 'supa-leaderboard',
-        name: 'Current User',
+        firstName: 'Current',
+        lastName: 'User',
         karmaPoints: 60,
       },
     });
@@ -56,7 +57,8 @@ describe('Leaderboard (e2e)', () => {
       data: {
         email: 'alltime@test.com',
         supabaseUserId: 'supa-alltime',
-        name: 'AllTime Winner',
+        firstName: 'AllTime',
+        lastName: 'Winner',
         karmaPoints: 1000,
       },
     });

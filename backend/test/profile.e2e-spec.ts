@@ -46,7 +46,8 @@ describe('Profile (e2e)', () => {
       data: {
         email: 'profile-test@example.com',
         supabaseUserId: 'test-supabase-id-profile',
-        name: 'Test User',
+        firstName: 'Test',
+        lastName: 'User',
         karmaPoints: 125,
       },
     });
@@ -64,8 +65,9 @@ describe('Profile (e2e)', () => {
       .get('/profile/me')
       .set('Authorization', authToken)
       .expect(200);
-      
+
     expect(body.email).toBe(mockUser.email);
-    expect(body.levelName).toBe('Активист');
+    expect(body.name).toBe('Test User');
+    expect(body.level).toBe('Активист');
   });
 });

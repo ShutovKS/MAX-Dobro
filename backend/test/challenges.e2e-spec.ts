@@ -37,7 +37,12 @@ describe('Challenges (e2e)', () => {
   beforeEach(async () => {
     await clearDatabase(prisma);
     mockUser = await prisma.user.create({
-      data: { email: 'challenges@test.com', supabaseUserId: 'supa-challenges' },
+      data: {
+        email: 'challenges@test.com',
+        supabaseUserId: 'supa-challenges',
+        firstName: 'Challenge',
+        lastName: 'Tester',
+      },
     });
   });
 
@@ -52,6 +57,7 @@ describe('Challenges (e2e)', () => {
       .set('Authorization', authToken)
       .expect(200)
       .then((response) => {
+        // Возвращаем ожидание пустого объекта, так как NestJS сериализует null как {}
         expect(response.body).toEqual({});
       });
   });

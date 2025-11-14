@@ -58,12 +58,18 @@ export class AuthService {
       throw new InternalServerErrorException('Email is required');
     }
 
+    const fullName = payload.raw_user_meta_data?.name ?? '';
+    const nameParts = fullName.split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ');
+
     try {
       return await this.prisma.user.create({
         data: {
           supabaseUserId: payload.id,
           email: payload.email,
-          name: payload.raw_user_meta_data?.name,
+          firstName: firstName || null,
+          lastName: lastName || null,
           avatarUrl: payload.raw_user_meta_data?.avatar_url,
         },
       });

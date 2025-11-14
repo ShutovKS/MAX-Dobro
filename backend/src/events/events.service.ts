@@ -19,13 +19,27 @@ export class EventsService {
     private readonly tasksService: TasksService,
   ) {}
 
-  private readonly eventWithParticipantCount = {
+  private readonly eventWithDetails = {
     include: {
+      organization: {
+        select: { name: true, category: true },
+      },
       _count: {
         select: { participants: true },
       },
     },
   };
+
+  private mapEvent(
+    event: Prisma.EventGetPayload<typeof this.eventWithDetails>,
+  ) {
+    const { organization, ...rest } = event;
+    return {
+      ...rest,
+      organizationName: organization.name,
+      category: organization.category,
+    };
+  }
 
   async create(createEventDto: CreateEventDto) {
     const newEvent = await this.prisma.event.create({
@@ -36,41 +50,44 @@ export class EventsService {
       },
     });
     this.tasksService.scheduleEventCompletion(newEvent);
-
-    return newEvent;
+    return this.findOne(newEvent.id);
   }
 
-  findAll(paginationQuery: PaginationQueryDto) {
+  async findAll(paginationQuery: PaginationQueryDto) {
     const { page = 1, limit = 10 } = paginationQuery;
     const skip = (page - 1) * limit;
 
-    return this.prisma.event.findMany({
+    const events = await this.prisma.event.findMany({
       skip,
       take: limit,
       orderBy: {
         date: 'asc',
       },
-      ...this.eventWithParticipantCount,
+      ...this.eventWithDetails,
     });
+
+    return events.map((event) => this.mapEvent(event));
   }
 
   async findOne(id: number) {
     const event = await this.prisma.event.findUnique({
       where: { id },
-      ...this.eventWithParticipantCount,
+      ...this.eventWithDetails,
     });
     if (!event) {
       throw new NotFoundException(`Event with ID ${id} not found`);
     }
-    return event;
+    return this.mapEvent(event);
   }
 
   async update(id: number, updateEventDto: UpdateEventDto) {
     try {
-      return await this.prisma.event.update({
+      const updatedEvent = await this.prisma.event.update({
         where: { id },
         data: updateEventDto,
+        ...this.eventWithDetails,
       });
+      return this.mapEvent(updatedEvent);
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -177,7 +194,10 @@ export class EventsService {
   }
 
   async getParticipants(eventId: number): Promise<PublicUserEntity[]> {
-    await this.findOne(eventId);
+    const event = await this.prisma.event.findUnique({ where: { id: eventId } });
+    if (!event) {
+      throw new NotFoundException(`Event with ID ${eventId} not found`);
+    }
 
     const participations = await this.prisma.eventParticipant.findMany({
       where: { eventId },
@@ -185,7 +205,8 @@ export class EventsService {
         user: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             avatarUrl: true,
             karmaPoints: true,
           },
@@ -199,7 +220,7 @@ export class EventsService {
 
     return participations.map((p) => ({
       id: p.user.id,
-      name: p.user.name,
+      name: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim(),
       avatarUrl: p.user.avatarUrl,
       rating: p.user.karmaPoints,
       status: p.status,

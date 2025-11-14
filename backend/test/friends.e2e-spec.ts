@@ -44,7 +44,8 @@ describe('Friends (e2e)', () => {
       data: {
         email: 'friend@test.com',
         supabaseUserId: 'supa-friend',
-        name: 'Friend User',
+        firstName: 'Friend',
+        lastName: 'User',
       },
     });
   });

@@ -12,13 +12,20 @@ export class FriendsService {
         friend: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             avatarUrl: true,
           },
         },
       },
     });
 
-    return friendships.map((f) => f.friend);
+    return friendships.map((f) => {
+      const { firstName, lastName, ...rest } = f.friend;
+      return {
+        ...rest,
+        name: `${firstName || ''} ${lastName || ''}`.trim(),
+      };
+    });
   }
 }

@@ -12,7 +12,7 @@ export class StoriesService {
 
   private getStoryInclude(currentUserId?: number) {
     return {
-      author: { select: { id: true, name: true } },
+      author: { select: { id: true, firstName: true, lastName: true } },
       event: { select: { id: true, title: true } },
       _count: {
         select: { comments: true, likes: true },
@@ -24,9 +24,13 @@ export class StoriesService {
   }
 
   private mapStory(story: any, currentUserId?: number) {
-    const { _count, ...rest } = story;
+    const { _count, author, ...rest } = story;
     const result = {
       ...rest,
+      author: {
+        id: author.id,
+        name: `${author.firstName || ''} ${author.lastName || ''}`.trim(),
+      },
       commentsCount: _count.comments,
       likesCount: _count.likes,
     };
@@ -52,7 +56,9 @@ export class StoriesService {
       include: {
         ...this.getStoryInclude(currentUserId),
         comments: {
-          include: { author: { select: { id: true, name: true } } },
+          include: {
+            author: { select: { id: true, firstName: true, lastName: true } },
+          },
           orderBy: { createdAt: 'asc' },
         },
       },
@@ -62,7 +68,19 @@ export class StoriesService {
       throw new NotFoundException(`Story with ID ${id} not found`);
     }
 
-    return this.mapStory(story, currentUserId);
+    const mappedStory = this.mapStory(story, currentUserId);
+    mappedStory.comments = story.comments.map((comment: any) => {
+      const { firstName, lastName, ...authorRest } = comment.author;
+      return {
+        ...comment,
+        author: {
+          ...authorRest,
+          name: `${firstName || ''} ${lastName || ''}`.trim(),
+        },
+      };
+    });
+
+    return mappedStory;
   }
 
   async likeStory(storyId: number, userId: number): Promise<void> {

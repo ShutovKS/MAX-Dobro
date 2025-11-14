@@ -28,9 +28,10 @@ export class EventChatsService {
     return participations
       .filter((p) => p.event.chat)
       .map((p) => {
-        const lastMessage = p.event.chat.messages[0];
+        const chat = p.event.chat!;
+        const lastMessage = chat.messages[0];
         return {
-          id: p.event.chat.id,
+          id: chat.id,
           eventId: p.eventId,
           eventTitle: p.event.title,
           lastMessage: lastMessage?.text ?? 'Сообщений пока нет',
@@ -61,16 +62,22 @@ export class EventChatsService {
       skip,
       include: {
         author: {
-          select: { id: true, name: true, avatarUrl: true },
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
         },
       },
     });
 
-    return messages.map((m) => ({
-      id: m.id,
-      author: m.author,
-      text: m.text,
-      timestamp: m.createdAt.toISOString(),
-    }));
+    return messages.map((m) => {
+      const { firstName, lastName, ...authorRest } = m.author;
+      return {
+        id: m.id,
+        author: {
+          ...authorRest,
+          name: `${firstName || ''} ${lastName || ''}`.trim(),
+        },
+        text: m.text,
+        timestamp: m.createdAt.toISOString(),
+      };
+    });
   }
 }

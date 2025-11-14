@@ -42,6 +42,8 @@ describe('Stories (e2e)', () => {
       data: {
         email: 'stories-test@example.com',
         supabaseUserId: 'test-supabase-id-stories',
+        firstName: 'Story',
+        lastName: 'Author',
       },
     });
   });

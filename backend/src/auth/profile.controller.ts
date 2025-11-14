@@ -31,7 +31,7 @@ export class ProfileController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 404, description: 'User profile not found.' })
-  async getMe(@CurrentUser() user: User): Promise<ProfileEntity> {
+  async getMe(@CurrentUser() user: User): Promise<any> {
     const fullProfile = await this.authService.getProfile(user.id);
 
     if (!fullProfile) {
@@ -40,16 +40,11 @@ export class ProfileController {
     const levelInfo = this.authService.calculateLevel(fullProfile.karmaPoints);
 
     return {
-      id: fullProfile.id,
-      email: fullProfile.email,
-      name: fullProfile.name,
-      avatarUrl: fullProfile.avatarUrl,
-      createdAt: fullProfile.createdAt,
-      updatedAt: fullProfile.updatedAt,
-      totalHours: fullProfile.totalHours,
-      karmaPoints: fullProfile.karmaPoints,
-      achievements: fullProfile.achievements as any,
-      levelName: levelInfo.level,
+      ...fullProfile,
+      name: `${fullProfile.firstName || ''} ${fullProfile.lastName || ''}`.trim(),
+      level: levelInfo.level,
+      progress: levelInfo.progress,
+      nextLevel: levelInfo.nextLevel,
     };
   }
 

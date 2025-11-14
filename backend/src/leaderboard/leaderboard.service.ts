@@ -42,20 +42,22 @@ export class LeaderboardService {
     limit: number,
     currentUserId: number,
   ): Promise<LeaderboardResponseEntity> {
-    const topUsers = await this.prisma.user.findMany({
+    const topUsersRaw = await this.prisma.user.findMany({
       take: limit,
       orderBy: [{ karmaPoints: 'desc' }, { id: 'asc' }],
       select: {
         id: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         karmaPoints: true,
         avatarUrl: true,
       },
     });
 
-    const topUsersWithRank: LeaderboardUserEntity[] = topUsers.map(
-      ({ karmaPoints, ...user }, index) => ({
+    const topUsersWithRank: LeaderboardUserEntity[] = topUsersRaw.map(
+      ({ karmaPoints, firstName, lastName, ...user }, index) => ({
         ...user,
+        name: `${firstName || ''} ${lastName || ''}`.trim(),
         karma: karmaPoints,
         rank: index + 1,
       }),
@@ -63,7 +65,13 @@ export class LeaderboardService {
 
     const currentUserData = await this.prisma.user.findUnique({
       where: { id: currentUserId },
-      select: { id: true, name: true, karmaPoints: true, avatarUrl: true },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        karmaPoints: true,
+        avatarUrl: true,
+      },
     });
 
     let currentUserWithRank: LeaderboardUserEntity | null = null;
@@ -71,8 +79,13 @@ export class LeaderboardService {
       const rank = await this.prisma.user.count({
         where: { karmaPoints: { gt: currentUserData.karmaPoints } },
       });
-      const { karmaPoints, ...rest } = currentUserData;
-      currentUserWithRank = { ...rest, karma: karmaPoints, rank: rank + 1 };
+      const { karmaPoints, firstName, lastName, ...rest } = currentUserData;
+      currentUserWithRank = {
+        ...rest,
+        name: `${firstName || ''} ${lastName || ''}`.trim(),
+        karma: karmaPoints,
+        rank: rank + 1,
+      };
     }
 
     return { topUsers: topUsersWithRank, currentUser: currentUserWithRank };
@@ -87,7 +100,7 @@ export class LeaderboardService {
 
     type RawLeaderboardUser = {
       id: number;
-      name: string | null;
+      name: string;
       avatarUrl: string | null;
       karma: number;
       rank: bigint;
@@ -97,12 +110,12 @@ export class LeaderboardService {
       WITH ranked_users AS (
         SELECT
           u.id,
-          u.name,
+          (u."first_name" || ' ' || u."last_name") as name,
           u."avatarUrl",
           SUM(kl.points)::int AS "karma",
           RANK() OVER (ORDER BY SUM(kl.points) DESC, u.id ASC) AS "rank"
         FROM "karma_logs" kl
-        JOIN "User" u ON u.id = kl."userId"
+        JOIN "users" u ON u.id = kl."userId"
         WHERE kl."createdAt" >= ${startDate}
         GROUP BY u.id
       )
@@ -112,7 +125,7 @@ export class LeaderboardService {
     `;
 
     const formattedLeaderboard: LeaderboardUserEntity[] = leaderboard.map(
-      (u) => ({ ...u, rank: Number(u.rank) }),
+      (u) => ({ ...u, rank: Number(u.rank), name: u.name.trim() }),
     );
 
     const topUsers = formattedLeaderboard.filter((u) => u.rank <= limit);
