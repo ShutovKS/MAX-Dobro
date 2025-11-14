@@ -1,7 +1,9 @@
 import {
-  Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Post,
@@ -13,10 +15,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import type { User } from '@prisma/client';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { CreateStoryDto } from './dto/create-story.dto';
-import { FullStoryEntity } from './dto/full-story.entity';
-import { StoryListItemEntity } from './dto/story-list-item.entity';
+import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
+import { StoryEntity } from './dto/story.entity';
 import { StoriesService } from './stories.service';
 
 @ApiTags('Stories')
@@ -24,41 +27,44 @@ import { StoriesService } from './stories.service';
 export class StoriesController {
   constructor(private readonly storiesService: StoriesService) {}
 
-  @Post()
-  @UseGuards(AuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create a new story (admin only)' })
-  @ApiResponse({
-    status: 201,
-    description: 'The story has been successfully created.',
-    type: FullStoryEntity,
-  })
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  create(@Body() createStoryDto: CreateStoryDto) {
-    return this.storiesService.create(createStoryDto);
-  }
-
   @Get()
-  @ApiOperation({ summary: 'Get a list of all stories (preview)' })
-  @ApiResponse({
-    status: 200,
-    description: 'A list of stories with titles and covers.',
-    type: [StoryListItemEntity],
-  })
-  findAll() {
-    return this.storiesService.findAll();
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a list of all stories' })
+  @ApiResponse({ status: 200, type: [StoryEntity] })
+  findAll(@CurrentUser() user?: User) {
+    return this.storiesService.findAll(user?.id);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a single story by its ID (full content)' })
-  @ApiResponse({
-    status: 200,
-    description: 'The full story data.',
-    type: FullStoryEntity,
-  })
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a single story by its ID' })
+  @ApiResponse({ status: 200, type: StoryEntity })
   @ApiResponse({ status: 404, description: 'Story not found.' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.storiesService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: User) {
+    return this.storiesService.findOne(id, user?.id);
+  }
+
+  @Post(':id/like')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Like a story' })
+  @ApiResponse({ status: 204, description: 'Story liked successfully.' })
+  @ApiResponse({ status: 409, description: 'Story already liked.' })
+  likeStory(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+    return this.storiesService.likeStory(id, user.id);
+  }
+
+  @Delete(':id/like')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Unlike a story' })
+  @ApiResponse({ status: 204, description: 'Story unliked successfully.' })
+  @ApiResponse({ status: 404, description: 'Like not found.' })
+  unlikeStory(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+    return this.storiesService.unlikeStory(id, user.id);
   }
 }

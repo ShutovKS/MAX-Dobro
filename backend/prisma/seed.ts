@@ -8,7 +8,9 @@ const OTHER_USER_SUPABASE_ID = '0e24c3b5-2e3b-4b1a-9a0e-1e9d1e4e1e0a';
 async function main() {
   console.log('Start seeding...');
 
-  // 1. Очистка (в порядке, обратном созданию, чтобы избежать ошибок внешних ключей)
+  // 1. Очистка
+  await prisma.storyLike.deleteMany();
+  await prisma.comment.deleteMany();
   await prisma.chatMessage.deleteMany();
   await prisma.story.deleteMany();
   await prisma.userReward.deleteMany();
@@ -37,8 +39,7 @@ async function main() {
   });
   console.log('Test user 1 created.');
 
-  // Второй пользователь остается для других тестов (например, подписки)
-  await prisma.user.create({
+  const user2 = await prisma.user.create({
     data: {
       email: 'friend@example.com',
       supabaseUserId: OTHER_USER_SUPABASE_ID,
@@ -67,7 +68,7 @@ async function main() {
 
   // 4. Создание организации и события
   const org = await prisma.organization.create({
-    data: { name: 'Организация для Теста Кармы' },
+    data: { name: 'Организация для Теста' },
   });
 
   const futureEventDate = new Date();
@@ -75,8 +76,8 @@ async function main() {
 
   const event = await prisma.event.create({
     data: {
-      title: 'Будущее событие для Теста Бота',
-      description: 'Это событие должно быть найдено ассистентом',
+      title: 'Событие для Теста',
+      description: 'Это событие используется в сидах',
       date: futureEventDate,
       organizationId: org.id,
       durationHours: 2,
@@ -157,24 +158,35 @@ async function main() {
   });
   console.log('Courses created.');
 
-  // 8. Создание историй
-  await prisma.story.createMany({
-    data: [
-      {
-        title: 'Как мы сажали деревья в парке',
-        coverImageUrl: 'https://placehold.co/600x400/a7e9af/333?text=Story+1',
-        content:
-          '<h1>День первый</h1><p>Это был замечательный солнечный день...</p>',
+  // 8. Создание историй, комментариев и лайков
+  console.log('Creating stories, comments, and likes...');
+  const story = await prisma.story.create({
+    data: {
+      authorId: user1.id,
+      eventId: event.id,
+      text: 'Это был потрясающий опыт! Спасибо всем, кто принял участие!',
+      imageUrl: 'https://placehold.co/600x400/a7e9af/333?text=Our+Event',
+      comments: {
+        create: [
+          {
+            authorId: user2.id,
+            text: 'Вы большие молодцы!',
+          },
+        ],
       },
-      {
-        title: 'Помощь приюту для животных',
-        coverImageUrl: 'https://placehold.co/600x400/e9cfa7/333?text=Story+2',
-        content:
-          '<h1>Наши пушистые друзья</h1><p>В прошлые выходные мы посетили местный приют...</p>',
+      likes: {
+        create: [
+          {
+            userId: user1.id, // Текущий пользователь лайкает свой пост
+          },
+          {
+            userId: user2.id, // И другой пользователь тоже
+          },
+        ],
       },
-    ],
+    },
   });
-  console.log('Stories created.');
+  console.log('Stories, comments and likes created.');
 
   // 9. Создание чата и сообщений
   console.log('Creating chat messages for chatbot...');

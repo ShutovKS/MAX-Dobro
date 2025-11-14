@@ -26,19 +26,30 @@ model User {
   subscriptions  UserOrganizationSubscription[]
   rewards        UserReward[]
   messages       ChatMessage[]
+  stories   Story[]
+  comments  Comment[]
+  likes     StoryLike[]
 
   supabaseUserId String @unique @map("supabase_user_id")
 }
 
 // Модель организации
 model Organization {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  events      Event[]
-  subscribers UserOrganizationSubscription[]
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  category      String?                             
+  logoUrl       String?  @map("logo_url")           
+  isVerified    Boolean  @default(false) @map("is_verified") 
+  coverImageUrl String?  @map("cover_image_url")    
+  websiteUrl    String?  @map("website_url")        
+  address       String?                             
+  rating        Float?   @default(0)               
+  reviewCount   Int      @default(0) @map("review_count")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  events        Event[]
+  subscribers   UserOrganizationSubscription[]
 }
 
 // Модель для подписок
@@ -69,6 +80,7 @@ model Event {
   organizationId  Int
   organization    Organization       @relation(fields: [organizationId], references: [id])
   participants    EventParticipant[]
+  stories         Story[]
 
   @@map("events")
 }
@@ -194,12 +206,47 @@ model UserReward {
 // Модель истории
 model Story {
   id            Int      @id @default(autoincrement())
-  title         String
-  coverImageUrl String
-  content       String   @db.Text
+  imageUrl      String   @map("image_url")
+  text          String   @db.Text
   createdAt     DateTime @default(now())
+  
+  authorId      Int
+  author        User     @relation(fields: [authorId], references: [id])
+  
+  eventId       Int
+  event         Event    @relation(fields: [eventId], references: [id])
 
+  comments      Comment[]
+  likes     StoryLike[]
+  
   @@map("stories")
+}
+
+// Модель лайка
+model StoryLike {
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  storyId   Int
+  story     Story    @relation(fields: [storyId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@id([userId, storyId])
+  @@map("story_likes")
+}
+
+// Модель комментария
+model Comment {
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now())
+
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  
+  storyId   Int
+  story     Story    @relation(fields: [storyId], references: [id])
+
+  @@map("comments")
 }
 
 // Модель сообщения в чате
