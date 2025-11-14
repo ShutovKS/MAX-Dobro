@@ -10,8 +10,8 @@ export class OrganizationEntity {
   @ApiProperty({ required: false, nullable: true })
   description: string | null;
 
-  @ApiPropertyOptional()
-  category?: string;
+  @ApiPropertyOptional({ nullable: true })
+  category: string | null;
 
   @ApiPropertyOptional({ example: 'https://example.com/logo.png' })
   logoUrl?: string | null;
@@ -41,7 +41,7 @@ export class OrganizationEntity {
     description: 'Flag indicating if the current user is subscribed.',
   })
   isSubscribed?: boolean;
-  
+
   @ApiProperty()
   createdAt: Date;
 
