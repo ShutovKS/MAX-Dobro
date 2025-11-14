@@ -1,1 +1,1 @@
-# Mini-app-MAX-Good
+# MAX Dobro

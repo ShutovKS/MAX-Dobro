@@ -1,9 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Event } from '@prisma/client';
+import { Course, Event } from '@prisma/client';
+import { PublicUserEntity } from '../../users/entities/public-user.entity';
 
 class EventCount {
   @ApiProperty()
   participants: number;
+}
+
+class RecommendedCourseInfo implements Pick<Course, 'id' | 'title'> {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  title: string;
 }
 
 export class EventEntity implements Event {
@@ -22,30 +31,28 @@ export class EventEntity implements Event {
   @ApiProperty({ required: false, nullable: true })
   location: string | null;
 
-  @ApiProperty({
-    required: false,
-    nullable: true,
-    description: 'Maximum number of participants. Null means unlimited.',
-  })
+  @ApiProperty({ required: false, nullable: true })
+  category: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  requirements: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  latitude: number | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  longitude: number | null;
+
+  @ApiProperty({ required: false, nullable: true })
   maxParticipants: number | null;
 
-  @ApiProperty({
-    required: false,
-    nullable: true,
-    description: 'Duration of the event in hours.',
-  })
+  @ApiProperty({ required: false, nullable: true })
   durationHours: number | null;
 
-  @ApiProperty({
-    description: 'Status of the event (e.g., PLANNED, COMPLETED)',
-    example: 'PLANNED',
-  })
+  @ApiProperty()
   status: string;
 
-  @ApiProperty({
-    description: 'Karma points awarded for completing the event.',
-    default: 10,
-  })
+  @ApiProperty()
   karmaPoints: number;
 
   @ApiProperty()
@@ -57,6 +64,25 @@ export class EventEntity implements Event {
   @ApiProperty()
   organizationId: number;
 
+  @ApiPropertyOptional({
+    description: 'ID of the recommended course for this event',
+    nullable: true,
+  })
+  recommendedCourseId: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Brief info about the recommended course',
+    type: RecommendedCourseInfo,
+    nullable: true,
+  })
+  recommendedCourse?: RecommendedCourseInfo | null;
+
   @ApiPropertyOptional({ type: EventCount })
   _count?: EventCount;
+
+  @ApiPropertyOptional({
+    description: "A list of the current user's friends who are also participating in this event.",
+    type: [PublicUserEntity],
+  })
+  friendsParticipating?: PublicUserEntity[];
 }

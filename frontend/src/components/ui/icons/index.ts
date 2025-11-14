@@ -1,0 +1,17 @@
+export {default as AnimalFriendIcon} from './AnimalFriendIcon';
+export {default as ArtVolunteerIcon} from './ArtVolunteerIcon';
+export {default as BinocularsIllustrationIcon} from './BinocularsIllustrationIcon';
+export {default as BronzeMedalIcon} from './BronzeMedalIcon';
+export {default as DiplomaStandIllustrationIcon} from './DiplomaStandIllustrationIcon';
+export {default as ElderlyHelperIcon} from './ElderlyHelperIcon';
+export {default as EmptyCalendarIllustrationIcon} from './EmptyCalendarIllustrationIcon';
+export {default as EmptyChatIllustrationIcon} from './EmptyChatIllustrationIcon';
+export {default as EmptyShelfIllustrationIcon} from './EmptyShelfIllustrationIcon';
+export {default as GoldMedalIcon} from './GoldMedalIcon';
+export {default as HeartHandIcon} from './HeartHandIcon';
+export {default as MagnifyingGlassIllustrationIcon} from './MagnifyingGlassIllustrationIcon';
+export {default as MapPinIcon} from './MapPinIcon';
+export {default as MaxIcon} from './MaxIcon';
+export {default as NatureProtectorIcon} from './NatureProtectorIcon';
+export {default as PhotoAlbumIllustrationIcon} from './PhotoAlbumIllustrationIcon';
+export {default as SilverMedalIcon} from './SilverMedalIcon';

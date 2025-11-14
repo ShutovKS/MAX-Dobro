@@ -98,13 +98,20 @@ export class TasksService implements OnModuleInit {
         const userIds = event.participants.map((p) => p.userId);
 
         if (userIds.length > 0) {
-          // --- ИЗМЕНЕНИЕ: Начисляем часы И карму ---
           await tx.user.updateMany({
             where: { id: { in: userIds } },
             data: {
               totalHours: { increment: event.durationHours },
               karmaPoints: { increment: event.karmaPoints },
             },
+          });
+
+          await tx.karmaLog.createMany({
+            data: userIds.map((userId) => ({
+              userId,
+              points: event.karmaPoints,
+              description: `Participation in event: ${event.title}`,
+            })),
           });
         }
 

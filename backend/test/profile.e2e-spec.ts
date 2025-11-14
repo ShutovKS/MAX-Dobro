@@ -1,9 +1,10 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
+import { clearDatabase } from './test-utils';
 
 describe('Profile (e2e)', () => {
   let app: INestApplication;
@@ -15,34 +16,18 @@ describe('Profile (e2e)', () => {
     },
   });
 
+  let mockUser: User;
+  const authToken = 'Bearer test-token';
+
   const mockAuthGuard = {
-    canActivate: (context) => {
+    canActivate: (context: any) => {
       const request = context.switchToHttp().getRequest();
-      request.user = {
-        id: 1,
-        supabaseUserId: 'test-supabase-id',
-        email: 'test@example.com',
-      };
+      request.user = mockUser;
       return true;
     },
   };
 
   beforeAll(async () => {
-    await new Promise<void>((resolve, reject) => {
-      const { exec } = require('child_process');
-      exec(
-        'dotenv -e ./test/.env -- npx prisma migrate deploy',
-        (error, stdout, stderr) => {
-          if (error) {
-            console.error(stderr);
-            return reject(error);
-          }
-          console.log(stdout);
-          return resolve();
-        },
-      );
-    });
-
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -56,8 +41,16 @@ describe('Profile (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.eventParticipant.deleteMany();
-    await prisma.user.deleteMany();
+    await clearDatabase(prisma);
+    mockUser = await prisma.user.create({
+      data: {
+        email: 'profile-test@example.com',
+        supabaseUserId: 'test-supabase-id-profile',
+        firstName: 'Test',
+        lastName: 'User',
+        karmaPoints: 125,
+      },
+    });
   });
 
   afterAll(async () => {
@@ -68,22 +61,13 @@ describe('Profile (e2e)', () => {
   });
 
   it('/profile/me (GET) - should return current user profile', async () => {
-    await prisma.user.create({
-      data: {
-        id: 1,
-        supabaseUserId: 'test-supabase-id',
-        email: 'test@example.com',
-        name: 'Test User',
-      },
-    });
-
-    return request(app.getHttpServer())
+    const { body } = await request(app.getHttpServer())
       .get('/profile/me')
-      .expect(200)
-      .expect((res) => {
-        expect(res.body.id).toBe(1);
-        expect(res.body.email).toBe('test@example.com');
-        expect(res.body).toHaveProperty('levelName');
-      });
+      .set('Authorization', authToken)
+      .expect(200);
+
+    expect(body.email).toBe(mockUser.email);
+    expect(body.name).toBe('Test User');
+    expect(body.level).toBe('Активист');
   });
 });

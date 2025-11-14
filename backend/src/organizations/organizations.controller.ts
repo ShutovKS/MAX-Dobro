@@ -1,0 +1,134 @@
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import type { User } from '@prisma/client';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
+import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
+import { EventEntity } from '../events/entities/event.entity';
+import { OrganizationEntity } from './entities/organization.entity';
+import { OrganizationStatEntity } from './entities/organization-stat.entity';
+import { OrganizationsService } from './organizations.service';
+import { ReviewsService } from '../reviews/reviews.service';
+import { ReviewEntity } from '../reviews/entities/review.entity';
+
+@ApiTags('Organizations')
+@Controller('organizations')
+export class OrganizationsController {
+  constructor(private readonly organizationsService: OrganizationsService,
+    private readonly reviewsService: ReviewsService
+  ) {}
+
+  @Get()
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a list of organizations' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of organizations.',
+    type: [OrganizationEntity],
+  })
+  findAll(
+    @Query() pagination: PaginationQueryDto,
+    @CurrentUser() user?: User,
+  ) {
+    return this.organizationsService.findAll(pagination, user?.id);
+  }
+
+  @Get(':id')
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a single organization by ID' })
+  @ApiResponse({ status: 200, type: () => OrganizationEntity })
+  @ApiResponse({ status: 404, description: 'Organization not found.' })
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: User) {
+    return this.organizationsService.findOne(id, user?.id);
+  }
+
+  @Get(':id/events')
+  @ApiOperation({ summary: "Get a list of an organization's events" })
+  @ApiResponse({
+    status: 200,
+    description: "List of organization's events.",
+    type: [() => EventEntity],
+  })
+  @ApiResponse({ status: 404, description: 'Organization not found.' })
+  findEvents(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() pagination: PaginationQueryDto,
+  ) {
+    return this.organizationsService.findEvents(id, pagination);
+  }
+
+  @Post(':id/subscribe')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Subscribe to an organization' })
+  @ApiResponse({ status: 204, description: 'Successfully subscribed.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 404, description: 'Organization not found.' })
+  @ApiResponse({ status: 409, description: 'Already subscribed.' })
+  subscribe(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: User,
+  ) {
+    return this.organizationsService.subscribe(id, user.id);
+  }
+
+  @Delete(':id/unsubscribe')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Unsubscribe from an organization' })
+  @ApiResponse({ status: 204, description: 'Successfully unsubscribed.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 404, description: 'Subscription not found.' })
+  unsubscribe(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: User,
+  ) {
+    return this.organizationsService.unsubscribe(id, user.id);
+  }
+
+  @Get(':id/dashboard')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get dashboard statistics for an organization" })
+  @ApiResponse({
+    status: 200,
+    description: "A list of dashboard statistics.",
+    type: [OrganizationStatEntity],
+  })
+  @ApiResponse({ status: 404, description: 'Organization not found.' })
+  getDashboardStats(@Param('id', ParseIntPipe) id: number) {
+    return this.organizationsService.getDashboardStats(id);
+  }
+
+  @Get(':id/reviews')
+  @ApiOperation({ summary: "Get an organization's reviews" })
+  @ApiResponse({ status: 200, type: [ReviewEntity] })
+  @ApiResponse({ status: 404, description: 'Organization not found.' })
+  getReviews(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() pagination: PaginationQueryDto,
+  ) {
+    return this.reviewsService.findAllForOrganization(id, pagination);
+  }
+}

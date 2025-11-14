@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UserAchievement } from '@prisma/client';
-import { AchievementEntity } from '../../achievements/dto/achievement.entity';
+import { AchievementEntity } from '../../achievements/entities/achievement.entity';
 
 export class UserAchievementEntity implements UserAchievement {
   @ApiProperty()
