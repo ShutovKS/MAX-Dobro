@@ -52,6 +52,57 @@ export class EventsService {
     };
   }
   
+  async findOne(id: number, currentUserId?: number) {
+    const event = await this.prisma.event.findUnique({
+      where: { id },
+      ...this.eventWithDetails,
+    });
+    if (!event) {
+      throw new NotFoundException(`Event with ID ${id} not found`);
+    }
+
+    const mappedEvent = this.mapEvent(event);
+
+    if (!currentUserId) {
+      return mappedEvent;
+    }
+
+    const [friends, participants] = await Promise.all([
+      this.prisma.friendship.findMany({
+        where: { userId: currentUserId },
+        select: { friendId: true },
+      }),
+      this.prisma.eventParticipant.findMany({
+        where: { eventId: id, status: 'approved' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const friendIds = new Set(friends.map((f) => f.friendId));
+    
+    const friendsParticipating = participants
+      .filter((p) => friendIds.has(p.userId))
+      .map((p) => {
+        const { user } = p;
+        return {
+          id: user.id,
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+          avatarUrl: user.avatarUrl,
+        };
+      });
+
+    return { ...mappedEvent, friendsParticipating };
+  }
+  
   async create(createEventDto: CreateEventDto) {
     const newEvent = await this.prisma.event.create({
       data: {
@@ -78,17 +129,6 @@ export class EventsService {
     });
 
     return events.map((event) => this.mapEvent(event));
-  }
-
-  async findOne(id: number) {
-    const event = await this.prisma.event.findUnique({
-      where: { id },
-      ...this.eventWithDetails,
-    });
-    if (!event) {
-      throw new NotFoundException(`Event with ID ${id} not found`);
-    }
-    return this.mapEvent(event);
   }
 
   async update(id: number, updateEventDto: UpdateEventDto) {

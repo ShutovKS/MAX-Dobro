@@ -3,7 +3,8 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const TEST_USER_SUPABASE_ID = '3eec394c-a786-44f6-b29d-3b201d540502';
-const FRIEND_USER_SUPABASE_ID = '0e24c3b5-2e3b-4b1a-9a0e-1e9d1e4e1e0a';
+const FRIEND_USER_SUPABASE_ID = '61df2213-3982-40dd-9fe4-27c1c89eed9b';
+const STRANGER_USER_SUPABASE_ID = '7d618a10-6439-4d74-9a59-8c20540f45e0';
 
 async function main() {
   console.log('Start seeding...');
@@ -36,7 +37,7 @@ async function main() {
   await prisma.user.deleteMany();
   console.log('Database cleared.');
 
-  // --- 2. Создание пользователей ---
+  // --- 2. Пользователи ---
   const user1 = await prisma.user.create({
     data: {
       email: 'test@example.com',
@@ -49,7 +50,7 @@ async function main() {
     },
   });
 
-  const user2 = await prisma.user.create({
+  const friendUser = await prisma.user.create({
     data: {
       email: 'friend@example.com',
       supabaseUserId: FRIEND_USER_SUPABASE_ID,
@@ -58,183 +59,164 @@ async function main() {
       avatarUrl: 'https://i.pravatar.cc/150?u=friend@example.com',
     },
   });
+
+  const strangerUser = await prisma.user.create({
+    data: {
+      email: 'stranger@example.com',
+      supabaseUserId: STRANGER_USER_SUPABASE_ID,
+      firstName: 'Посторонний',
+      lastName: 'Участник',
+      avatarUrl: 'https://i.pravatar.cc/150?u=stranger@example.com',
+    },
+  });
   console.log('Users created.');
 
+  // --- 3. Дружба ---
   await prisma.friendship.create({
-    data: { userId: user1.id, friendId: user2.id },
+    data: { userId: user1.id, friendId: friendUser.id },
   });
   console.log('Friendship created.');
 
-  // --- 3. Ачивки ---
-  const achievement1 = await prisma.achievement.create({
-    data: {
-      name: 'Новичок Добра',
-      description: 'Провести 1 час, помогая другим.',
-      criteriaType: 'TOTAL_HOURS',
-      criteriaValue: 1,
-    },
-  });
-  await prisma.userAchievement.create({
-    data: { userId: user1.id, achievementId: achievement1.id },
-  });
-  console.log('Achievements created.');
-
   // --- 4. Организации ---
-  const org = await prisma.organization.create({
+  const org1 = await prisma.organization.create({
     data: {
       name: 'Фонд "Чистый Лес"',
       description: 'Мы занимаемся защитой и восстановлением лесов.',
+      fullDescription:
+        'Полное описание деятельности фонда "Чистый Лес", включая наши миссии, цели и историю. Мы проводим регулярные субботники, лекции и акции по сбору макулатуры.',
       category: 'Экология',
       isVerified: true,
     },
   });
-  console.log('Organization created.');
+  const org2 = await prisma.organization.create({
+    data: {
+      name: 'Приют "Лучший Друг"',
+      description: 'Помогаем бездомным животным.',
+      category: 'Животные',
+    },
+  });
+  console.log('Organizations created.');
 
-  // --- 5. События ---
+  // --- 5. Курсы ---
+  const course1 = await prisma.course.create({
+    data: {
+      title: 'Основы Первой Помощи',
+      description: 'Курс, который научит вас базовым действиям.',
+      icon: 'first-aid',
+      lessons: {
+        create: {
+          title: 'Урок 1: Оценка ситуации',
+          content: 'Первое, что нужно сделать...',
+          questions: {
+            create: {
+              question: 'Что является первым шагом?',
+              answers: { create: [{ answer: 'Убедиться в безопасности', isCorrect: true }] },
+            },
+          },
+        },
+      },
+    },
+  });
+  const course2 = await prisma.course.create({
+    data: {
+      title: 'Введение в волонтерство',
+      description: 'Узнай все о том, как стать волонтером.',
+    },
+  });
+  await prisma.userCertificate.create({ data: { userId: user1.id, courseId: course2.id } });
+  console.log('Courses & certificates created.');
+
+  // --- 6. События ---
   const futureEventDate = new Date();
   futureEventDate.setDate(futureEventDate.getDate() + 7);
   const pastEventDate = new Date();
   pastEventDate.setDate(pastEventDate.getDate() - 14);
 
-  // === События для общих тестов (истории, чаты и т.д.) ===
-  const generalFutureEvent = await prisma.event.create({
+  const futureEvent = await prisma.event.create({
     data: {
       title: 'Субботник в парке "Сокольники"',
-      description: 'Убираем мусор и высаживаем новые деревья. Приносите перчатки!',
+      description: 'Убираем мусор и высаживаем новые деревья.',
       date: futureEventDate,
-      organizationId: org.id,
-      durationHours: 2,
-      karmaPoints: 50,
+      organizationId: org1.id,
       status: 'PLANNED',
       category: 'Экология',
       location: 'Парк "Сокольники", главный вход',
       latitude: 55.8023,
       longitude: 37.6769,
-      requirements: 'Нужна удобная одежда и обувь.',
+      recommendedCourseId: course1.id,
     },
   });
-
-  // === События специально для тестирования системы ОТЗЫВОВ ===
-  const eventToReview = await prisma.event.create({
+  const pastEvent = await prisma.event.create({
     data: {
-      title: 'Событие для отзыва (успех)',
-      description: 'Это событие завершилось, и вы в нем участвовали.',
+      title: 'Сбор помощи для приюта',
+      description: 'Это событие уже завершилось.',
       date: pastEventDate,
-      organizationId: org.id,
+      organizationId: org2.id,
       status: 'COMPLETED',
     },
   });
-  const eventWithoutParticipation = await prisma.event.create({
+  const eventForFriends = await prisma.event.create({
     data: {
-      title: 'Событие без участия (ошибка)',
-      description: 'Вы не были участником.',
-      date: pastEventDate,
-      organizationId: org.id,
-      status: 'COMPLETED',
-    },
-  });
-  const eventAlreadyReviewed = await prisma.event.create({
-    data: {
-      title: 'Уже оцененное событие (ошибка)',
-      description: 'Вы уже оставили отзыв.',
-      date: pastEventDate,
-      organizationId: org.id,
-      status: 'COMPLETED',
+      title: 'Событие с друзьями',
+      description: 'Тестируем фичу "Идем вместе!"',
+      date: futureEventDate,
+      organizationId: org1.id,
+      status: 'PLANNED',
     },
   });
   console.log('Events created.');
 
-  // --- 6. Участники событий ---
+  // --- 7. Участники событий ---
   await prisma.eventParticipant.createMany({
     data: [
-      { userId: user1.id, eventId: generalFutureEvent.id, status: 'approved' },
-      { userId: user2.id, eventId: generalFutureEvent.id, status: 'pending' },
-      // Участие для системы отзывов
-      { userId: user1.id, eventId: eventToReview.id, status: 'approved' },
-      { userId: user1.id, eventId: eventAlreadyReviewed.id, status: 'approved' },
+      { userId: user1.id, eventId: futureEvent.id, status: 'approved' },
+      { userId: friendUser.id, eventId: futureEvent.id, status: 'pending' },
+      { userId: user1.id, eventId: pastEvent.id, status: 'approved' },
+      { userId: user1.id, eventId: eventForFriends.id, status: 'approved' },
+      { userId: friendUser.id, eventId: eventForFriends.id, status: 'approved' },
+      { userId: strangerUser.id, eventId: eventForFriends.id, status: 'approved' },
     ],
   });
   console.log('Event participants created.');
 
-  // --- 7. Отзывы (для теста на дубликат) ---
+  // --- 8. Отзывы ---
   await prisma.review.create({
     data: {
       authorId: user1.id,
-      eventId: eventAlreadyReviewed.id,
-      organizationId: org.id,
-      rating: 5,
-      text: 'Это мой старый отзыв.',
+      eventId: pastEvent.id,
+      organizationId: org2.id,
+      rating: 4,
+      text: 'Все было хорошо организовано!',
     },
   });
-  console.log('Initial review created for testing duplicates.');
-  
-  // --- 8. Чаты, награды, курсы, истории и все остальное ---
-  const eventChat = await prisma.eventChat.create({
-    data: { eventId: generalFutureEvent.id },
-  });
-  await prisma.eventChatMessage.create({
-    data: {
-      chatId: eventChat.id,
-      authorId: user1.id,
-      text: 'Всем привет! Жду наше событие!',
-    },
-  });
-  console.log('Event chat and messages created.');
+  console.log('Reviews created.');
 
-  await prisma.reward.create({
-    data: {
-      name: 'Фирменный стикерпак',
-      description: 'Набор наклеек для ноутбука.',
-      price: 100,
-      category: 'Значки',
-    },
-  });
-  console.log('Rewards created.');
+  await prisma.organization.update({ where: { id: org2.id }, data: { rating: 4, reviewCount: 1 } });
 
-  const completedCourse = await prisma.course.create({
-    data: {
-      title: 'Введение в волонтерство',
-      description: 'Узнайте все о том, как стать волонтером.',
-      duration: '1 час',
-    },
-  });
-  await prisma.userCertificate.create({
-    data: { userId: user1.id, courseId: completedCourse.id },
-  });
-  console.log('Courses and certificates created.');
-
+  // --- 9. Достижения, Награды, Истории, Челленджи, Чаты ---
+  const achievement = await prisma.achievement.create({ data: { name: 'Первый час', criteriaType: 'TOTAL_HOURS', criteriaValue: 1, description: 'Провести 1 час, помогая.' } });
+  await prisma.userAchievement.create({ data: { userId: user1.id, achievementId: achievement.id } });
+  const reward = await prisma.reward.create({ data: { name: 'Стикерпак', price: 100, description: 'Набор наклеек.' } });
+  await prisma.userReward.create({ data: { userId: user1.id, rewardId: reward.id } });
   await prisma.story.create({
     data: {
       authorId: user1.id,
-      eventId: eventToReview.id,
-      text: 'Это был потрясающий опыт! Спасибо всем!',
+      eventId: pastEvent.id,
+      text: 'Отличный был день!',
       imageUrl: 'https://placehold.co/600x400',
+      comments: { create: { authorId: friendUser.id, text: 'Супер!' } },
+      likes: { create: { userId: friendUser.id } },
     },
   });
-  console.log('Stories created.');
+  const challenge = await prisma.challenge.create({ data: { title: 'Эко-неделя', description: '2 эко-события', reward: '+150', criteriaType: 'EVENT_PARTICIPATION', criteriaValue: 2, period: 'WEEKLY' } });
+  await prisma.userChallenge.create({ data: { userId: user1.id, challengeId: challenge.id, progress: 1 } });
+  const eventChat = await prisma.eventChat.create({ data: { eventId: futureEvent.id } });
+  await prisma.eventChatMessage.create({ data: { chatId: eventChat.id, authorId: user1.id, text: 'Всем привет!' } });
+  await prisma.assistantChatMessage.create({ data: { authorId: user1.id, content: 'Привет, ассистент!', sender: 'USER' } });
+  await prisma.karmaLog.create({ data: { userId: user1.id, points: 50, description: `Участие в событии: ${pastEvent.title}` } });
 
-  const challenge = await prisma.challenge.create({
-    data: {
-      title: 'Эко-неделя',
-      description: 'Примите участие в 2-х экологических событиях',
-      reward: '+150 очков кармы',
-      criteriaType: 'EVENT_PARTICIPATION',
-      criteriaValue: 2,
-      period: 'WEEKLY',
-    },
-  });
-  await prisma.userChallenge.create({
-    data: { userId: user1.id, challengeId: challenge.id, progress: 1 },
-  });
-  console.log('Weekly challenge created.');
-
-  console.log('Seeding finished.');
-  console.log('--- Test Data for Review System ---');
-  console.log(`User for tests: ${user1.email} (ID: ${user1.id})`);
-  console.log(`Event for SUCCESSFUL review (ID: ${eventToReview.id})`);
-  console.log(`Event for FORBIDDEN review (future event) (ID: ${generalFutureEvent.id})`);
-  console.log(`Event for FORBIDDEN review (no participation) (ID: ${eventWithoutParticipation.id})`);
-  console.log(`Event for CONFLICT review (already reviewed) (ID: ${eventAlreadyReviewed.id})`);
+  console.log('Seeding of additional entities finished.');
+  console.log('--- Seeding complete! ---');
 }
 
 main()

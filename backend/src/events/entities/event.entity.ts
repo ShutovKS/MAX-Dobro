@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Course, Event } from '@prisma/client';
+import { PublicUserEntity } from '../../users/entities/public-user.entity';
 
 class EventCount {
   @ApiProperty()
@@ -78,4 +79,10 @@ export class EventEntity implements Event {
 
   @ApiPropertyOptional({ type: EventCount })
   _count?: EventCount;
+
+  @ApiPropertyOptional({
+    description: "A list of the current user's friends who are also participating in this event.",
+    type: [PublicUserEntity],
+  })
+  friendsParticipating?: PublicUserEntity[];
 }

@@ -28,6 +28,7 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { EventParticipantEntity } from './entities/event-participant.entity';
 import { EventEntity } from './entities/event.entity';
 import { EventsService } from './events.service';
+import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
 
 @ApiTags('Events')
 @Controller('events')
@@ -59,16 +60,21 @@ export class EventsController {
   }
 
   @Get(':id')
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a single event by its ID' })
   @ApiParam({ name: 'id', required: true, description: 'Event ID' })
   @ApiResponse({
     status: 200,
     description: 'The event data.',
-    type: () => EventEntity,
+    type: EventEntity,
   })
   @ApiResponse({ status: 404, description: 'Event not found.' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.eventsService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user?: User,
+  ) {
+    return this.eventsService.findOne(id, user?.id);
   }
 
   @Get(':id/participants')
