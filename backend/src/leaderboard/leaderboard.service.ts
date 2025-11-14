@@ -5,8 +5,8 @@ import {
   LeaderboardPeriod,
   LeaderboardQueryDto,
 } from './dto/leaderboard-query.dto';
-import { LeaderboardResponseEntity } from './dto/leaderboard-response.entity';
-import { LeaderboardUserEntity } from './dto/leaderboard-user.entity';
+import { LeaderboardResponseEntity } from './entities/leaderboard-response.entity';
+import { LeaderboardUserEntity } from './entities/leaderboard-user.entity';
 
 @Injectable()
 export class LeaderboardService {
@@ -35,7 +35,7 @@ export class LeaderboardService {
       const lastMonth = new Date(now.setMonth(now.getMonth() - 1));
       return lastMonth;
     }
-    return new Date(0); // Should not happen with default value
+    return new Date(0);
   }
 
   private async getAllTimeLeaderboard(

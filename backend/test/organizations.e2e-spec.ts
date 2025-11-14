@@ -25,6 +25,7 @@ describe('Organizations (e2e)', () => {
     name: 'Orgs Tester',
     totalHours: 0,
     karmaPoints: 0,
+    avatarUrl: null,
   };
 
   const mockAuthGuard = {
@@ -67,17 +68,24 @@ describe('Organizations (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.userOrganizationSubscription.deleteMany();
-    await prisma.userAchievement.deleteMany();
+    await prisma.storyLike.deleteMany();
+    await prisma.comment.deleteMany();
+    await prisma.chatMessage.deleteMany();
+    await prisma.story.deleteMany();
+    await prisma.userReward.deleteMany();
+    await prisma.reward.deleteMany();
     await prisma.userCertificate.deleteMany();
+    await prisma.userAchievement.deleteMany();
+    await prisma.achievement.deleteMany();
     await prisma.eventParticipant.deleteMany();
+    await prisma.userOrganizationSubscription.deleteMany();
+    await prisma.karmaLog.deleteMany();
+    await prisma.event.deleteMany();
+    await prisma.organization.deleteMany();
     await prisma.quizAnswer.deleteMany();
     await prisma.quizQuestion.deleteMany();
     await prisma.lesson.deleteMany();
     await prisma.course.deleteMany();
-    await prisma.event.deleteMany();
-    await prisma.organization.deleteMany();
-    await prisma.achievement.deleteMany();
     await prisma.user.deleteMany();
     await prisma.user.create({ data: mockUser as User });
   });

@@ -12,7 +12,7 @@ import { AppModule } from '../src/app.module';
 import { AuthGuard } from '../src/auth/guards/auth.guard';
 import { OptionalAuthGuard } from '../src/auth/guards/optional-auth.guard';
 
-describe('Organizations (e2e)', () => {
+describe('Events (e2e)', () => {
   let app: INestApplication;
   const prisma = new PrismaClient({
     datasources: { db: { url: process.env.DATABASE_URL } },
@@ -20,11 +20,12 @@ describe('Organizations (e2e)', () => {
 
   const mockUser: Omit<User, 'createdAt' | 'updatedAt'> = {
     id: 20,
-    supabaseUserId: 'test-supabase-id-orgs',
-    email: 'orgs-test@example.com',
-    name: 'Orgs Tester',
+    supabaseUserId: 'test-supabase-id-events',
+    email: 'events-test@example.com',
+    name: 'Events Tester',
     totalHours: 0,
     karmaPoints: 0,
+    avatarUrl: null,
   };
 
   const mockAuthGuard = {
@@ -67,17 +68,24 @@ describe('Organizations (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.userOrganizationSubscription.deleteMany();
-    await prisma.userAchievement.deleteMany();
+    await prisma.storyLike.deleteMany();
+    await prisma.comment.deleteMany();
+    await prisma.chatMessage.deleteMany();
+    await prisma.story.deleteMany();
+    await prisma.userReward.deleteMany();
+    await prisma.reward.deleteMany();
     await prisma.userCertificate.deleteMany();
+    await prisma.userAchievement.deleteMany();
+    await prisma.achievement.deleteMany();
     await prisma.eventParticipant.deleteMany();
+    await prisma.userOrganizationSubscription.deleteMany();
+    await prisma.karmaLog.deleteMany();
+    await prisma.event.deleteMany();
+    await prisma.organization.deleteMany();
     await prisma.quizAnswer.deleteMany();
     await prisma.quizQuestion.deleteMany();
     await prisma.lesson.deleteMany();
     await prisma.course.deleteMany();
-    await prisma.event.deleteMany();
-    await prisma.organization.deleteMany();
-    await prisma.achievement.deleteMany();
     await prisma.user.deleteMany();
     await prisma.user.create({ data: mockUser as User });
   });
@@ -92,7 +100,7 @@ describe('Organizations (e2e)', () => {
       const org1 = await prisma.organization.create({
         data: { name: 'Org With Events' },
       });
-      const org2 = await prisma.organization.create({
+      await prisma.organization.create({
         data: { name: 'Org Without Events' },
       });
       const event1 = await prisma.event.create({

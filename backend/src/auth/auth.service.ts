@@ -45,7 +45,7 @@ export class AuthService {
           supabaseUserId: payload.id,
           email: payload.email,
           name: payload.raw_user_meta_data?.name,
-          avatarUrl: payload.raw_user_meta_data?.avatar_url, // Сохраняем аватар
+          avatarUrl: payload.raw_user_meta_data?.avatar_url,
         },
       });
     } catch (error) {

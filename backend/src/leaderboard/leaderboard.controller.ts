@@ -9,7 +9,7 @@ import type { User } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { LeaderboardQueryDto } from './dto/leaderboard-query.dto';
-import { LeaderboardResponseEntity } from './dto/leaderboard-response.entity';
+import { LeaderboardResponseEntity } from './entities//leaderboard-response.entity';
 import { LeaderboardService } from './leaderboard.service';
 
 @ApiTags('Leaderboard')

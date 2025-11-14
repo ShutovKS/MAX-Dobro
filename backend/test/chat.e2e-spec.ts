@@ -14,6 +14,14 @@ describe('Chat (e2e)', () => {
   let mockUser: User;
 
   beforeAll(async () => {
+    await prisma.storyLike.deleteMany();
+    await prisma.comment.deleteMany();
+    await prisma.chatMessage.deleteMany();
+    await prisma.story.deleteMany();
+    await prisma.event.deleteMany();
+    await prisma.organization.deleteMany();
+    await prisma.user.deleteMany();
+
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -31,24 +39,25 @@ describe('Chat (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
 
-    await prisma.chatMessage.deleteMany();
-    await prisma.event.deleteMany();
-    await prisma.organization.deleteMany();
-    await prisma.user.deleteMany();
     mockUser = await prisma.user.create({
       data: {
         id: 60,
         email: 'chatbot-user@test.com',
         supabaseUserId: 'supa-chatbot-user',
+        avatarUrl: null,
       },
     });
   });
 
   beforeEach(async () => {
     await prisma.chatMessage.deleteMany();
+    await prisma.event.deleteMany();
+    await prisma.organization.deleteMany();
   });
 
   afterAll(async () => {
+    await prisma.chatMessage.deleteMany();
+    await prisma.user.deleteMany();
     await prisma.$disconnect();
     if (app) await app.close();
   });

@@ -19,7 +19,7 @@ import type { User } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
-import { StoryEntity } from './dto/story.entity';
+import { StoryEntity } from './entities/story.entity';
 import { StoriesService } from './stories.service';
 
 @ApiTags('Stories')

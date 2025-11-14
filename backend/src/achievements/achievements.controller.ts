@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AchievementsService } from './achievements.service';
-import { AchievementEntity } from './dto/achievement.entity';
+import { AchievementEntity } from './entities/achievement.entity';
 
 @ApiTags('Achievements')
 @Controller('achievements')

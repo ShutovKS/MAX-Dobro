@@ -17,7 +17,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
 import { ChatService } from './chat.service';
-import { ChatMessageEntity } from './dto/chat-message.entity';
+import { ChatMessageEntity } from './entities/chat-message.entity';
 import { CreateMessageDto } from './dto/create-message.dto';
 
 @ApiTags('Chat')

@@ -30,6 +30,12 @@ describe('Leaderboard (e2e)', () => {
   };
 
   beforeAll(async () => {
+    await prisma.storyLike.deleteMany();
+    await prisma.comment.deleteMany();
+    await prisma.story.deleteMany();
+    await prisma.karmaLog.deleteMany();
+    await prisma.user.deleteMany();
+
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -41,9 +47,6 @@ describe('Leaderboard (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
 
-    await prisma.karmaLog.deleteMany();
-    await prisma.user.deleteMany();
-
     await prisma.user.createMany({
       data: [
         {
@@ -52,6 +55,7 @@ describe('Leaderboard (e2e)', () => {
           supabaseUserId: 'supa-1',
           name: 'Weekly Winner',
           karmaPoints: 100,
+          avatarUrl: null,
         },
         {
           id: 102,
@@ -59,6 +63,7 @@ describe('Leaderboard (e2e)', () => {
           supabaseUserId: 'supa-2',
           name: 'Monthly Winner',
           karmaPoints: 500,
+          avatarUrl: null,
         },
         {
           id: 103,
@@ -66,6 +71,7 @@ describe('Leaderboard (e2e)', () => {
           supabaseUserId: 'supa-3',
           name: 'AllTime Winner',
           karmaPoints: 1000,
+          avatarUrl: null,
         },
         mockUser as User,
       ],

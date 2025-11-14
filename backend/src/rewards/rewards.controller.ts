@@ -17,7 +17,7 @@ import {
 import type { User } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { RewardEntity } from './dto/reward.entity';
+import { RewardEntity } from './entities/reward.entity';
 import { RewardsService } from './rewards.service';
 
 @ApiTags('Rewards')
