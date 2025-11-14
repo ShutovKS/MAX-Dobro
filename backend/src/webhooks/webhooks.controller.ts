@@ -1,25 +1,34 @@
-import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+// src/webhooks/webhooks.controller.ts
+
+import { Body, Controller, HttpCode, Logger, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from '../auth/auth.service';
 import { WebhookGuard } from '../auth/guards/webhook.guard';
-import { SupabaseAuthPayloadDto } from './dto/supabase-payload.dto';
+// SupabaseAuthPayloadDto больше не нужен для валидации, но оставим для справки
+// import { SupabaseAuthPayloadDto } from './dto/supabase-payload.dto';
 
 @ApiTags('Webhooks')
 @Controller('webhooks')
 export class WebhooksController {
+  private readonly logger = new Logger(WebhooksController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   @Post('supabase-auth')
-  @UseGuards(WebhookGuard) // Защищаем эндпоинт нашим Guard'ом
-  @HttpCode(200) // Отвечаем 200 OK, чтобы Supabase знал, что мы получили хук
-  @ApiBearerAuth() // Указываем в Swagger, что нужен токен (наш секрет)
+  @UseGuards(WebhookGuard)
+  @HttpCode(200)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Handles user creation webhook from Supabase' })
   async handleSupabaseAuthWebhook(
-    @Body() payload: SupabaseAuthPayloadDto,
+    @Body() payload: any, // <-- Изменяем DTO на any, чтобы пропустить валидацию
   ): Promise<{ received: boolean }> {
+    this.logger.log('Received Supabase auth webhook payload:', JSON.stringify(payload, null, 2));
+
     // Мы реагируем только на событие создания нового пользователя
-    if (payload.type === 'INSERT') {
+    if (payload.type === 'INSERT' && payload.table === 'users') {
       await this.authService.createLocalUserAfterSignUp(payload.record);
+    } else {
+      this.logger.log(`Webhook received but was not an INSERT on users table. Type: ${payload.type}, Table: ${payload.table}. Skipping.`);
     }
 
     return { received: true };
