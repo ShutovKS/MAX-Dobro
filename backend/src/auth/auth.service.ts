@@ -1,5 +1,4 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { EventEntity } from '../events/entities/event.entity';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface SupabaseUserPayload {
@@ -10,6 +9,7 @@ interface SupabaseUserPayload {
     avatar_url?: string;
   };
 }
+
 @Injectable()
 export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
@@ -88,6 +88,9 @@ export class AuthService {
             _count: {
               select: { participants: true },
             },
+            organization: {
+              select: { name: true },
+            }
           },
         },
       },
@@ -99,54 +102,36 @@ export class AuthService {
     });
 
     const now = new Date();
-    const upcoming: EventEntity[] = [];
-    const past: EventEntity[] = [];
+    const upcoming: any[] = [];
+    const past: any[] = [];
+    
+    const mapToHistoryEvent = (participation: any) => {
+      const { event, ...restParticipation } = participation;
+      const { organization, durationHours, karmaPoints, ...restEvent } = event;
+
+      return {
+        ...restEvent,
+        location: event.location ?? '',
+        organizationName: organization.name,
+        participantCount: event._count.participants,
+        rewards: {
+          hours: durationHours,
+          karma: karmaPoints,
+        },
+        // 'role' пока не реализовано, можно вернуть null или не включать
+      };
+    };
 
     for (const p of participations) {
+      const historyEvent = mapToHistoryEvent(p);
       if (p.event.date >= now) {
-        upcoming.push(p.event);
+        upcoming.push({ ...historyEvent, status: 'upcoming' });
       } else {
-        past.push(p.event);
+        past.push({ ...historyEvent, status: 'past' });
       }
     }
-
-    return { upcoming, past };
-  }
-
-  async getUserCertificates(userId: number) {
-    return this.prisma.userCertificate.findMany({
-      where: { userId },
-      include: {
-        course: true,
-      },
-      orderBy: {
-        completedAt: 'desc',
-      },
-    });
-  }
-
-  async getUserRewards(userId: number) {
-    return this.prisma.userReward.findMany({
-      where: { userId },
-      include: {
-        reward: true,
-      },
-      orderBy: {
-        purchasedAt: 'desc',
-      },
-    });
-  }
-
-  async getUserAchievements(userId: number) {
-    return this.prisma.userAchievement.findMany({
-      where: { userId },
-      include: {
-        achievement: true,
-      },
-      orderBy: {
-        unlockedAt: 'desc',
-      },
-    });
+    
+    return [...upcoming, ...past.reverse()];
   }
 
   async getUserCourses(userId: number) {
@@ -183,6 +168,13 @@ export class AuthService {
       const progress = isCompleted ? 1 : 0;
       
       const { lessons, ...courseData } = course;
+      
+      lessons.forEach((lesson) => {
+        lesson.questions.forEach((question) => {
+          // @ts-expect-error
+          question.id = question.id.toString();
+        });
+      });
 
       return {
         ...courseData,
@@ -191,6 +183,42 @@ export class AuthService {
         progress,
         program: lessons,
       };
+    });
+  }
+  
+  async getUserCertificates(userId: number) {
+    return this.prisma.userCertificate.findMany({
+      where: { userId },
+      include: {
+        course: true,
+      },
+      orderBy: {
+        completedAt: 'desc',
+      },
+    });
+  }
+
+  async getUserRewards(userId: number) {
+    return this.prisma.userReward.findMany({
+      where: { userId },
+      include: {
+        reward: true,
+      },
+      orderBy: {
+        purchasedAt: 'desc',
+      },
+    });
+  }
+
+  async getUserAchievements(userId: number) {
+    return this.prisma.userAchievement.findMany({
+      where: { userId },
+      include: {
+        achievement: true,
+      },
+      orderBy: {
+        unlockedAt: 'desc',
+      },
     });
   }
 }
