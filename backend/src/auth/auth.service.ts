@@ -148,4 +148,49 @@ export class AuthService {
       },
     });
   }
+
+  async getUserCourses(userId: number) {
+    const [allCourses, userCertificates] = await Promise.all([
+      this.prisma.course.findMany({
+        include: {
+          lessons: {
+            include: {
+              questions: {
+                include: {
+                  answers: {
+                    select: { id: true, answer: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.userCertificate.findMany({
+        where: { userId },
+        select: { courseId: true },
+      }),
+    ]);
+
+    const completedCourseIds = new Set(
+      userCertificates.map((cert) => cert.courseId),
+    );
+
+    return allCourses.map((course) => {
+      const isCompleted = completedCourseIds.has(course.id);
+      
+      const status = isCompleted ? 'completed' : 'not-started';
+      const progress = isCompleted ? 1 : 0;
+      
+      const { lessons, ...courseData } = course;
+
+      return {
+        ...courseData,
+        hasCertificate: true,
+        status,
+        progress,
+        program: lessons,
+      };
+    });
+  }
 }
