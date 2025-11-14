@@ -39,12 +39,12 @@ model Organization {
   name          String
   description   String?
   category      String?                             
-  logoUrl       String?  @map("logo_url")           
-  isVerified    Boolean  @default(false) @map("is_verified") 
+  logoUrl       String?  @map("logo_url")          
+  isVerified    Boolean  @default(false) @map("is_verified")
   coverImageUrl String?  @map("cover_image_url")    
   websiteUrl    String?  @map("website_url")        
   address       String?                             
-  rating        Float?   @default(0)               
+  rating        Float?   @default(0)                
   reviewCount   Int      @default(0) @map("review_count")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

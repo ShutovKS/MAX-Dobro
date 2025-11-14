@@ -68,8 +68,21 @@ async function main() {
 
   // 4. Создание организации и события
   const org = await prisma.organization.create({
-    data: { name: 'Организация для Теста' },
+    data: {
+      name: 'Фонд "Чистый Лес"',
+      description: 'Мы занимаемся защитой и восстановлением лесов по всей стране.',
+      category: 'Экология',
+      logoUrl: 'https://placehold.co/100x100/a7e9af/333?text=CL',
+      isVerified: true,
+      coverImageUrl: 'https://placehold.co/800x300/a7e9af/333?text=Forest',
+      websiteUrl: 'https://clean-forest-fund.org',
+      address: 'г. Москва, ул. Лесная, д. 5',
+      rating: 4.8,
+      reviewCount: 152,
+    },
   });
+  
+  console.log('Organization created.');
 
   const futureEventDate = new Date();
   futureEventDate.setDate(futureEventDate.getDate() + 7);

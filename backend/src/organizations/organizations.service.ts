@@ -13,6 +13,33 @@ import { OrganizationEntity } from './entities/organization.entity';
 export class OrganizationsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private getOrgInclude() {
+    return {
+      _count: {
+        select: { subscribers: true },
+      },
+    };
+  }
+
+  private mapToEntity(
+    org: Prisma.OrganizationGetPayload<{
+      include: { _count: { select: { subscribers: true } } };
+    }>,
+    isSubscribed?: boolean,
+  ): OrganizationEntity {
+    const { _count, ...rest } = org;
+    const entity = {
+      ...rest,
+      subscribersCount: _count.subscribers,
+    };
+
+    if (isSubscribed !== undefined) {
+      (entity as any).isSubscribed = isSubscribed;
+    }
+
+    return entity;
+  }
+
   async findAll(
     pagination: PaginationQueryDto,
     userId?: number,
@@ -24,15 +51,19 @@ export class OrganizationsService {
       skip,
       take: limit,
       orderBy: { name: 'asc' },
+      include: this.getOrgInclude(),
     });
 
     if (!userId) {
-      return organizations;
+      return organizations.map((org) => this.mapToEntity(org));
     }
 
     const subscriptions =
       await this.prisma.userOrganizationSubscription.findMany({
-        where: { userId },
+        where: {
+          userId,
+          organizationId: { in: organizations.map((o) => o.id) },
+        },
         select: { organizationId: true },
       });
 
@@ -40,18 +71,15 @@ export class OrganizationsService {
       subscriptions.map((sub) => sub.organizationId),
     );
 
-    return organizations.map((org) => ({
-      ...org,
-      isSubscribed: subscribedIds.has(org.id),
-    }));
+    return organizations.map((org) =>
+      this.mapToEntity(org, subscribedIds.has(org.id)),
+    );
   }
 
-  async findOne(
-    id: number,
-    userId?: number,
-  ): Promise<OrganizationEntity | null> {
+  async findOne(id: number, userId?: number): Promise<OrganizationEntity> {
     const organization = await this.prisma.organization.findUnique({
       where: { id },
+      include: this.getOrgInclude(),
     });
 
     if (!organization) {
@@ -59,7 +87,7 @@ export class OrganizationsService {
     }
 
     if (!userId) {
-      return organization;
+      return this.mapToEntity(organization);
     }
 
     const subscription =
@@ -67,7 +95,7 @@ export class OrganizationsService {
         where: { userId_organizationId: { userId, organizationId: id } },
       });
 
-    return { ...organization, isSubscribed: !!subscription };
+    return this.mapToEntity(organization, !!subscription);
   }
 
   async findEvents(
