@@ -1,0 +1,14 @@
+{
+  "name": "max-dobro-bot",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "@maxhub/max-bot-api": "^0.2.1",
+    "dotenv": "^17.2.3",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1"
+  }
+}
