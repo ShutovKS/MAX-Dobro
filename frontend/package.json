@@ -9,13 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^0.14.0",
+    "@supabase/supabase-js": "^2.81.1",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.553.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router": "^7.9.5",
-    "@google/genai": "^0.14.0",
-    "lucide-react": "^0.553.0",
-    "leaflet": "^1.9.4",
-    "react-leaflet": "5.0.0"
+    "react-leaflet": "5.0.0",
+    "react-router": "^7.9.5"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

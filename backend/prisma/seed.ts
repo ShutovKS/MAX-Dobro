@@ -47,6 +47,7 @@ async function main() {
       karmaPoints: 500,
       totalHours: 8,
       avatarUrl: 'https://i.pravatar.cc/150?u=test@example.com',
+      role: 'volunteer',
     },
   });
 
@@ -57,6 +58,7 @@ async function main() {
       firstName: 'Друг',
       lastName: 'Тестера',
       avatarUrl: 'https://i.pravatar.cc/150?u=friend@example.com',
+      role: 'volunteer',
     },
   });
 
@@ -67,6 +69,7 @@ async function main() {
       firstName: 'Посторонний',
       lastName: 'Участник',
       avatarUrl: 'https://i.pravatar.cc/150?u=stranger@example.com',
+      role: 'volunteer',
     },
   });
   console.log('Users created.');

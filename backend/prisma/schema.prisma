@@ -14,6 +14,7 @@ model User {
   email             String               @unique
   firstName         String?              @map("first_name")
   lastName          String?              @map("last_name")
+  role        String   @default("volunteer")
   avatarUrl         String?
   about             String?
   createdAt         DateTime             @default(now())

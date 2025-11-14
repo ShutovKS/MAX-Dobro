@@ -1,3 +1,5 @@
+// src/auth/entities/profile.entity.ts
+
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '@prisma/client';
 import { UserAchievementEntity } from './user-achievement.entity';
@@ -16,6 +18,9 @@ export class ProfileEntity
 
   @ApiProperty({ required: false, nullable: true })
   lastName: string | null;
+  
+  @ApiProperty({ example: 'volunteer' })
+  role: string;
 
   @ApiProperty({ required: false, nullable: true })
   avatarUrl: string | null;
