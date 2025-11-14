@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {useParams} from 'react-router';
 import {fetchEventParticipants, fetchOrganizationEvents} from '../../../../lib/api';
-import type {EventParticipant, OrganizationEvent} from '../../../../lib/types';
+import type {EventParticipant, OrganizationEvent, User} from '../../../../lib/types';
 import {ArrowLeft, MessageSquare, MoreHorizontal, Star, Users} from 'lucide-react';
 import EmptyState from '../../../../components/ui/EmptyState';
 
@@ -62,8 +62,9 @@ const ParticipantCellSkeleton: React.FC = () => (
 );
 
 const EventParticipantsPage: React.FC<{
+  user: User;
   onBack: () => void;
-}> = ({onBack}) => {
+}> = ({user, onBack}) => {
   const {eventId} = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<OrganizationEvent | null>(null);
   const [activeTab, setActiveTab] = useState<ParticipantTab>('new');
@@ -72,12 +73,16 @@ const EventParticipantsPage: React.FC<{
 
   useEffect(() => {
     const loadData = async () => {
-      if (!eventId) return;
+      if (!eventId || !user.organizationId) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       const eventIdNum = parseInt(eventId, 10);
       try {
+        // FIX: Pass user.organizationId to fetchOrganizationEvents as it's a required argument.
         const [allOrgEvents, participantsData] = await Promise.all([
-          fetchOrganizationEvents(),
+          fetchOrganizationEvents(user.organizationId),
           fetchEventParticipants(eventIdNum)
         ]);
         const currentEvent = allOrgEvents.find(e => e.id === eventIdNum);
@@ -92,7 +97,7 @@ const EventParticipantsPage: React.FC<{
       }
     };
     loadData();
-  }, [eventId]);
+  }, [eventId, user.organizationId]);
 
   const newApplications = useMemo(() => participants.filter(p => p.status === 'new'), [participants]);
   const confirmedParticipants = useMemo(() => participants.filter(p => p.status === 'confirmed'), [participants]);

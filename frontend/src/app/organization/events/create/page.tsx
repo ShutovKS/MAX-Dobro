@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import type {OrganizationEvent} from '../../../../lib/types';
+import type {OrganizationEvent, User} from '../../../../lib/types';
 import {fetchOrganizationEvents} from '../../../../lib/api';
 import {parseRuDateToDateTimeLocal} from '../../../../lib/dateUtils';
 import {ArrowLeft, Camera, MapPin, Users} from 'lucide-react';
@@ -41,12 +41,13 @@ const ToggleSwitch: React.FC<{
 
 
 interface CreateEventPageProps {
+  user: User;
   event?: OrganizationEvent | null;
   onBack: () => void;
   onPublish: (data: any) => void;
 }
 
-const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPublish}) => {
+const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, onPublish}) => {
   const [title, setTitle] = useState(event?.title || '');
   const [category, setCategory] = useState<string | null>(null);
   const [description, setDescription] = useState('');
@@ -59,9 +60,9 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
   const [rewards, setRewards] = useState('');
 
   useEffect(() => {
-    if (event?.id) {
+    if (event?.id && user.organizationId) {
       const loadEventData = async () => {
-        const allOrgEvents = await fetchOrganizationEvents();
+        const allOrgEvents = await fetchOrganizationEvents(user.organizationId);
         const existingEvent = allOrgEvents.find(e => e.id === event.id);
         if (existingEvent) {
           setTitle(existingEvent.title);
@@ -71,7 +72,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
       };
       loadEventData();
     }
-  }, [event]);
+  }, [event, user.organizationId]);
 
   const isFormValid = title && category && description && startDate && (format === 'Онлайн' || address);
 

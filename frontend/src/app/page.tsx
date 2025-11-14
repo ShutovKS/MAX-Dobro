@@ -35,6 +35,7 @@ import OrganizationDashboardPage from './organization/dashboard/page';
 import EventManagementPage from './organization/events/page';
 import CreateEventPage from './organization/events/create/page';
 import EventParticipantsPage from './organization/events/participants/page';
+import OrganizationSettingsPage from './organization/settings/page';
 
 import type {Course, OrganizationEvent, RewardItem, User} from '../lib/types';
 import {fetchAllCourses, fetchRewards} from '../lib/api';
@@ -199,25 +200,30 @@ const App: React.FC = () => {
   const RewardsStorePageWrapper = () => <RewardsStorePage user={userData!} rewards={allRewards}
                                                           onBack={() => navigate(ROUTES.PROFILE)}/>;
 
-  const EventManagementPageWrapper = () => <EventManagementPage onBack={() => navigate(ROUTES.ORGANIZATION_DASHBOARD)}
+  const EventManagementPageWrapper = () => <EventManagementPage user={userData!}
+                                                                onBack={() => navigate(ROUTES.ORGANIZATION_DASHBOARD)}
                                                                 onCreateEvent={() => navigate(ROUTES.ORGANIZATION_EVENTS_CREATE)}
                                                                 onEditEvent={(e) => navigate(ROUTES.ORGANIZATION_EVENTS_EDIT(e.id))}
                                                                 onManageParticipants={(e) => navigate(ROUTES.ORGANIZATION_EVENTS_PARTICIPANTS(e.id))}/>;
-  const CreateEventPageWrapper = () => <CreateEventPage onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)}
+  const CreateEventPageWrapper = () => <CreateEventPage user={userData!}
+                                                        onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)}
                                                         onPublish={() => {
                                                           showToast(MESSAGES.TOASTS.EVENT_PUBLISHED, 'success');
                                                           navigate(ROUTES.ORGANIZATION_EVENTS);
                                                         }}/>;
   const EditEventPageWrapper = () => {
     const {eventId} = useParams<{ eventId: string }>();
-    return <CreateEventPage event={{id: parseInt(eventId!, 10)} as OrganizationEvent}
+    return <CreateEventPage user={userData!} event={{id: parseInt(eventId!, 10)} as OrganizationEvent}
                             onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onPublish={() => {
       showToast(MESSAGES.TOASTS.EVENT_SAVED, 'success');
       navigate(ROUTES.ORGANIZATION_EVENTS);
     }}/>
   };
-  const EventParticipantsPageWrapper = () => <EventParticipantsPage
-    onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)}/>;
+  // FIX: Pass userData to EventParticipantsPageWrapper to provide organizationId for API calls.
+  const EventParticipantsPageWrapper = () => <EventParticipantsPage user={userData!}
+                                                                    onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)}/>;
+  const OrganizationSettingsPageWrapper = () => <OrganizationSettingsPage
+    onBack={() => navigate(ROUTES.ORGANIZATION_DASHBOARD)} onLogout={handleLogout}/>;
 
   const element = useRoutes(
     isAuthenticated && userData ?
@@ -257,14 +263,16 @@ const App: React.FC = () => {
 
         {
           path: ROUTES.ORGANIZATION_DASHBOARD,
-          element: <OrganizationDashboardPage onSwitchToVolunteer={() => navigate(ROUTES.HOME)}
+          element: <OrganizationDashboardPage user={userData} onSwitchToVolunteer={() => navigate(ROUTES.HOME)}
                                               onManageEvents={() => navigate(ROUTES.ORGANIZATION_EVENTS)}
-                                              onCreateEvent={() => navigate(ROUTES.ORGANIZATION_EVENTS_CREATE)}/>
+                                              onCreateEvent={() => navigate(ROUTES.ORGANIZATION_EVENTS_CREATE)}
+                                              onNavigateToSettings={() => navigate(ROUTES.ORGANIZATION_SETTINGS)}/>
         },
         {path: ROUTES.ORGANIZATION_EVENTS, element: <EventManagementPageWrapper/>},
         {path: ROUTES.ORGANIZATION_EVENTS_CREATE, element: <CreateEventPageWrapper/>},
         {path: ROUTES.ORGANIZATION_EVENTS_EDIT(':eventId'), element: <EditEventPageWrapper/>},
         {path: ROUTES.ORGANIZATION_EVENTS_PARTICIPANTS(':eventId'), element: <EventParticipantsPageWrapper/>},
+        {path: ROUTES.ORGANIZATION_SETTINGS, element: <OrganizationSettingsPageWrapper/>},
 
         {path: "/", element: <Navigate to={getRedirectPath(userData)} replace/>},
         {path: "/organization", element: <Navigate to={ROUTES.ORGANIZATION_DASHBOARD} replace/>},

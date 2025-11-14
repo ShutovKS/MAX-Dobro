@@ -1,9 +1,9 @@
 import React, {useState} from 'react';
-import {useNavigate} from 'react-router';
-import {ArrowLeft, Bell, ChevronRight, FileText, LogOut, MessageSquare, ShieldCheck, UserCircle} from 'lucide-react';
-import type {ProfileSubScreen} from '../../../lib/types';
+import {ArrowLeft, Bell, Briefcase, ChevronRight, FileText, LogOut, MessageSquare, Users} from 'lucide-react';
 import LogoutConfirmationModal from '../../../components/ui/LogoutConfirmationModal';
 
+// Reusing these components by defining them locally for simplicity.
+// In a larger app, they would be in a shared ui folder.
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({title, children}) => (
   <section>
     <h2 className="px-6 pb-2 text-sm font-semibold text-[rgb(12,13,14,0.52)] uppercase tracking-wider">{title}</h2>
@@ -39,7 +39,6 @@ const SettingsRow: React.FC<{
   </button>
 );
 
-
 const ToggleSwitch: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({enabled, onChange}) => (
   <button
     onClick={() => onChange(!enabled)}
@@ -51,7 +50,6 @@ const ToggleSwitch: React.FC<{ enabled: boolean; onChange: (enabled: boolean) =>
       className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`}/>
   </button>
 );
-
 
 const ToggleRow: React.FC<{ label: string; enabled: boolean; onChange: (enabled: boolean) => void; }> = ({
                                                                                                            label,
@@ -65,14 +63,9 @@ const ToggleRow: React.FC<{ label: string; enabled: boolean; onChange: (enabled:
 );
 
 
-const SettingsPage: React.FC<{ onBack: () => void; onLogout: () => void; }> = ({onBack, onLogout}) => {
-  const navigate = useNavigate();
-  const [notifications, setNotifications] = useState({newEvents: true, reminders: true, achievements: false});
+const OrganizationSettingsPage: React.FC<{ onBack: () => void; onLogout: () => void; }> = ({onBack, onLogout}) => {
+  const [notifications, setNotifications] = useState({newApplications: true, chatMessages: true});
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
-  const onNavigate = (screen: ProfileSubScreen) => {
-    navigate(`/profile/${screen}`);
-  };
 
   const handleToggle = (key: keyof typeof notifications) => {
     setNotifications(prev => ({...prev, [key]: !prev[key]}));
@@ -92,9 +85,10 @@ const SettingsPage: React.FC<{ onBack: () => void; onLogout: () => void; }> = ({
         </header>
 
         <main className="flex-grow overflow-y-auto pt-8 space-y-8 pb-8">
-          <SettingsSection title="Аккаунт">
-            <SettingsRow label="Редактировать профиль" Icon={UserCircle} onClick={() => onNavigate('editProfile')}/>
-            <SettingsRow label="Приватность" Icon={ShieldCheck} onClick={() => {
+          <SettingsSection title="Профиль организации">
+            <SettingsRow label="Редактировать профиль" Icon={Briefcase} onClick={() => {
+            }}/>
+            <SettingsRow label="Участники команды" Icon={Users} onClick={() => {
             }}/>
           </SettingsSection>
 
@@ -106,16 +100,12 @@ const SettingsPage: React.FC<{ onBack: () => void; onLogout: () => void; }> = ({
               <span className="font-semibold text-[#0C0D0E]">Push-уведомления</span>
             </div>
             <div className="pl-16 pr-4 py-2 border-t border-gray-100">
-              <ToggleRow label="Новые события от подписок" enabled={notifications.newEvents}
-                         onChange={() => handleToggle('newEvents')}/>
+              <ToggleRow label="Новые заявки волонтеров" enabled={notifications.newApplications}
+                         onChange={() => handleToggle('newApplications')}/>
             </div>
             <div className="pl-16 pr-4 py-2 border-t border-gray-100">
-              <ToggleRow label="Напоминания о моих событиях" enabled={notifications.reminders}
-                         onChange={() => handleToggle('reminders')}/>
-            </div>
-            <div className="pl-16 pr-4 py-2 border-t border-gray-100">
-              <ToggleRow label="Новые достижения" enabled={notifications.achievements}
-                         onChange={() => handleToggle('achievements')}/>
+              <ToggleRow label="Сообщения в чатах событий" enabled={notifications.chatMessages}
+                         onChange={() => handleToggle('chatMessages')}/>
             </div>
           </SettingsSection>
 
@@ -143,4 +133,4 @@ const SettingsPage: React.FC<{ onBack: () => void; onLogout: () => void; }> = ({
   );
 };
 
-export default SettingsPage;
+export default OrganizationSettingsPage;

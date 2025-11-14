@@ -81,6 +81,7 @@ export const ROUTES = {
   ORGANIZATION_EVENTS_CREATE: '/organization/events/create',
   ORGANIZATION_EVENTS_EDIT: (id: string | number) => `/organization/events/edit/${id}`,
   ORGANIZATION_EVENTS_PARTICIPANTS: (id: string | number) => `/organization/events/participants/${id}`,
+  ORGANIZATION_SETTINGS: '/organization/settings',
 };
 
 export const MESSAGES = {

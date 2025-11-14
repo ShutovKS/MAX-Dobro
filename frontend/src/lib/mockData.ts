@@ -648,6 +648,7 @@ export const organizationUserData: User = {
   lastName: "Организатор",
   avatarUrl: "https://i.pravatar.cc/150?img=20",
   role: 'organization',
+  organizationId: 1,
   // Org-specific stats and navigation can be different
   stats: [],
   achievements: [],

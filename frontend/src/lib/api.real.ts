@@ -20,11 +20,31 @@ import type {
 
 const API_BASE_URL = process.env.VITE_API_BASE_URL;
 
+const getAuthToken = (): string | null => {
+  const sessionData = localStorage.getItem('userSession');
+  if (!sessionData) return null;
+
+  try {
+    const session = JSON.parse(sessionData);
+    return session.token || session.user?.token || null;
+  } catch (e) {
+    console.error('Could not parse session data to get auth token:', e);
+    return null;
+  }
+}
+
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const token = getAuthToken();
+  const authHeaders: Record<string, string> = {};
+  if (token) {
+    authHeaders['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
       ...options.headers,
     },
   });
@@ -53,13 +73,13 @@ export const updateOrganizationSubscription = (organizationId: number, isSubscri
   });
 };
 
-export const fetchOrganizationEvents = (): Promise<OrganizationEvent[]> => apiFetch('/organization/events');
+export const fetchOrganizationEvents = (organizationId: number): Promise<OrganizationEvent[]> => apiFetch(`/organizations/${organizationId}/events`);
 export const fetchEventParticipants = (eventId: number): Promise<EventParticipant[]> => apiFetch(`/organization/events/${eventId}/participants`);
 
-export const fetchOrganizationDashboardStats = (): Promise<OrganizationStat[]> => apiFetch('/organization/dashboard/stats');
-export const fetchOrganizationDetails = (): Promise<OrganizationDetails> => apiFetch('/organization/details');
+export const fetchOrganizationDashboardStats = (organizationId: number): Promise<OrganizationStat[]> => apiFetch(`/organizations/${organizationId}/dashboard`);
+export const fetchOrganizationDetails = (organizationId: number): Promise<OrganizationDetails> => apiFetch(`/organizations/${organizationId}`);
 
-export const fetchActivityHistoryEvents = (): Promise<HistoryEvent[]> => apiFetch('/profile/history');
+export const fetchActivityHistoryEvents = (): Promise<HistoryEvent[]> => apiFetch('/profile/me/events');
 export const fetchLeaderboardData = (period: 'week' | 'month' | 'allTime'): Promise<LeaderboardUser[]> => apiFetch(`/leaderboard?period=${period}`);
 export const fetchAllAchievements = (): Promise<Achievement[]> => apiFetch('/achievements');
 export const fetchMyChats = (): Promise<MyChatItem[]> => apiFetch('/profile/chats');

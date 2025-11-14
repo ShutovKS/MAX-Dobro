@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {List, Plus, Settings} from 'lucide-react';
 import {fetchOrganizationDashboardStats, fetchOrganizationDetails} from '../../../lib/api';
-import type {OrganizationDetails, OrganizationStat} from '../../../lib/types';
+import type {OrganizationDetails, OrganizationStat, User} from '../../../lib/types';
 
 
 const StatCardSkeleton: React.FC = () => (
@@ -36,15 +36,19 @@ const StatCard: React.FC<{ label: string; value: string; Icon: React.FC<any>; ch
 );
 
 interface OrganizationDashboardPageProps {
+  user: User;
   onSwitchToVolunteer: () => void;
   onManageEvents: () => void;
   onCreateEvent: () => void;
+  onNavigateToSettings: () => void;
 }
 
 const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
+                                                                               user,
                                                                                onSwitchToVolunteer,
                                                                                onManageEvents,
-                                                                               onCreateEvent
+                                                                               onCreateEvent,
+                                                                               onNavigateToSettings
                                                                              }) => {
   const [stats, setStats] = useState<OrganizationStat[]>([]);
   const [organizationDetails, setOrganizationDetails] = useState<OrganizationDetails | null>(null);
@@ -52,11 +56,15 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
 
   useEffect(() => {
     const loadData = async () => {
+      if (!user.organizationId) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         const [statsData, orgData] = await Promise.all([
-          fetchOrganizationDashboardStats(),
-          fetchOrganizationDetails()
+          fetchOrganizationDashboardStats(user.organizationId),
+          fetchOrganizationDetails(user.organizationId)
         ]);
         setStats(statsData);
         setOrganizationDetails(orgData);
@@ -67,7 +75,7 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
       }
     };
     loadData();
-  }, []);
+  }, [user.organizationId]);
 
 
   return (
@@ -75,7 +83,8 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
       <header className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm flex items-center justify-between">
         <div className="w-10 h-10"/>
         <h1 className="text-lg font-bold text-[#0C0D0E]">{loading ? 'Загрузка...' : organizationDetails?.name}</h1>
-        <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
+        <button onClick={onNavigateToSettings}
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                 aria-label="Настройки организации">
           <Settings className="w-6 h-6 text-gray-700"/>
         </button>
