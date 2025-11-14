@@ -1,0 +1,54 @@
+#!/bin/bash
+
+if [ -f all_sources.md ]; then
+  rm all_sources.md
+fi
+
+# Определяем шаблоны для исключения
+# Каждая строка - шаблон для исключения
+# Примеры шаблонов для исключения:
+#   ".*\.png" - все файлы с расширением .png
+#   "certs/.*" - все файлы в папке certs
+#   "^[^.\/][^/]*$|^\.[^/]*$" - все корневые файлы и скрытые файлы
+EXCLUDE_PATTERNS=(
+  ".*\.abi.json"
+  ".*\.icon"
+  ".*\.ico"
+  ".*\.avif"
+  ".*\.png"
+  ".*\.svg"
+
+  ".github/.*"
+  ".husky/.*"
+  ".idea/.*"
+  "docs/.*"
+  #  "backend/.*"
+  #  "frontend/.*"
+  "^[^.\/][^/]*$|^\.[^/]*$" # Корневые файлы и скрытые файлы
+
+  "package-lock\.json"
+  "yarn\.lock"
+  "pnpm-lock.yaml"
+  "gluing-project-contents"
+  "openapi.yaml"
+)
+
+EXCLUDE_PATTERN="(^|/)($(
+  IFS="|"
+  echo "${EXCLUDE_PATTERNS[*]}"
+))$"
+
+echo "Вот исходники проекта, ознакомься с ними" >all_sources.md
+echo -e '\n' >>all_sources.md
+
+git ls-files | grep -vE "$EXCLUDE_PATTERN" | while read -r file; do
+  {
+    echo "### $file"
+    echo '```'
+    cat "$file"
+    echo -e '\n'
+    echo '```'
+    echo -e '\n'
+  } >>all_sources.md
+
+done
