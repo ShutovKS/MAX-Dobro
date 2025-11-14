@@ -12,6 +12,9 @@ export class ProfileEntity implements Omit<User, 'supabaseUserId'> {
   @ApiProperty({ required: false, nullable: true })
   name: string | null;
 
+  @ApiProperty({ required: false, nullable: true })
+  avatarUrl: string | null;
+
   @ApiProperty()
   createdAt: Date;
 

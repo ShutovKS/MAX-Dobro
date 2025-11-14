@@ -35,7 +35,7 @@ export class OrganizationEntity {
   reviewCount?: number;
 
   @ApiProperty({ description: 'Total number of subscribers' })
-  subscribersCount: number;
+  subscribers: number;
 
   @ApiPropertyOptional({
     description: 'Flag indicating if the current user is subscribed.',

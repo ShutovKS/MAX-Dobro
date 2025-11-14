@@ -1,9 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Reward } from '@prisma/client';
 
-export class RewardEntity
-  implements Omit<Reward, 'title' | 'cost' | 'icon'>
-{
+export class RewardEntity {
   @ApiProperty()
   id: number;
 
@@ -19,8 +16,8 @@ export class RewardEntity
   @ApiProperty({ description: 'Cost in karma points' })
   price: number;
 
-  @ApiProperty({ example: 'Темы оформления' })
-  category: string;
+  @ApiPropertyOptional({ example: 'Темы оформления' })
+  category: string | null;
 
   @ApiPropertyOptional({
     description: 'Flag indicating if the current user has purchased this reward',

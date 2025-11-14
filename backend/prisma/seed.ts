@@ -105,21 +105,22 @@ async function main() {
   });
 
   await prisma.reward.createMany({
-    data: [
-      {
-        title: 'Фирменный стикерпак',
-        description: 'Набор наклеек для ноутбука.',
-        cost: 100,
-        icon: 'sticker-icon',
-      },
-      {
-        title: 'Брендированная футболка',
-        description: 'Стильная футболка MAX Добро.',
-        cost: 1000,
-        icon: 'tshirt-icon',
-      },
-    ],
-  });
+  data: [
+    {
+      name: 'Фирменный стикерпак',
+      description: 'Набор наклеек для ноутбука.',
+      price: 100,
+      imageUrl: 'sticker-icon',
+    },
+    {
+      name: 'Брендированная футболка',
+      description: 'Стильная футболка MAX Добро.',
+      price: 1000,
+      imageUrl: 'tshirt-icon',
+    },
+  ],
+});
+console.log('Rewards created.');
   console.log('Rewards created.');
 
   console.log('Creating courses...');

@@ -237,10 +237,10 @@ model UserChallenge {
 // Модель награды в магазине
 model Reward {
   id          Int          @id @default(autoincrement())
-  title       String
+  name        String
   description String
-  icon        String?
-  cost        Int
+  imageUrl    String?
+  price       Int
   category    String?
   users       UserReward[]
 

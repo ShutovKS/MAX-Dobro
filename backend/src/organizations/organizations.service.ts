@@ -5,9 +5,9 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
-import { EventEntity } from '../events/entities/event.entity';
 import { PrismaService } from '../prisma/prisma.service';
-import { OrganizationEntity } from './dto/organization.entity';
+import { OrganizationEntity } from './entities/organization.entity';
+import { EventEntity } from '../events/entities/event.entity';
 
 @Injectable()
 export class OrganizationsService {
@@ -28,13 +28,15 @@ export class OrganizationsService {
     isSubscribed?: boolean,
   ): OrganizationEntity {
     const { _count, ...rest } = org;
-    const entity = {
+    const entity: OrganizationEntity = {
       ...rest,
-      subscribersCount: _count.subscribers,
+      rating: rest.rating,
+      reviewCount: rest.reviewCount,
+      subscribers: _count.subscribers,
     };
 
     if (isSubscribed !== undefined) {
-      (entity as any).isSubscribed = isSubscribed;
+      entity.isSubscribed = isSubscribed;
     }
 
     return entity;

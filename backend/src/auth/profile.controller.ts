@@ -37,12 +37,20 @@ export class ProfileController {
     if (!fullProfile) {
       throw new NotFoundException('User profile could not be found.');
     }
-    const levelName = this.authService.calculateLevel(fullProfile.karmaPoints);
+    const levelInfo = this.authService.calculateLevel(fullProfile.karmaPoints);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { supabaseUserId, ...profileData } = fullProfile;
-
-    return { ...profileData, levelName };
+    return {
+      id: fullProfile.id,
+      email: fullProfile.email,
+      name: fullProfile.name,
+      avatarUrl: fullProfile.avatarUrl,
+      createdAt: fullProfile.createdAt,
+      updatedAt: fullProfile.updatedAt,
+      totalHours: fullProfile.totalHours,
+      karmaPoints: fullProfile.karmaPoints,
+      achievements: fullProfile.achievements as any,
+      levelName: levelInfo.level,
+    };
   }
 
   @Get('me/events')
@@ -54,7 +62,7 @@ export class ProfileController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   getMyEvents(@CurrentUser() user: User) {
-    return this.authService.getUserEvents(user.id, user.supabaseUserId);
+    return this.authService.getUserEvents(user.id);
   }
 
   @Get('me/certificates')

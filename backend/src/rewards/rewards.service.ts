@@ -12,7 +12,7 @@ export class RewardsService {
 
   async findAll(userId?: number): Promise<RewardEntity[]> {
     const rewards = await this.prisma.reward.findMany({
-      orderBy: { cost: 'asc' },
+      orderBy: { price: 'asc' },
     });
 
     let userRewardIds: Set<number> = new Set();
@@ -25,12 +25,7 @@ export class RewardsService {
     }
 
     return rewards.map((r) => ({
-      id: r.id,
-      name: r.title,
-      description: r.description,
-      price: r.cost,
-      imageUrl: r.icon,
-      category: r.category ?? 'Разное',
+      ...r,
       isPurchased: userId ? userRewardIds.has(r.id) : undefined,
     }));
   }
@@ -53,7 +48,7 @@ export class RewardsService {
         throw new NotFoundException(`User with ID ${userId} not found.`);
       }
 
-      if (user.karmaPoints < reward.cost) {
+      if (user.karmaPoints < reward.price) {
         throw new ForbiddenException('Insufficient karma points.');
       }
 
@@ -61,7 +56,7 @@ export class RewardsService {
         where: { id: userId },
         data: {
           karmaPoints: {
-            decrement: reward.cost,
+            decrement: reward.price,
           },
         },
       });

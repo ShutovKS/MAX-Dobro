@@ -63,10 +63,10 @@ describe('Rewards (e2e)', () => {
 
   it('GET /rewards - should return isPurchased flag correctly', async () => {
     const reward1 = await prisma.reward.create({
-      data: { title: 'Reward 1', description: 'd', cost: 10 },
+      data: { name: 'Reward 1', description: 'd', price: 10 },
     });
     const reward2 = await prisma.reward.create({
-      data: { title: 'Reward 2', description: 'd', cost: 10 },
+      data: { name: 'Reward 2', description: 'd', price: 10 },
     });
     await prisma.userReward.create({
       data: { userId: mockUser.id, rewardId: reward1.id },
@@ -83,7 +83,7 @@ describe('Rewards (e2e)', () => {
 
   it('POST /rewards/:id/purchase - should succeed with enough points and fail without', async () => {
     const reward = await prisma.reward.create({
-      data: { title: 'Test Reward', description: 'd', cost: 150 },
+      data: { name: 'Test Reward', description: 'd', price: 150 },
     });
 
     await request(app.getHttpServer())

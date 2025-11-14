@@ -7,6 +7,7 @@ interface SupabaseUserPayload {
   email?: string;
   raw_user_meta_data?: {
     name?: string;
+    avatar_url?: string;
   };
 }
 @Injectable()
@@ -26,12 +27,30 @@ export class AuthService {
     });
   }
 
-  calculateLevel(karmaPoints: number): string {
-    if (karmaPoints <= 100) return 'Новичок';
-    if (karmaPoints <= 500) return 'Активист';
-    if (karmaPoints <= 1500) return 'Лидер';
-    if (karmaPoints <= 5000) return 'Мастер';
-    return 'Амбассадор';
+  calculateLevel(karmaPoints: number) {
+    const levels = [
+      { name: 'Новичок', threshold: 0 },
+      { name: 'Активист', threshold: 101 },
+      { name: 'Лидер', threshold: 501 },
+      { name: 'Мастер', threshold: 1501 },
+      { name: 'Амбассадор', threshold: 5001 },
+    ];
+
+    const current =
+      [...levels].reverse().find((l) => karmaPoints >= l.threshold) ??
+      levels[0];
+    const next = levels.find((l) => karmaPoints < l.threshold);
+
+    const progress = next
+      ? (karmaPoints - current.threshold) /
+        (next.threshold - current.threshold)
+      : 1;
+
+    return {
+      level: current.name,
+      progress: Math.min(1, Math.max(0, progress)),
+      nextLevel: next?.name ?? null,
+    };
   }
 
   async createLocalUserAfterSignUp(payload: SupabaseUserPayload) {
@@ -54,40 +73,38 @@ export class AuthService {
     }
   }
 
-  async getUserEvents(userId: number, supabaseUserId: string) {
-    return this.prisma.fromUser(supabaseUserId, async (prisma) => {
-      const participations = await prisma.eventParticipant.findMany({
-        where: { userId },
-        include: {
-          event: {
-            include: {
-              _count: {
-                select: { participants: true },
-              },
+  async getUserEvents(userId: number) {
+    const participations = await this.prisma.eventParticipant.findMany({
+      where: { userId },
+      include: {
+        event: {
+          include: {
+            _count: {
+              select: { participants: true },
             },
           },
         },
-        orderBy: {
-          event: {
-            date: 'asc',
-          },
+      },
+      orderBy: {
+        event: {
+          date: 'asc',
         },
-      });
-
-      const now = new Date();
-      const upcoming: EventEntity[] = [];
-      const past: EventEntity[] = [];
-
-      for (const p of participations) {
-        if (p.event.date >= now) {
-          upcoming.push(p.event);
-        } else {
-          past.push(p.event);
-        }
-      }
-
-      return { upcoming, past };
+      },
     });
+
+    const now = new Date();
+    const upcoming: EventEntity[] = [];
+    const past: EventEntity[] = [];
+
+    for (const p of participations) {
+      if (p.event.date >= now) {
+        upcoming.push(p.event);
+      } else {
+        past.push(p.event);
+      }
+    }
+
+    return { upcoming, past };
   }
 
   async getUserCertificates(userId: number) {
