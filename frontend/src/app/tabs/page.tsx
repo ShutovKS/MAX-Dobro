@@ -18,7 +18,6 @@ const defaultFilters: Filters = {
   distance: 5,
 };
 
-// Haversine distance function
 const getDistance = (from: [number, number], to: [number, number]): number => {
   const R = 6371; // Radius of the Earth in km
   const dLat = (to[0] - from[0]) * Math.PI / 180;
@@ -31,7 +30,6 @@ const getDistance = (from: [number, number], to: [number, number]): number => {
   return R * c; // Distance in km
 };
 
-// Reusable filter function
 const applyAllFilters = (
   events: AppEvent[],
   markers: MapMarker[],

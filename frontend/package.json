@@ -9,15 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.81.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.553.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-leaflet": "5.0.0",
-    "react-router": "^7.9.5"
+    "react-router": "^7.9.5",
+    "supabase": "^2.58.5"
   },
   "devDependencies": {
-    "@types/node": "^22.19.1",
+    "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"

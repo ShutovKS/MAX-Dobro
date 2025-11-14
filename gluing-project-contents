@@ -22,7 +22,7 @@ EXCLUDE_PATTERNS=(
   ".husky/.*"
   ".idea/.*"
   "docs/.*"
-  "backend/.*"
+  #  "backend/.*"
   #  "frontend/.*"
   "^[^.\/][^/]*$|^\.[^/]*$" # Корневые файлы и скрытые файлы
 

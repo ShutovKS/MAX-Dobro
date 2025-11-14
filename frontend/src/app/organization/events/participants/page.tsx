@@ -80,7 +80,6 @@ const EventParticipantsPage: React.FC<{
       setLoading(true);
       const eventIdNum = parseInt(eventId, 10);
       try {
-        // FIX: Pass user.organizationId to fetchOrganizationEvents as it's a required argument.
         const [allOrgEvents, participantsData] = await Promise.all([
           fetchOrganizationEvents(user.organizationId),
           fetchEventParticipants(eventIdNum)

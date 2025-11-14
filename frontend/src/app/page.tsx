@@ -100,12 +100,12 @@ const App: React.FC = () => {
     initializeApp();
   }, []);
 
-  const handleAuthSuccess = (user: User) => {
-    setUserData(user);
+  const handleAuthSuccess = (session: { user: User; token: string }) => {
+    setUserData(session.user);
     if (!isOnboardingComplete()) {
       navigate(ROUTES.ONBOARDING);
     } else {
-      navigate(getRedirectPath(user));
+      navigate(getRedirectPath(session.user));
     }
   };
 
@@ -219,7 +219,6 @@ const App: React.FC = () => {
       navigate(ROUTES.ORGANIZATION_EVENTS);
     }}/>
   };
-  // FIX: Pass userData to EventParticipantsPageWrapper to provide organizationId for API calls.
   const EventParticipantsPageWrapper = () => <EventParticipantsPage user={userData!}
                                                                     onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)}/>;
   const OrganizationSettingsPageWrapper = () => <OrganizationSettingsPage

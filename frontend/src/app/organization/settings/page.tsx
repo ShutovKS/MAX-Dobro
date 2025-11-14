@@ -2,8 +2,6 @@ import React, {useState} from 'react';
 import {ArrowLeft, Bell, Briefcase, ChevronRight, FileText, LogOut, MessageSquare, Users} from 'lucide-react';
 import LogoutConfirmationModal from '../../../components/ui/LogoutConfirmationModal';
 
-// Reusing these components by defining them locally for simplicity.
-// In a larger app, they would be in a shared ui folder.
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({title, children}) => (
   <section>
     <h2 className="px-6 pb-2 text-sm font-semibold text-[rgb(12,13,14,0.52)] uppercase tracking-wider">{title}</h2>

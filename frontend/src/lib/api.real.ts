@@ -1,3 +1,4 @@
+import {supabase} from './auth.real';
 import type {
   Achievement,
   AppEvent,
@@ -18,23 +19,16 @@ import type {
   WeeklyChallenge
 } from './types';
 
-const API_BASE_URL = process.env.VITE_API_BASE_URL;
+const API_BASE_URL = process.env.API_BASE_URL;
 
-const getAuthToken = (): string | null => {
-  const sessionData = localStorage.getItem('userSession');
-  if (!sessionData) return null;
-
-  try {
-    const session = JSON.parse(sessionData);
-    return session.token || session.user?.token || null;
-  } catch (e) {
-    console.error('Could not parse session data to get auth token:', e);
-    return null;
-  }
+const getAuthToken = async (): Promise<string | null> => {
+  if (!supabase) return null;
+  const {data} = await supabase.auth.getSession();
+  return data.session?.access_token || null;
 }
 
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = getAuthToken();
+  const token = await getAuthToken();
   const authHeaders: Record<string, string> = {};
   if (token) {
     authHeaders['Authorization'] = `Bearer ${token}`;
