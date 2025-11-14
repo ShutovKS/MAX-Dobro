@@ -10,9 +10,7 @@ async function bootstrap() {
   console.log('[MAX-DOBRO-API] --- Enabling CORS ---');
   app.enableCors({
     origin: [
-      'https://max-dobro.vercel.app',
-      'http://localhost:3000',
-      'http://localhost:5173',
+      '*',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
