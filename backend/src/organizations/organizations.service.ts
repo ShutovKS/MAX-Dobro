@@ -8,6 +8,7 @@ import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrganizationEntity } from './entities/organization.entity';
 import { EventEntity } from '../events/entities/event.entity';
+import { OrganizationStatEntity } from './entities/organization-stat.entity';
 
 @Injectable()
 export class OrganizationsService {
@@ -176,5 +177,51 @@ export class OrganizationsService {
       }
       throw error;
     }
+  }
+
+  async getDashboardStats(organizationId: number) {
+    const organization = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      include: {
+        _count: {
+          select: { subscribers: true, events: true },
+        },
+      },
+    });
+
+    if (!organization) {
+      throw new NotFoundException(
+        `Organization with ID ${organizationId} not found.`,
+      );
+    }
+
+    const stats: OrganizationStatEntity[] = [
+      {
+        id: 'subscribers',
+        label: 'Подписчики',
+        value: organization._count.subscribers.toLocaleString('ru-RU'),
+        change: '+5', // Mocked data
+      },
+      {
+        id: 'events_total',
+        label: 'Всего событий',
+        value: organization._count.events.toLocaleString('ru-RU'),
+        change: '+1', // Mocked data
+      },
+      {
+        id: 'rating',
+        label: 'Рейтинг',
+        value: organization.rating?.toFixed(1) ?? 'N/A',
+        change: '-0.1', // Mocked data
+      },
+      {
+        id: 'reviews',
+        label: 'Отзывы',
+        value: organization.reviewCount.toLocaleString('ru-RU'),
+        change: '+12', // Mocked data
+      },
+    ];
+
+    return stats;
   }
 }

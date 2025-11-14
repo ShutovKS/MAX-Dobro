@@ -23,6 +23,7 @@ import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
 import { EventEntity } from '../events/entities/event.entity';
 import { OrganizationEntity } from './entities/organization.entity';
+import { OrganizationStatEntity } from './entities/organization-stat.entity';
 import { OrganizationsService } from './organizations.service';
 
 @ApiTags('Organizations')
@@ -100,5 +101,21 @@ export class OrganizationsController {
     @CurrentUser() user: User,
   ) {
     return this.organizationsService.unsubscribe(id, user.id);
+  }
+
+  @Get(':id/dashboard')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get dashboard statistics for an organization" })
+  @ApiResponse({
+    status: 200,
+    description: "A list of dashboard statistics.",
+    type: [OrganizationStatEntity],
+  })
+  @ApiResponse({ status: 404, description: 'Organization not found.' })
+  getDashboardStats(@Param('id', ParseIntPipe) id: number) {
+    // В будущем здесь можно добавить проверку прав, что текущий пользователь
+    // является администратором организации 'id'
+    return this.organizationsService.getDashboardStats(id);
   }
 }
