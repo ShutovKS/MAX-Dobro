@@ -36,6 +36,14 @@ export class LearningService {
     if (!course) {
       throw new NotFoundException(`Course with ID ${id} not found`);
     }
+
+    course.lessons.forEach((lesson) => {
+      lesson.questions.forEach((question) => {
+        // @ts-expect-error
+        question.id = question.id.toString();
+      });
+    });
+
     return course;
   }
 
