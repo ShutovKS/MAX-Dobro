@@ -70,6 +70,29 @@ const TestResultModal: React.FC<{
   );
 };
 
+const renderMarkdown = (text: string | undefined) => {
+  if (!text) return null;
+
+  const html = text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .split('\n\n')
+    .map((paragraph) => {
+      if (paragraph.trim().startsWith('- ')) {
+        const listItems = paragraph
+          .trim()
+          .split('\n')
+          .map((item) => `<li>${item.trim().substring(2)}</li>`)
+          .join('');
+        return `<ul>${listItems}</ul>`;
+      }
+      return `<p>${paragraph}</p>`;
+    })
+    .join('');
+
+  return <div dangerouslySetInnerHTML={{__html: html}}/>;
+};
+
+
 const LessonPage: React.FC<{
   courseId: number;
   lessonIndex: number;
@@ -189,7 +212,9 @@ const LessonPage: React.FC<{
           {isTest ? (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">{lesson.contentTitle}</h2>
-              <p className="text-gray-600 leading-relaxed whitespace-pre-line">{lesson.content}</p>
+              <div className="prose max-w-none text-gray-600 leading-relaxed">
+                {renderMarkdown(lesson.content)}
+              </div>
               {lesson.quiz?.map((q, index) => (
                 <div key={q.id} className="border-t border-gray-200 pt-4">
                   <p className="font-semibold">{`${index + 1}. ${q.question}`}</p>
@@ -219,7 +244,7 @@ const LessonPage: React.FC<{
           ) : (
             <div className="prose max-w-none">
               <h2>{lesson.contentTitle}</h2>
-              <p>{lesson.content}</p>
+              {renderMarkdown(lesson.content)}
             </div>
           )}
         </main>

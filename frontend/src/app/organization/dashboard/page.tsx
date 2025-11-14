@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ArrowLeft, List, Plus, Settings} from 'lucide-react';
+import {List, Plus, Settings} from 'lucide-react';
 import {fetchOrganizationDashboardStats, fetchOrganizationDetails} from '../../../lib/api';
 import type {OrganizationDetails, OrganizationStat} from '../../../lib/types';
 
@@ -73,11 +73,7 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       <header className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm flex items-center justify-between">
-        <button onClick={onSwitchToVolunteer}
-                className="flex items-center space-x-2 text-sm font-semibold text-[#007AFF]">
-          <ArrowLeft className="w-5 h-5"/>
-          <span>Режим волонтера</span>
-        </button>
+        <div className="w-10 h-10"/>
         <h1 className="text-lg font-bold text-[#0C0D0E]">{loading ? 'Загрузка...' : organizationDetails?.name}</h1>
         <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
                 aria-label="Настройки организации">

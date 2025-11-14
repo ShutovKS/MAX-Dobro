@@ -1,13 +1,18 @@
 import React, {useEffect, useState} from 'react';
-import {Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams} from 'react-router';
+import {Navigate, useLocation, useNavigate, useParams, useRoutes, useSearchParams} from 'react-router';
 
 import SplashPage from './splash/page';
 import AuthPage from './auth/page';
 import OnboardingPage from './onboarding/page';
 import TabsLayout from './tabs/layout';
+import HomePage from './tabs/page';
+import CoursesPage from './tabs/courses/page';
+import OrganizationsPage from './tabs/organizations/page';
+import StoriesPage from './tabs/stories/page';
+import ProfilePage from './tabs/profile/page';
 import EventDetailPage from './events/detail/page';
 import CourseDetailPage from './courses/detail/page';
-import OrganizationProfilePage from './organizations/detail/page';
+import OrganizationProfilePage from './organization/detail/page';
 import LessonPage from './courses/lesson/page';
 import CertificatePage from './courses/certificate/page';
 import ActivityHistoryPage from './profile/history/page';
@@ -31,18 +36,14 @@ import EventManagementPage from './organization/events/page';
 import CreateEventPage from './organization/events/create/page';
 import EventParticipantsPage from './organization/events/participants/page';
 
-// FIX: Import RewardItem type to resolve typing error for allRewards state.
 import type {Course, OrganizationEvent, RewardItem, User} from '../lib/types';
 import {fetchAllCourses, fetchRewards} from '../lib/api';
 import {getCurrentSession, isOnboardingComplete, logout, setOnboardingComplete} from '../lib/auth';
 import {MESSAGES, ROUTES} from '../lib/constants';
 
 
-type AppMode = 'volunteer' | 'organization';
-
 const App: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState(false);
-  const [appMode, setAppMode] = useState<AppMode>('volunteer');
   const [error, setError] = useState<'network' | 'server' | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
   const [allRewards, setAllRewards] = useState<RewardItem[]>([]);
@@ -55,6 +56,10 @@ const App: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAuthenticated = !!userData;
+
+  const getRedirectPath = (user: User) => {
+    return user.role === 'organization' ? ROUTES.ORGANIZATION_DASHBOARD : ROUTES.HOME;
+  };
 
   const initializeApp = async () => {
     setError(null);
@@ -75,10 +80,12 @@ const App: React.FC = () => {
         if (!onboardingComplete) {
           navigate(ROUTES.ONBOARDING);
         } else if (['', '/', '#/', ROUTES.AUTH].includes(location.pathname)) {
-          navigate(ROUTES.HOME);
+          navigate(getRedirectPath(session.user));
         }
       } else {
-        navigate(ROUTES.AUTH);
+        if (location.pathname !== ROUTES.ONBOARDING) {
+          navigate(ROUTES.AUTH);
+        }
       }
       setIsInitialized(true);
 
@@ -97,13 +104,19 @@ const App: React.FC = () => {
     if (!isOnboardingComplete()) {
       navigate(ROUTES.ONBOARDING);
     } else {
-      navigate(ROUTES.HOME);
+      navigate(getRedirectPath(user));
     }
   };
 
   const handleOnboardingComplete = () => {
     setOnboardingComplete();
-    navigate(ROUTES.HOME);
+    if (userData) {
+      navigate(getRedirectPath(userData));
+    } else {
+      // If userData is not yet set, user has likely just registered.
+      // Redirect to home and let initializeApp handle session and final redirect.
+      navigate(ROUTES.HOME);
+    }
   };
 
   const handleLogout = async () => {
@@ -186,7 +199,7 @@ const App: React.FC = () => {
   const RewardsStorePageWrapper = () => <RewardsStorePage user={userData!} rewards={allRewards}
                                                           onBack={() => navigate(ROUTES.PROFILE)}/>;
 
-  const EventManagementPageWrapper = () => <EventManagementPage onBack={() => setAppMode('volunteer')}
+  const EventManagementPageWrapper = () => <EventManagementPage onBack={() => navigate(ROUTES.ORGANIZATION_DASHBOARD)}
                                                                 onCreateEvent={() => navigate(ROUTES.ORGANIZATION_EVENTS_CREATE)}
                                                                 onEditEvent={(e) => navigate(ROUTES.ORGANIZATION_EVENTS_EDIT(e.id))}
                                                                 onManageParticipants={(e) => navigate(ROUTES.ORGANIZATION_EVENTS_PARTICIPANTS(e.id))}/>;
@@ -206,85 +219,70 @@ const App: React.FC = () => {
   const EventParticipantsPageWrapper = () => <EventParticipantsPage
     onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)}/>;
 
-  const renderRoutes = () => {
-    if (appMode === 'organization') {
-      return (
-        <Routes>
-          <Route path={ROUTES.ORGANIZATION_DASHBOARD}
-                 element={<OrganizationDashboardPage onSwitchToVolunteer={() => setAppMode('volunteer')}
-                                                     onManageEvents={() => navigate(ROUTES.ORGANIZATION_EVENTS)}
-                                                     onCreateEvent={() => navigate(ROUTES.ORGANIZATION_EVENTS_CREATE)}/>}/>
-          <Route path={ROUTES.ORGANIZATION_EVENTS} element={<EventManagementPageWrapper/>}/>
-          <Route path={ROUTES.ORGANIZATION_EVENTS_CREATE} element={<CreateEventPageWrapper/>}/>
-          <Route path={ROUTES.ORGANIZATION_EVENTS_EDIT(':eventId')} element={<EditEventPageWrapper/>}/>
-          <Route path={ROUTES.ORGANIZATION_EVENTS_PARTICIPANTS(':eventId')} element={<EventParticipantsPageWrapper/>}/>
-          <Route path="*" element={<Navigate to={ROUTES.ORGANIZATION_DASHBOARD} replace/>}/>
-        </Routes>
-      );
-    }
+  const element = useRoutes(
+    isAuthenticated && userData ?
+      [
+        {
+          path: "/app",
+          element: <TabsLayout user={userData}
+                               onSwitchToOrganizationMode={() => navigate(ROUTES.ORGANIZATION_DASHBOARD)}/>,
+          children: [
+            {index: true, element: <Navigate to={ROUTES.HOME} replace/>},
+            {path: "home", element: <HomePage/>},
+            {path: "training", element: <CoursesPage/>},
+            {path: "organizations", element: <OrganizationsPage/>},
+            {path: "stories", element: <StoriesPage/>},
+            {path: "profile", element: <ProfilePage/>},
+          ],
+        },
+        {path: "/app/events/:id/chat", element: <EventChatPageWrapper/>},
+        {path: "/app/events/:id", element: <EventDetailPage/>},
+        {path: "/app/courses/:id/lesson/:subId", element: <LessonPageWrapper/>},
+        {path: "/app/courses/:id/certificate", element: <CertificatePageWrapper/>},
+        {path: "/app/courses/:id", element: <CourseDetailPageWrapper/>},
+        {path: "/app/organizations/:id", element: <OrganizationProfilePageWrapper/>},
+        {path: "/app/stories/create", element: <CreateStoryPageWrapper/>},
+        {path: "/app/stories/:id", element: <StoryDetailPageWrapper/>},
+        {path: "/app/rewards/:id", element: <RewardsDetailPageWrapper/>},
+        {path: "/app/chat", element: <AssistantChatPage onClose={() => navigate(-1)} user={userData}/>},
+        {path: ROUTES.PROFILE_ACTIVITY_HISTORY, element: <ActivityHistoryPage/>},
+        {path: ROUTES.PROFILE_ACHIEVEMENTS, element: <AllAchievementsPage/>},
+        {path: ROUTES.PROFILE_CALENDAR, element: <CalendarPage/>},
+        {path: ROUTES.PROFILE_LEADERBOARDS, element: <LeaderboardPageWrapper/>},
+        {path: ROUTES.PROFILE_SETTINGS, element: <SettingsPageWrapper/>},
+        {path: ROUTES.PROFILE_EDIT, element: <EditProfilePageWrapper/>},
+        {path: ROUTES.PROFILE_CERTIFICATES, element: <MyCertificatesPageWrapper/>},
+        {path: ROUTES.PROFILE_CHATS, element: <MyChatsPage/>},
+        {path: ROUTES.PROFILE_REWARDS, element: <RewardsStorePageWrapper/>},
 
-    if (!isAuthenticated) {
-      return (
-        <Routes>
-          <Route path={ROUTES.AUTH} element={<AuthPage onAuthSuccess={handleAuthSuccess}/>}/>
-          <Route path={ROUTES.ONBOARDING} element={<OnboardingPage onComplete={handleOnboardingComplete}/>}/>
-          <Route path="*" element={<Navigate to={ROUTES.AUTH} replace/>}/>
-        </Routes>
-      );
-    }
+        {
+          path: ROUTES.ORGANIZATION_DASHBOARD,
+          element: <OrganizationDashboardPage onSwitchToVolunteer={() => navigate(ROUTES.HOME)}
+                                              onManageEvents={() => navigate(ROUTES.ORGANIZATION_EVENTS)}
+                                              onCreateEvent={() => navigate(ROUTES.ORGANIZATION_EVENTS_CREATE)}/>
+        },
+        {path: ROUTES.ORGANIZATION_EVENTS, element: <EventManagementPageWrapper/>},
+        {path: ROUTES.ORGANIZATION_EVENTS_CREATE, element: <CreateEventPageWrapper/>},
+        {path: ROUTES.ORGANIZATION_EVENTS_EDIT(':eventId'), element: <EditEventPageWrapper/>},
+        {path: ROUTES.ORGANIZATION_EVENTS_PARTICIPANTS(':eventId'), element: <EventParticipantsPageWrapper/>},
 
-    if (!userData || !allCourses) {
-      return <SplashPage/>;
-    }
-
-    return (
-      <Routes>
-        <Route path={ROUTES.HOME} element={<TabsLayout user={userData} activeTab="home"
-                                                       onSwitchToOrganizationMode={() => setAppMode('organization')}/>}/>
-        <Route path={ROUTES.TRAINING} element={<TabsLayout user={userData} activeTab="training"
-                                                           onSwitchToOrganizationMode={() => setAppMode('organization')}/>}/>
-        <Route path={ROUTES.ORGANIZATIONS} element={<TabsLayout user={userData} activeTab="organizations"
-                                                                onSwitchToOrganizationMode={() => setAppMode('organization')}/>}/>
-        <Route path={ROUTES.STORIES} element={<TabsLayout user={userData} activeTab="stories"
-                                                          onSwitchToOrganizationMode={() => setAppMode('organization')}/>}/>
-        <Route path={ROUTES.PROFILE} element={<TabsLayout user={userData} activeTab="profile"
-                                                          onSwitchToOrganizationMode={() => setAppMode('organization')}/>}/>
-
-        <Route path={ROUTES.EVENT_CHAT(':id')} element={<EventChatPageWrapper/>}/>
-        <Route path={ROUTES.EVENT_DETAIL(':id')} element={<EventDetailPage/>}/>
-        <Route path={ROUTES.COURSE_LESSON(':id', ':subId')} element={<LessonPageWrapper/>}/>
-        <Route path={ROUTES.COURSE_CERTIFICATE(':id')} element={<CertificatePageWrapper/>}/>
-        <Route path={ROUTES.COURSE_DETAIL(':id')} element={<CourseDetailPageWrapper/>}/>
-        <Route path={ROUTES.ORGANIZATION_DETAIL(':id')} element={<OrganizationProfilePageWrapper/>}/>
-        <Route path={ROUTES.STORY_CREATE} element={<CreateStoryPageWrapper/>}/>
-        <Route path={ROUTES.STORY_DETAIL(':id')} element={<StoryDetailPageWrapper/>}/>
-        <Route path={ROUTES.REWARD_DETAIL(':id')} element={<RewardsDetailPageWrapper/>}/>
-        <Route path={ROUTES.CHAT} element={<AssistantChatPage onClose={() => navigate(ROUTES.HOME)} user={userData}/>}/>
-
-        <Route path={ROUTES.PROFILE_ACTIVITY_HISTORY} element={<ActivityHistoryPage/>}/>
-        <Route path={ROUTES.PROFILE_ACHIEVEMENTS} element={<AllAchievementsPage/>}/>
-        <Route path={ROUTES.PROFILE_CALENDAR} element={<CalendarPage/>}/>
-        <Route path={ROUTES.PROFILE_LEADERBOARDS} element={<LeaderboardPageWrapper/>}/>
-        <Route path={ROUTES.PROFILE_SETTINGS} element={<SettingsPageWrapper/>}/>
-        <Route path={ROUTES.PROFILE_EDIT} element={<EditProfilePageWrapper/>}/>
-        <Route path={ROUTES.PROFILE_CERTIFICATES} element={<MyCertificatesPageWrapper/>}/>
-        <Route path={ROUTES.PROFILE_CHATS} element={<MyChatsPage/>}/>
-        <Route path={ROUTES.PROFILE_REWARDS} element={<RewardsStorePageWrapper/>}/>
-
-        <Route path="/" element={<Navigate to={ROUTES.HOME} replace/>}/>
-
-        <Route path="*" element={<Navigate to="/" replace/>}/>
-      </Routes>
-    );
-  };
+        {path: "/", element: <Navigate to={getRedirectPath(userData)} replace/>},
+        {path: "/organization", element: <Navigate to={ROUTES.ORGANIZATION_DASHBOARD} replace/>},
+        {path: "*", element: <Navigate to={getRedirectPath(userData)} replace/>},
+      ] :
+      [
+        {path: ROUTES.AUTH, element: <AuthPage onAuthSuccess={handleAuthSuccess}/>},
+        {path: ROUTES.ONBOARDING, element: <OnboardingPage onComplete={handleOnboardingComplete}/>},
+        {path: "*", element: <Navigate to={ROUTES.AUTH} replace/>},
+      ]
+  );
 
   if (error) return <ErrorPage type={error} onRetry={initializeApp}/>;
-
-  if (!isInitialized) return <SplashPage/>;
+  if (!isInitialized || (isAuthenticated && (!userData || allCourses.length === 0))) return <SplashPage/>;
 
   return (
     <>
-      {renderRoutes()}
+      {element}
       <Toast
         message={toast.message}
         show={toast.show}

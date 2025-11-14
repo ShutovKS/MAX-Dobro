@@ -54,7 +54,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
   const [endDate, setEndDate] = useState('');
   const [format, setFormat] = useState<'Офлайн' | 'Онлайн'>('Офлайн');
   const [address, setAddress] = useState('');
-  const [volunteerCount, setVolunteerCount] = useState(event?.capacity.toString() || '10');
+  const [volunteerCount, setVolunteerCount] = useState(event?.capacity ? event.capacity.toString() : '10');
   const [requirements, setRequirements] = useState('');
   const [rewards, setRewards] = useState('');
 
@@ -189,16 +189,20 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({event, onBack, onPubli
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100 z-30">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-stretch space-x-2">
           <button
-            className="flex-1 bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-xl hover:bg-gray-300">Сохранить
-            в черновик
+            className="bg-gray-200 text-gray-800 font-semibold px-4 rounded-xl hover:bg-gray-300 flex items-center justify-center">
+            <span className="text-center text-sm leading-tight">Сохранить<br/>в<br/>черновик</span>
+          </button>
+          <button className="flex-1 bg-gray-300 text-gray-800 font-semibold py-3 px-4 rounded-xl hover:bg-gray-400">
+            Предпросмотр
           </button>
           <button
-            className="flex-1 bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-xl hover:bg-gray-300">Предпросмотр
-          </button>
-          <button onClick={handlePublish} disabled={!isFormValid}
-                  className="flex-1 bg-[#007AFF] text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed">Опубликовать
+            onClick={handlePublish}
+            disabled={!isFormValid}
+            className="flex-1 bg-[#007AFF] text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed"
+          >
+            Опубликовать
           </button>
         </div>
       </footer>

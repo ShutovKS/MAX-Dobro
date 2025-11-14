@@ -46,7 +46,7 @@ const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBac
   const [selectedCategory, setSelectedCategory] = useState<typeof REWARD_CATEGORIES[number]>('Все');
 
   const onSelectReward = (reward: RewardItem) => {
-    navigate(`/rewards/${reward.id}`);
+    navigate(`/app/rewards/${reward.id}`);
   };
 
   const karmaBalance = useMemo(() => {

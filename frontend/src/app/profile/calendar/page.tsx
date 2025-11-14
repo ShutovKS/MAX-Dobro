@@ -13,9 +13,9 @@ const CalendarPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [upcomingEvents, setUpcomingEvents] = useState<(HistoryEvent & { parsedDate: Date | null })[]>([]);
 
-  const onBack = () => navigate('/profile');
-  const onFindEvent = () => navigate('/home');
-  const onSelectEvent = (id: number) => navigate(`/events/${id}`);
+  const onBack = () => navigate('/app/profile');
+  const onFindEvent = () => navigate('/app/home');
+  const onSelectEvent = (id: number) => navigate(`/app/events/${id}`);
 
   useEffect(() => {
     const loadEvents = async () => {

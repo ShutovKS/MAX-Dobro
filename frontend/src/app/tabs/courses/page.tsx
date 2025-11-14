@@ -81,7 +81,7 @@ const CoursesPage: React.FC = () => {
   }, []);
 
   const onSelectCourse = (id: number) => {
-    navigate(`/courses/${id}`);
+    navigate(`/app/courses/${id}`);
   };
 
   const filteredCourses = useMemo(() => {

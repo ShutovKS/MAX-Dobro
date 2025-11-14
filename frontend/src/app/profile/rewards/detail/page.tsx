@@ -22,7 +22,7 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
     return karmaStat ? parseInt(karmaStat.value.replace(/,/g, ''), 10) : 0;
   }, [user.stats]);
 
-  const onBack = () => navigate('/profile/rewardsStore');
+  const onBack = () => navigate('/app/profile/rewardsStore');
 
   if (!reward) {
     return <div className="w-full h-screen flex items-center justify-center">Награда не найдена.</div>;

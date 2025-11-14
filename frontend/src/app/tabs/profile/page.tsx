@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {useNavigate} from 'react-router';
+import {useNavigate, useOutletContext} from 'react-router';
 import type {ProfileSubScreen, User, WeeklyChallenge} from '../../../lib/types';
 import {ChevronRight, Settings} from 'lucide-react';
 import WeeklyChallengeWidget from '../../../features/challenges/components/WeeklyChallengeWidget';
@@ -35,10 +35,8 @@ const AchievementBadge: React.FC<{ achievement: User['achievements'][0] }> = Rea
   </div>
 ));
 
-const ProfilePage: React.FC<{ user: User; onSwitchToOrganizationMode: () => void; }> = ({
-                                                                                          user,
-                                                                                          onSwitchToOrganizationMode
-                                                                                        }) => {
+const ProfilePage: React.FC = () => {
+  const {user, onSwitchToOrganizationMode} = useOutletContext<{ user: User, onSwitchToOrganizationMode: () => void }>();
   const navigate = useNavigate();
   const [challenge, setChallenge] = useState<WeeklyChallenge | null>(null);
 
@@ -55,11 +53,11 @@ const ProfilePage: React.FC<{ user: User; onSwitchToOrganizationMode: () => void
   }, []);
 
   const onNavigate = (screen: ProfileSubScreen) => {
-    navigate(`/profile/${screen}`);
+    navigate(`/app/profile/${screen}`);
   };
 
   const onFindEvent = (category?: string) => {
-    navigate('/home');
+    navigate('/app/home');
   };
 
   const handleStatClick = (statId: string) => {
@@ -153,18 +151,11 @@ const ProfilePage: React.FC<{ user: User; onSwitchToOrganizationMode: () => void
 
       <section className="px-6">
         <div className="bg-white rounded-2xl shadow-sm divide-y divide-gray-100">
-          {user.navigation.map(item => {
-            const handleClick = () => {
-              if (item.id === 'switchToOrganization') {
-                onSwitchToOrganizationMode();
-              } else {
-                onNavigate(item.id as ProfileSubScreen);
-              }
-            };
+          {user.navigation.filter(item => item.id !== 'switchToOrganization').map(item => {
             return (
               <button
                 key={item.id}
-                onClick={handleClick}
+                onClick={() => onNavigate(item.id as ProfileSubScreen)}
                 className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 first:rounded-t-2xl last:rounded-b-2xl transition-colors">
                 <div className="flex items-center space-x-4">
                   <item.Icon className="w-6 h-6 text-gray-500"/>
