@@ -10,6 +10,9 @@ export class OrganizationEntity {
   @ApiProperty({ required: false, nullable: true })
   description: string | null;
 
+  @ApiProperty({ required: false, nullable: true })
+  fullDescription: string | null
+
   @ApiPropertyOptional({ nullable: true })
   category: string | null;
 

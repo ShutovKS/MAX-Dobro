@@ -47,6 +47,7 @@ model Organization {
   id            Int      @id @default(autoincrement())
   name          String
   description   String?
+  fullDescription String?  @db.Text
   category      String?
   logoUrl       String?  @map("logo_url")
   isVerified    Boolean  @default(false) @map("is_verified")
@@ -95,6 +96,8 @@ model Event {
   updatedAt       DateTime @updatedAt
   organizationId  Int
   organization    Organization       @relation(fields: [organizationId], references: [id])
+  recommendedCourseId Int?
+  recommendedCourse   Course?   @relation("RecommendedCourseForEvent", fields: [recommendedCourseId], references: [id], onUpdate: NoAction, onDelete: SetNull)
   participants    EventParticipant[]
   stories         Story[]
   chat            EventChat?
@@ -155,6 +158,7 @@ model Course {
   updatedAt    DateTime          @updatedAt
   lessons      Lesson[]
   certificates UserCertificate[]
+  events       Event[]           @relation("RecommendedCourseForEvent")
 
   @@map("courses")
 }

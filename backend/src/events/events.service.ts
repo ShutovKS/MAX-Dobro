@@ -27,6 +27,12 @@ export class EventsService {
       _count: {
         select: { participants: true },
       },
+      recommendedCourse: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
     },
   };
 
@@ -45,7 +51,7 @@ export class EventsService {
       },
     };
   }
-
+  
   async create(createEventDto: CreateEventDto) {
     const newEvent = await this.prisma.event.create({
       data: {
