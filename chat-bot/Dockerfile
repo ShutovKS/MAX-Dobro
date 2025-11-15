@@ -6,10 +6,6 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
 
-# Generate Prisma Client
-COPY prisma ./prisma/
-RUN npx prisma generate
-
 COPY . .
 RUN npm run build
 
@@ -21,9 +17,9 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
 
+# Копируем скомпилированный код из стадии сборки
 COPY --from=builder /usr/src/app/dist ./dist
-COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
 
-EXPOSE 3000
+EXPOSE 10000
 
-CMD ["node", "dist/main"]
+CMD ["node", "dist/index.js"]
