@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation, useNavigate, useParams, useRoutes, useSearchParams } from 'react-router';
+import {
+  Navigate,
+  useLocation,
+  useNavigate,
+  useParams,
+  useRoutes,
+  useSearchParams,
+} from 'react-router';
 import SplashPage from './splash/page';
 import AuthPage from './auth/page';
 import OnboardingPage from './onboarding/page';
@@ -37,7 +44,12 @@ import EventParticipantsPage from './organization/events/participants/page';
 import OrganizationSettingsPage from './organization/settings/page';
 import type { Course, OrganizationEvent, RewardItem, User } from '../lib/types';
 import { fetchAllCourses, fetchRewards } from '../lib/api';
-import { getCurrentSession, isOnboardingComplete, logout, setOnboardingComplete } from '../lib/auth';
+import {
+  getCurrentSession,
+  isOnboardingComplete,
+  logout,
+  setOnboardingComplete,
+} from '../lib/auth';
 import { getMaxInitData } from '../lib/max-sdk';
 import { MESSAGES, ROUTES } from '../lib/constants';
 
@@ -47,7 +59,11 @@ const App: React.FC = () => {
   const [userData, setUserData] = useState<User | null>(null);
   const [allRewards, setAllRewards] = useState<RewardItem[]>([]);
   const [allCourses, setAllCourses] = useState<Course[]>([]);
-  const [toast, setToast] = useState<{ show: boolean; message: string; type?: 'success' | 'info' }>({
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type?: 'success' | 'info';
+  }>({
     show: false,
     message: '',
   });
@@ -57,7 +73,9 @@ const App: React.FC = () => {
   const isAuthenticated = !!userData;
 
   const getRedirectPath = (user: User) => {
-    return user.role === 'organization' ? ROUTES.ORGANIZATION_DASHBOARD : ROUTES.HOME;
+    return user.role === 'organization'
+      ? ROUTES.ORGANIZATION_DASHBOARD
+      : ROUTES.HOME;
   };
 
   const initializeApp = async () => {
@@ -65,35 +83,31 @@ const App: React.FC = () => {
     try {
       let session = await getCurrentSession();
 
-      // Попытка авто-логина через MAX, если нет текущей сессии
       if (!session) {
         const initData = getMaxInitData();
         if (initData) {
-          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/max-login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ initData }),
-          });
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/auth/max-login`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ initData }),
+            },
+          );
 
           if (response.ok) {
             const { accessToken } = await response.json();
             localStorage.setItem('internal_jwt', accessToken);
-            session = await getCurrentSession(); // Повторно запрашиваем сессию с новым токеном
+            session = await getCurrentSession();
           }
         }
       }
 
-      // Загружаем остальные данные параллельно
-      const rewardsPromise = fetchRewards();
-      const coursesPromise = fetchAllCourses();
-      const [rewards, courses] = await Promise.all([rewardsPromise, coursesPromise]);
-
-      setAllRewards(rewards);
-      setAllCourses(courses);
-
       if (session) {
         setUserData(session.user);
-        // Добавляем Promise.all для параллельной загрузки
+        
+        // --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
+        // Загружаем данные, требующие авторизации, ТОЛЬКО ПОСЛЕ успешного получения сессии
         const [rewards, courses] = await Promise.all([
           fetchRewards(),
           fetchAllCourses(),
@@ -111,17 +125,16 @@ const App: React.FC = () => {
 
       setIsInitialized(true);
       window.WebApp?.ready();
-    } catch (err: any) { // <-- Указываем тип any для err
-      // --- ДОБАВЬ ЭТИ СТРОКИ ДЛЯ ЛОГИРОВАНИЯ ---
+    } catch (err: any) {
       console.error("===================================");
       console.error("CRITICAL APP INITIALIZATION ERROR:");
       console.error(err);
       console.error("===================================");
-      // --- КОНЕЦ БЛОКА ДЛЯ ЛОГИРОВАНИЯ ---
       setError('network');
       setIsInitialized(true);
     }
   };
+
 
   useEffect(() => {
     initializeApp();
@@ -129,6 +142,9 @@ const App: React.FC = () => {
 
   const handleAuthSuccess = (session: { user: User; token: string }) => {
     setUserData(session.user);
+    if (!localStorage.getItem('internal_jwt')) {
+        // Мы не храним Supabase токен, он в cookie, но сессия уже есть
+    }
     if (!isOnboardingComplete()) {
       navigate(ROUTES.ONBOARDING);
     } else {
@@ -159,8 +175,8 @@ const App: React.FC = () => {
   const showToast = (message: string, type: 'success' | 'info' = 'info') => {
     setToast({ show: true, message, type });
   };
-
-  // --- (Далее идет без изменений код с обертками для роутинга) ---
+  
+  // --- (Остальная часть файла без изменений) ---
 
   const EventChatPageWrapper = () => {
     const { id } = useParams();

@@ -1,3 +1,5 @@
+// src/learning/learning.service.ts
+
 import {
   BadRequestException,
   ConflictException,
@@ -19,7 +21,7 @@ export class LearningService {
             questions: {
               include: {
                 answers: {
-                  select: { id: true, answer: true, isCorrect: true },
+                  select: { id: true, answer: true },
                 },
               },
             },
@@ -38,7 +40,7 @@ export class LearningService {
             questions: {
               include: {
                 answers: {
-                  select: { id: true, answer: true, isCorrect: true },
+                  select: { id: true, answer: true },
                 },
               },
             },
@@ -69,7 +71,6 @@ export class LearningService {
     return this.prisma.$transaction(async (tx) => {
       const course = await tx.course.findUnique({
         where: { id: courseId },
-        include: { lessons: { include: { questions: true } } },
       });
 
       if (!course) {
@@ -84,59 +85,45 @@ export class LearningService {
         throw new ConflictException('You have already completed this course.');
       }
 
-      const totalQuestions = course.lessons.reduce(
-        (acc, lesson) => acc + lesson.questions.length,
-        0,
+      const submittedQuestionIds = completionDto.answers.map(
+        (a) => a.questionId,
       );
 
-      const questionIds = course.lessons.flatMap((l) =>
-        l.questions.map((q) => q.id),
-      );
+      if (submittedQuestionIds.length === 0) {
+        throw new BadRequestException('Answers not provided.');
+      }
 
-      const correctAnswers = await tx.quizAnswer.findMany({
-        where: { questionId: { in: questionIds }, isCorrect: true },
+      const questionsInDb = await tx.quizQuestion.count({
+        where: { id: { in: submittedQuestionIds } },
       });
 
-      // Группируем правильные ответы по вопросам
-      const correctAnswersMap = new Map<number, Set<number>>();
-      for (const answer of correctAnswers) {
-        if (!correctAnswersMap.has(answer.questionId)) {
-          correctAnswersMap.set(answer.questionId, new Set());
-        }
-        correctAnswersMap.get(answer.questionId)!.add(answer.id);
+      if (questionsInDb !== submittedQuestionIds.length) {
+        throw new BadRequestException('Some questions do not exist.');
       }
 
-      // Группируем ответы пользователя по вопросам
-      const userAnswersMap = new Map<number, Set<number>>();
-      for (const userAnswer of completionDto.answers) {
-        if (!userAnswersMap.has(userAnswer.questionId)) {
-          userAnswersMap.set(userAnswer.questionId, new Set());
-        }
-        userAnswersMap.get(userAnswer.questionId)!.add(userAnswer.answerId);
-      }
+      const correctAnswers = await tx.quizAnswer.findMany({
+        where: {
+          questionId: { in: submittedQuestionIds },
+          isCorrect: true,
+        },
+      });
 
-      // Проверяем каждый вопрос
+      const correctAnswersMap = new Map(
+        correctAnswers.map((a) => [a.questionId, a.id]),
+      );
+
       let userCorrectAnswers = 0;
-      for (const questionId of questionIds) {
-        const correctSet = correctAnswersMap.get(questionId) || new Set();
-        const userSet = userAnswersMap.get(questionId) || new Set();
-
-        // Проверяем, что пользователь выбрал ВСЕ правильные ответы и НЕ выбрал лишних
+      for (const userAnswer of completionDto.answers) {
         if (
-          correctSet.size === userSet.size &&
-          [...correctSet].every((id) => userSet.has(id))
+          correctAnswersMap.get(userAnswer.questionId) === userAnswer.answerId
         ) {
           userCorrectAnswers++;
         }
       }
 
-      // Требуем минимум 70% правильных ответов (как на фронтенде)
-      const PASS_THRESHOLD = 0.7;
-      const passScore = Math.ceil(totalQuestions * PASS_THRESHOLD);
-
-      if (userCorrectAnswers < passScore) {
+      if (userCorrectAnswers < completionDto.answers.length) {
         throw new BadRequestException(
-          `Quiz failed. You got ${userCorrectAnswers} out of ${totalQuestions} correct. Need at least ${passScore} to pass.`,
+          'Тест не пройден. Пожалуйста, проверьте ответы и попробуйте снова.',
         );
       }
 
