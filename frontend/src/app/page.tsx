@@ -93,6 +93,14 @@ const App: React.FC = () => {
 
       if (session) {
         setUserData(session.user);
+        // Добавляем Promise.all для параллельной загрузки
+        const [rewards, courses] = await Promise.all([
+          fetchRewards(),
+          fetchAllCourses(),
+        ]);
+        setAllRewards(rewards);
+        setAllCourses(courses);
+
         const onboardingComplete = isOnboardingComplete();
         if (!onboardingComplete) {
           navigate(ROUTES.ONBOARDING);
@@ -102,8 +110,14 @@ const App: React.FC = () => {
       }
 
       setIsInitialized(true);
-      window.WebApp?.ready(); // Сообщаем клиенту MAX, что приложение готово
-    } catch (err) {
+      window.WebApp?.ready();
+    } catch (err: any) { // <-- Указываем тип any для err
+      // --- ДОБАВЬ ЭТИ СТРОКИ ДЛЯ ЛОГИРОВАНИЯ ---
+      console.error("===================================");
+      console.error("CRITICAL APP INITIALIZATION ERROR:");
+      console.error(err);
+      console.error("===================================");
+      // --- КОНЕЦ БЛОКА ДЛЯ ЛОГИРОВАНИЯ ---
       setError('network');
       setIsInitialized(true);
     }

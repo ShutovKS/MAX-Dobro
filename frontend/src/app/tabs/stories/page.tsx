@@ -73,12 +73,12 @@ const StoriesPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full bg-background min-h-full relative">
+    <div className="w-full bg-[#F0F0F0] min-h-full relative">
       <header className="p-6 bg-white/80 backdrop-blur-sm sticky top-0 z-10 flex justify-between items-center">
-        <h1 className="text-[28px] font-bold text-text-primary">Истории</h1>
+        <h1 className="text-[28px] font-bold text-[#0C0D0E]">Истории</h1>
         <button
           onClick={onStartCreateStory}
-          className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center shadow-lg"
+          className="w-12 h-12 bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] rounded-full flex items-center justify-center shadow-lg"
           aria-label="Создать историю"
         >
           <Plus className="w-6 h-6 text-white" strokeWidth={3}/>

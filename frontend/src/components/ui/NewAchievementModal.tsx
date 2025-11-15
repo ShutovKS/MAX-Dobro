@@ -20,11 +20,11 @@ const NewAchievementModal: React.FC<{
         onClick={(e) => e.stopPropagation()}
       >
         <div
-          className="w-32 h-32 rounded-full bg-gradient-primary flex items-center justify-center shadow-lg mb-2 animate-pop-in">
+          className="w-32 h-32 rounded-full bg-gradient-to-br from-cyan-300 to-blue-400 flex items-center justify-center shadow-lg mb-2 animate-pop-in">
           <achievement.Icon className="w-20 h-20 text-white"/>
         </div>
 
-        <h2 className="text-3xl font-bold text-text-primary">Новое достижение!</h2>
+        <h2 className="text-3xl font-bold text-[#0C0D0E]">Новое достижение!</h2>
 
         <p className="text-gray-600">
           Получена ачивка «<span className="font-semibold">{achievement.name}</span>»
@@ -33,13 +33,13 @@ const NewAchievementModal: React.FC<{
         <div className="w-full flex space-x-3 pt-2">
           <button
             onClick={onNavigateToAchievements}
-            className="flex-1 bg-transparent text-brand font-semibold py-3 px-4 rounded-xl hover:bg-blue-50 transition-colors"
+            className="flex-1 bg-transparent text-[#007AFF] font-semibold py-3 px-4 rounded-xl hover:bg-blue-50 transition-colors"
           >
             К достижениям
           </button>
           <button
 
-            className="flex-1 bg-brand text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-brand-dark transition-opacity"
+            className="flex-1 bg-[#007AFF] text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-blue-600 transition-opacity"
           >
             Поделиться
           </button>
