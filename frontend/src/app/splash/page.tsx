@@ -10,7 +10,7 @@ const SplashPage: React.FC = () => {
           MAX<span className="text-[#007AFF]">Добро</span>
         </h1>
         <p className="text-sm font-medium tracking-[0.2em] text-[rgba(12,13,14,0.52)] uppercase">
-          Платформа для волонтеров
+          Платформа для волонтёров
         </p>
       </div>
     </div>

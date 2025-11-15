@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -81,8 +82,12 @@ export class AuthService {
     const lastName = nameParts.slice(1).join(' ');
 
     try {
-      return await this.prisma.user.create({
-        data: {
+      return await this.prisma.user.upsert({
+        where: { supabaseUserId: payload.id },
+        update: {
+          email: payload.email,
+        },
+        create: {
           supabaseUserId: payload.id,
           email: payload.email,
           firstName: firstName || null,
@@ -91,8 +96,16 @@ export class AuthService {
         },
       });
     } catch (error) {
-      console.error('Error creating local user:', error);
-      throw new InternalServerErrorException('Could not create local user.');
+      console.error('Error in upsert local user via Supabase:', error);
+      if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+        return this.prisma.user.update({
+          where: { email: payload.email },
+          data: { supabaseUserId: payload.id },
+        });
+      }
+      throw new InternalServerErrorException(
+        'Could not create or update local user.',
+      );
     }
   }
 
@@ -123,7 +136,7 @@ export class AuthService {
     const past: any[] = [];
 
     const mapToHistoryEvent = (participation: any) => {
-      const { event, ...restParticipation } = participation;
+      const { event } = participation;
       const { organization, durationHours, karmaPoints, ...restEvent } = event;
 
       return {
@@ -179,19 +192,15 @@ export class AuthService {
 
     return allCourses.map((course) => {
       const isCompleted = completedCourseIds.has(course.id);
-
       const status = isCompleted ? 'completed' : 'not-started';
       const progress = isCompleted ? 1 : 0;
-
       const { lessons, ...courseData } = course;
-
       lessons.forEach((lesson) => {
         lesson.questions.forEach((question) => {
           // @ts-expect-error
           question.id = question.id.toString();
         });
       });
-
       return {
         ...courseData,
         hasCertificate: true,
@@ -227,24 +236,78 @@ export class AuthService {
   }
 
   async getUserAchievements(userId: number) {
-    const [allAchievements, userAchievements] = await this.prisma.$transaction([
-      this.prisma.achievement.findMany({ orderBy: { id: 'asc' } }),
-      this.prisma.userAchievement.findMany({
-        where: { userId },
-        select: { achievementId: true, unlockedAt: true },
-      }),
-    ]);
+    const [allAchievements, userAchievements, user] =
+      await this.prisma.$transaction([
+        this.prisma.achievement.findMany({ orderBy: { id: 'asc' } }),
+        this.prisma.userAchievement.findMany({
+          where: { userId },
+          select: { achievementId: true, unlockedAt: true },
+        }),
+        this.prisma.user.findUnique({
+          where: { id: userId },
+          include: {
+            participations: { where: { event: { status: 'COMPLETED' } } },
+            subscriptions: true,
+            certificates: true,
+          },
+        }),
+      ]);
+
+    if (!user) {
+      throw new InternalServerErrorException('User not found for achievements');
+    }
 
     const unlockedIds = new Map(
       userAchievements.map((ua) => [ua.achievementId, ua.unlockedAt]),
     );
 
-    return allAchievements.map((ach) => ({
-      ...ach,
-      unlocked: unlockedIds.has(ach.id),
-      unlockedDate:
-        unlockedIds.get(ach.id)?.toLocaleDateString('ru-RU') || null,
-    }));
+    return allAchievements.map((ach) => {
+      const isUnlocked = unlockedIds.has(ach.id);
+      let progress: number | undefined;
+      let cta: string | undefined;
+
+      if (!isUnlocked) {
+        switch (ach.criteriaType) {
+          case 'EVENT_COUNT':
+            progress = user.participations.length;
+            cta = 'Найти событие';
+            break;
+          case 'TOTAL_HOURS':
+            progress = user.totalHours;
+            cta = 'Найти событие';
+            break;
+          case 'KARMA_POINTS':
+            progress = user.karmaPoints;
+            cta = 'Заработать карму';
+            break;
+          case 'COURSES_COUNT':
+            progress = user.certificates.length;
+            cta = 'Перейти к курсам';
+            break;
+          case 'SUBSCRIPTION_COUNT':
+            progress = user.subscriptions.length;
+            cta = 'Найти организацию';
+            break;
+          case 'EVENT_CATEGORY':
+            cta = 'Найти событие';
+            progress = 0;
+            break;
+          default:
+            progress = undefined;
+            cta = 'К цели!';
+        }
+      }
+
+      return {
+        ...ach,
+        unlocked: isUnlocked,
+        unlockedDate:
+          unlockedIds.get(ach.id)?.toLocaleDateString('ru-RU') || null,
+        progress: progress,
+        target: ach.criteriaValue,
+        cta: isUnlocked ? 'Поделиться' : cta,
+      };
+    });
   }
 
   private isValidMaxHash(initData: string): boolean {
@@ -253,17 +316,14 @@ export class AuthService {
     if (!hash) {
       return false;
     }
-
     const dataToCheck: string[] = [];
     params.forEach((value, key) => {
       if (key !== 'hash') {
         dataToCheck.push(`${key}=${value}`);
       }
     });
-
     dataToCheck.sort();
     const dataCheckString = dataToCheck.join('\n');
-
     const botToken = this.configService.getOrThrow<string>('MAX_BOT_TOKEN');
     const secretKey = crypto
       .createHmac('sha256', 'WebAppData')
@@ -271,7 +331,6 @@ export class AuthService {
       .digest();
     const hmac = crypto.createHmac('sha256', secretKey);
     const calculatedHash = hmac.update(dataCheckString).digest('hex');
-
     return crypto.timingSafeEqual(
       Buffer.from(calculatedHash),
       Buffer.from(hash),
@@ -282,29 +341,44 @@ export class AuthService {
     if (!this.isValidMaxHash(dto.initData)) {
       throw new UnauthorizedException('Invalid hash from MAX');
     }
-
     const params = new URLSearchParams(dto.initData);
     const userParam = params.get('user');
     if (!userParam) {
       throw new UnauthorizedException('User data is missing in initData');
     }
-
     const maxUserData = JSON.parse(userParam);
     const maxUserId = String(maxUserData.id);
+    const user = await this.prisma.user.upsert({
+      where: { maxUserId },
+      update: {
+        firstName: maxUserData.first_name || null,
+        lastName: maxUserData.last_name || null,
+        avatarUrl: maxUserData.photo_url || null,
+      },
+      create: {
+        maxUserId,
+        email: `${maxUserId}@max-app.placeholder.com`,
+        firstName: maxUserData.first_name || null,
+        lastName: maxUserData.last_name || null,
+        avatarUrl: maxUserData.photo_url || null,
+        role: 'volunteer',
+      },
+    });
+    const payload = { sub: user.id, type: 'internal' };
+    const accessToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });
+    return { accessToken };
+  }
 
-    let user = await this.prisma.user.findUnique({ where: { maxUserId } });
+  async loginAsDemoOrganizer() {
+    const demoOrganizerEmail = 'organizer@test.com';
+    const user = await this.prisma.user.findUnique({
+      where: { email: demoOrganizerEmail },
+    });
 
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          maxUserId,
-          email: `${maxUserId}@max-app.placeholder.com`,
-          firstName: maxUserData.first_name || null,
-          lastName: maxUserData.last_name || null,
-          avatarUrl: maxUserData.photo_url || null,
-          role: 'volunteer',
-        },
-      });
+    if (!user || user.role !== 'organization') {
+      throw new NotFoundException(
+        'Demo organizer user not found. Please seed the database.',
+      );
     }
 
     const payload = { sub: user.id, type: 'internal' };

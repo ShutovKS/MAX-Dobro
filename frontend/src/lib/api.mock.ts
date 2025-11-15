@@ -36,7 +36,7 @@ import type {
   Story,
   WeeklyChallenge,
 } from './types';
-import { CURRENT_USER_ID } from './constants';
+import { CURRENT_USER_ID, COURSE_PASS_THRESHOLD } from './constants';
 
 const SIMULATED_DELAY = 500;
 
@@ -213,8 +213,62 @@ export const fetchWeeklyChallenge = (): Promise<WeeklyChallenge> => {
   return simulateRequest(mockWeeklyChallenge);
 };
 
-export const completeCourse = (courseId: number, answers: any): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(), SIMULATED_DELAY);
+export const completeCourse = (
+  courseId: number,
+  answers: { questionId: number; answerId: number }[],
+): Promise<{ isPassed: boolean; score: number; totalQuestions: number }> => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const course = allCourses.find((c) => c.id === courseId);
+      if (!course || !course.program) {
+        return reject(new Error('Course not found'));
+      }
+
+      const submittedQuestionIds = [
+        ...new Set(answers.map((a) => a.questionId.toString())),
+      ];
+      const questionsInSubmission = course.program
+        .flatMap((lesson) => lesson.quiz || [])
+        .filter((q) => submittedQuestionIds.includes(q.id));
+
+      const totalQuestions = questionsInSubmission.length;
+
+      if (totalQuestions === 0) {
+        return resolve({ isPassed: true, score: 0, totalQuestions: 0 });
+      }
+
+      const userAnswersMap = new Map<string, Set<number>>();
+      for (const answer of answers) {
+        const qId = answer.questionId.toString();
+        if (!userAnswersMap.has(qId)) {
+          userAnswersMap.set(qId, new Set());
+        }
+        userAnswersMap.get(qId)!.add(answer.answerId);
+      }
+
+      let score = 0;
+      for (const question of questionsInSubmission) {
+        const correctAnswers = new Set<number>();
+        question.answers.forEach((ans) => {
+          if (ans.isCorrect) {
+            correctAnswers.add(ans.id);
+          }
+        });
+
+        const userAnswers = userAnswersMap.get(question.id) || new Set();
+
+        if (
+          correctAnswers.size > 0 &&
+          correctAnswers.size === userAnswers.size &&
+          [...correctAnswers].every((id) => userAnswers.has(id))
+        ) {
+          score++;
+        }
+      }
+
+      const isPassed = score >= totalQuestions;
+
+      resolve({ isPassed, score, totalQuestions });
+    }, SIMULATED_DELAY);
   });
 };

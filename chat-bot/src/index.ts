@@ -15,58 +15,30 @@ const webAppButton = Keyboard.inlineKeyboard([
   [Keyboard.button.link('🚀 Запустить приложение', miniAppUrl)],
 ]);
 
-const keywordResponses: Record<string, (ctx: Context) => void> = {
-  события: (ctx) =>
-    ctx.reply(
-      'Я могу помочь найти события. Попробуйте написать категорию, например, "экология" или "спорт". Или откройте приложение, чтобы увидеть всё!',
-      { attachments: [webAppButton] },
-    ),
-  экология: (ctx) =>
-    ctx.reply('Нашел для вас события в категории "Экология". Открыть?', {
-      attachments: [webAppButton],
-    }),
-  животные: (ctx) =>
-    ctx.reply('Подбираю лучшие события для помощи животным. Показать?', {
-      attachments: [webAppButton],
-    }),
-  спорт: (ctx) =>
-    ctx.reply('Есть несколько спортивных мероприятий. Откройте приложение, чтобы записаться!', {
-      attachments: [webAppButton],
-    }),
-  помощь: (ctx) =>
-    ctx.reply(
-      'Помощь нужна разная: пожилым, детям, людям в сложной ситуации. Все возможности — в приложении.',
-      { attachments: [webAppButton] },
-    ),
-  курсы: (ctx) =>
-    ctx.reply('У нас есть отличные курсы! Они помогут вам получить новые навыки. Открыть каталог?', {
-      attachments: [webAppButton],
-    }),
-  профиль: (ctx) =>
-    ctx.reply(
-      'Ваш профиль, достижения и накопленные "часы добра" ждут вас в приложении. Загляните!',
-      { attachments: [webAppButton] },
-    ),
-  рейтинг: (ctx) =>
-    ctx.reply(
-      'Хотите узнать свое место в рейтинге волонтеров? Откройте таблицу лидеров в приложении!',
-      { attachments: [webAppButton] },
-    ),
-  челлендж: (ctx) =>
-    ctx.reply('Еженедельный челлендж — отличный способ получить больше кармы! Проверить текущий?', {
-      attachments: [webAppButton],
-    }),
-};
+const genericReplies = [
+  'Все возможности для добрых дел находятся в нашем приложении. Нажмите на кнопку, чтобы начать!',
+  'Моя главная задача — запустить для вас приложение «МАХ Добро». Давайте начнем?',
+  'Я — просто бот. Вся магия происходит внутри приложения. Откройте его, чтобы найти события и курсы!',
+  'Чтобы найти то, что вы ищете, пожалуйста, запустите наше приложение.',
+  'Кажется, вы хотите сделать что-то хорошее! Наше приложение поможет вам в этом. Нажмите кнопку для запуска.',
+];
 
-const allKeywords = Object.keys(keywordResponses);
-const keywordRegex = new RegExp(`(${allKeywords.join('|')})`, 'i');
+const getRandomReply = () =>
+  genericReplies[Math.floor(Math.random() * genericReplies.length)];
 
 bot.on('bot_started', (ctx: Context) => {
   const userName = ctx.user?.name ?? 'пользователь';
-  ctx.reply(
-    `Привет, ${userName}! 👋\n\nЯ бот «МАХ Добро». Помогу вам найти интересные события и курсы. Нажмите на кнопку, чтобы начать!`,
-    { attachments: [webAppButton] },
-  );
+  const welcomeMessage = `Привет, ${userName}! 👋
+
+Я бот «МАХ Добро» — ваш помощник в мире волонтерства.
+
+Здесь вы можете найти волонтерские события на любой вкус: от помощи животным в приютах и участия в экологических субботниках до организации спортивных мероприятий и поддержки пожилых людей.
+
+А чтобы вы чувствовали себя увереннее, мы подготовили полезные микро-курсы, например, «Основы первой помощи» или «Экологические привычки».
+
+Все это — в одном удобном приложении. Нажмите на кнопку ниже, чтобы начать свой путь героя!`;
+
+  ctx.reply(welcomeMessage, { attachments: [webAppButton] });
 });
 
 bot.command('start', (ctx: Context) =>
@@ -75,32 +47,39 @@ bot.command('start', (ctx: Context) =>
   }),
 );
 
-bot.command('profile', keywordResponses['профиль']);
-bot.command('courses', keywordResponses['курсы']);
-bot.command('leaderboard', keywordResponses['рейтинг']);
-bot.command('challenge', keywordResponses['челлендж']);
+bot.command('info', (ctx: Context) => {
+  const infoText = `ℹ️ **О проекте «МАХ Добро»**
 
-bot.hears(keywordRegex, (ctx, next) => {
-  const keyword = ctx.match?.[1]?.toLowerCase();
-  if (keyword && keywordResponses[keyword]) {
-    return keywordResponses[keyword](ctx);
-  }
-  return next();
+**Наша цель** — сделать волонтерство простым, удобным и геймифицированным.
+
+**Что умеет бот?**
+• Запускать мини-приложение.
+• Отвечать на команду /start и /info.
+
+**Что можно делать в приложении?**
+• **Находить события:** ищите мероприятия по категориям, дате и геолокации.
+• **Проходить курсы:** получайте новые знания и цифровые сертификаты.
+• **Отслеживать прогресс:** ведите электронную волонтерскую книжку, зарабатывайте баллы "кармы" и получайте достижения.
+
+Готовы начать?`;
+
+  ctx.reply(infoText, { attachments: [webAppButton], format: 'markdown' });
 });
 
-bot.on('message_created', (ctx) =>
-  ctx.reply(
-    'Я не совсем понял. Попробуйте спросить про "события", "курсы" или "профиль". Или просто откройте приложение.',
-    { attachments: [webAppButton] },
-  ),
+bot.hears(/(привет|здравствуй|добрый день)/i, (ctx: Context) => {
+  const userName = ctx.user?.name ?? 'незнакомец';
+  ctx.reply(`Привет, ${userName}! Рад вас видеть. Начнем делать добрые дела?`, {
+    attachments: [webAppButton],
+  });
+});
+
+bot.on('message_created', (ctx: Context) =>
+  ctx.reply(getRandomReply(), { attachments: [webAppButton] }),
 );
 
 bot.api.setMyCommands([
   { name: 'start', description: '🚀 Запустить приложение' },
-  { name: 'profile', description: '📊 Мой профиль и статистика' },
-  { name: 'courses', description: '🎓 Каталог курсов' },
-  { name: 'leaderboard', description: '🏆 Таблица лидеров' },
-  { name: 'challenge', description: '🎯 Еженедельный челлендж' },
+  { name: 'info', description: 'ℹ️ Узнать больше о проекте' },
 ]);
 
 bot.start();

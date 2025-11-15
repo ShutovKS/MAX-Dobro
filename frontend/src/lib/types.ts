@@ -20,7 +20,7 @@ export type AppEvent = {
   date: string;
   location: string;
   Icon: React.FC<React.SVGProps<SVGSVGElement>>;
-  pos: { top: string; left: string; };
+  pos: { top: string; left: string };
   requirements?: string[];
   participantCount?: number;
   rewards?: { hours: number; karma: number };
@@ -41,15 +41,19 @@ export interface Filters {
   distance: number;
 }
 
+export type QuizAnswer = {
+  id: number;
+  answer: string;
+  isCorrect: boolean;
+};
+
 export type QuizQuestion = {
   id: string;
   question: string;
   type: 'single' | 'multiple';
-  options: string[];
-  correctAnswer?: string;
-  correctAnswers?: string[];
-  answerIds?: Record<string, number>; // Маппинг текста ответа -> ID
-}
+  answers: QuizAnswer[];
+};
+
 export type CourseLesson = {
   id: number;
   title: string;
@@ -58,7 +62,7 @@ export type CourseLesson = {
   contentTitle?: string;
   content?: string;
   quiz?: QuizQuestion[];
-}
+};
 
 export type Course = {
   id: number;
@@ -76,7 +80,7 @@ export type Course = {
 
 export type Tab = 'home' | 'training' | 'organizations' | 'stories' | 'profile';
 export type ProfileSubScreen =
-  'activityHistory'
+  | 'activityHistory'
   | 'allAchievements'
   | 'calendar'
   | 'leaderboards'
@@ -171,9 +175,18 @@ export type User = {
   nextLevel: string;
   role: 'volunteer' | 'organization';
   organizationId?: number;
-  stats: { id: string; value: string; label: string; Icon: React.FC<React.SVGProps<SVGSVGElement>>; }[];
-  achievements: { id: number; name: string; Icon: React.FC<React.SVGProps<SVGSVGElement>>; }[];
-}
+  stats: {
+    id: string;
+    value: string;
+    label: string;
+    Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  }[];
+  achievements: {
+    id: number;
+    name: string;
+    Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  }[];
+};
 
 export type Friend = {
   id: number;
@@ -216,7 +229,7 @@ export type ChatMessage = {
   text?: string;
   event?: AppEvent;
   suggestions?: string[];
-  actions?: { label: string; route: string; }[];
+  actions?: { label: string; route: string }[];
 };
 
 export type EventChatMessage = {

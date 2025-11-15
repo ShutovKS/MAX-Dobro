@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation, useNavigate, useParams, useRoutes, useSearchParams } from 'react-router';
+import {
+  Navigate,
+  useLocation,
+  useNavigate,
+  useParams,
+  useRoutes,
+  useSearchParams,
+} from 'react-router';
 import SplashPage from './splash/page';
 import AuthPage from './auth/page';
 import OnboardingPage from './onboarding/page';
@@ -37,8 +44,12 @@ import EventParticipantsPage from './organization/events/participants/page';
 import OrganizationSettingsPage from './organization/settings/page';
 import type { Course, OrganizationEvent, RewardItem, User } from '../lib/types';
 import { fetchAllCourses, fetchRewards } from '../lib/api';
-import { getCurrentSession, isOnboardingComplete, logout, setOnboardingComplete } from '../lib/auth';
-import { getMaxInitData } from '../lib/max-sdk';
+import {
+  getCurrentSession,
+  isOnboardingComplete,
+  logout,
+  setOnboardingComplete,
+} from '../lib/auth';
 import { MESSAGES, ROUTES } from '../lib/constants';
 
 const App: React.FC = () => {
@@ -47,7 +58,11 @@ const App: React.FC = () => {
   const [userData, setUserData] = useState<User | null>(null);
   const [allRewards, setAllRewards] = useState<RewardItem[]>([]);
   const [allCourses, setAllCourses] = useState<Course[]>([]);
-  const [toast, setToast] = useState<{ show: boolean; message: string; type?: 'success' | 'info' }>({
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type?: 'success' | 'info';
+  }>({
     show: false,
     message: '',
   });
@@ -57,40 +72,21 @@ const App: React.FC = () => {
   const isAuthenticated = !!userData;
 
   const getRedirectPath = (user: User) => {
-    return user.role === 'organization' ? ROUTES.ORGANIZATION_DASHBOARD : ROUTES.HOME;
+    return user.role === 'organization'
+      ? ROUTES.ORGANIZATION_DASHBOARD
+      : ROUTES.HOME;
   };
 
   const initializeApp = async () => {
     setError(null);
+    let sessionFound = false;
     try {
-      let session = await getCurrentSession();
-
-      if (!session) {
-        const initData = getMaxInitData();
-        if (initData) {
-          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/max-login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ initData }),
-          });
-
-          if (response.ok) {
-            const { accessToken } = await response.json();
-            localStorage.setItem('internal_jwt', accessToken);
-            session = await getCurrentSession();
-          }
-        }
-      }
-
-      const rewardsPromise = fetchRewards();
-      const coursesPromise = fetchAllCourses();
-      const [rewards, courses] = await Promise.all([rewardsPromise, coursesPromise]);
-
-      setAllRewards(rewards);
-      setAllCourses(courses);
+      const session = await getCurrentSession();
 
       if (session) {
+        sessionFound = true;
         setUserData(session.user);
+        
         const [rewards, courses] = await Promise.all([
           fetchRewards(),
           fetchAllCourses(),
@@ -105,30 +101,25 @@ const App: React.FC = () => {
           navigate(getRedirectPath(session.user));
         }
       }
-
+    } catch (err: any) {
+      console.error('CRITICAL APP INITIALIZATION ERROR:', err);
+      setError('network');
+    } finally {
       setIsInitialized(true);
       window.WebApp?.ready();
-    } catch (err: any) {
-      console.error("===================================");
-      console.error("CRITICAL APP INITIALIZATION ERROR:");
-      console.error(err);
-      console.error("===================================");
-      setError('network');
-      setIsInitialized(true);
+      if (!sessionFound && ![ROUTES.AUTH, ROUTES.ONBOARDING].includes(location.pathname)) {
+        navigate(ROUTES.AUTH);
+      }
     }
   };
 
   useEffect(() => {
     initializeApp();
   }, []);
-
+  
   const handleAuthSuccess = (session: { user: User; token: string }) => {
     setUserData(session.user);
-    if (!isOnboardingComplete()) {
-      navigate(ROUTES.ONBOARDING);
-    } else {
-      navigate(getRedirectPath(session.user));
-    }
+    initializeApp(); // Переинициализируем приложение, чтобы загрузить все данные
   };
 
   const handleOnboardingComplete = () => {
@@ -154,6 +145,16 @@ const App: React.FC = () => {
   const showToast = (message: string, type: 'success' | 'info' = 'info') => {
     setToast({ show: true, message, type });
   };
+  
+  const handleCourseCompletion = async (courseId: number) => {
+    navigate(ROUTES.COURSE_CERTIFICATE(courseId));
+    try {
+      const updatedCourses = await fetchAllCourses();
+      setAllCourses(updatedCourses);
+    } catch (e) {
+      console.error("Failed to re-fetch courses after completion:", e);
+    }
+  };
 
   const EventChatPageWrapper = () => {
     const { id } = useParams();
@@ -169,9 +170,9 @@ const App: React.FC = () => {
     const { id, subId } = useParams();
     const courseId = parseInt(id || '0', 10);
     const lessonId = parseInt(subId || '0', 10);
-    return <LessonPage courseId={courseId} lessonId={lessonId} allCourses={allCourses}
+    return <LessonPage courseId={courseId} lessonId={lessonId}
                        onClose={() => navigate(ROUTES.COURSE_DETAIL(courseId))}
-                       onComplete={(cId) => navigate(ROUTES.COURSE_CERTIFICATE(cId))}/>;
+                       onComplete={handleCourseCompletion}/>;
   };
 
   const CertificatePageWrapper = () => {
@@ -280,7 +281,11 @@ const App: React.FC = () => {
       ]
   );
 
-  if (!isInitialized || (isAuthenticated && (!userData || allCourses.length === 0))) {
+  if (!isInitialized) {
+    return <SplashPage />;
+  }
+  
+  if (isAuthenticated && (!userData || allCourses.length === 0)) {
     return <SplashPage />;
   }
 

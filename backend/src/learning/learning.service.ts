@@ -67,11 +67,7 @@ export class LearningService {
     completionDto: CompleteCourseDto,
   ) {
     return this.prisma.$transaction(async (tx) => {
-      const course = await tx.course.findUnique({
-        where: { id: courseId },
-        include: { lessons: { include: { questions: true } } },
-      });
-
+      const course = await tx.course.findUnique({ where: { id: courseId } });
       if (!course) {
         throw new NotFoundException(`Course with ID ${courseId} not found`);
       }
@@ -79,70 +75,75 @@ export class LearningService {
       const existingCertificate = await tx.userCertificate.findUnique({
         where: { userId_courseId: { userId, courseId } },
       });
-
       if (existingCertificate) {
-        throw new ConflictException('You have already completed this course.');
+        return { isPassed: true, score: 0, totalQuestions: 0 };
       }
 
-      const totalQuestions = course.lessons.reduce(
-        (acc, lesson) => acc + lesson.questions.length,
-        0,
-      );
+      const submittedQuestionIds = [
+        ...new Set(completionDto.answers.map((a) => a.questionId)),
+      ];
+      const totalQuestionsInSubmission = submittedQuestionIds.length;
 
-      const questionIds = course.lessons.flatMap((l) =>
-        l.questions.map((q) => q.id),
-      );
+      if (totalQuestionsInSubmission === 0) {
+        await tx.userCertificate.create({ data: { userId, courseId } });
+        return { isPassed: true, score: 0, totalQuestions: 0 };
+      }
 
-      const correctAnswers = await tx.quizAnswer.findMany({
-        where: { questionId: { in: questionIds }, isCorrect: true },
+      const correctAnswersFromDb = await tx.quizAnswer.findMany({
+        where: {
+          questionId: { in: submittedQuestionIds },
+          isCorrect: true,
+        },
+        select: { id: true, questionId: true },
       });
 
-      // Группируем правильные ответы по вопросам
       const correctAnswersMap = new Map<number, Set<number>>();
-      for (const answer of correctAnswers) {
+      for (const answer of correctAnswersFromDb) {
         if (!correctAnswersMap.has(answer.questionId)) {
           correctAnswersMap.set(answer.questionId, new Set());
         }
         correctAnswersMap.get(answer.questionId)!.add(answer.id);
       }
 
-      // Группируем ответы пользователя по вопросам
       const userAnswersMap = new Map<number, Set<number>>();
-      for (const userAnswer of completionDto.answers) {
-        if (!userAnswersMap.has(userAnswer.questionId)) {
-          userAnswersMap.set(userAnswer.questionId, new Set());
+      for (const answer of completionDto.answers) {
+        if (!userAnswersMap.has(answer.questionId)) {
+          userAnswersMap.set(answer.questionId, new Set());
         }
-        userAnswersMap.get(userAnswer.questionId)!.add(userAnswer.answerId);
+        userAnswersMap.get(answer.questionId)!.add(answer.answerId);
       }
 
-      // Проверяем каждый вопрос
-      let userCorrectAnswers = 0;
-      for (const questionId of questionIds) {
+      let score = 0;
+      const areSetsEqual = (a: Set<number>, b: Set<number>) =>
+        a.size === b.size && [...a].every((value) => b.has(value));
+
+      for (const questionId of submittedQuestionIds) {
         const correctSet = correctAnswersMap.get(questionId) || new Set();
         const userSet = userAnswersMap.get(questionId) || new Set();
-
-        // Проверяем, что пользователь выбрал ВСЕ правильные ответы и НЕ выбрал лишних
-        if (
-          correctSet.size === userSet.size &&
-          [...correctSet].every((id) => userSet.has(id))
-        ) {
-          userCorrectAnswers++;
+        if (areSetsEqual(correctSet, userSet)) {
+          score++;
         }
       }
 
-      // Требуем минимум 70% правильных ответов (как на фронтенде)
-      const PASS_THRESHOLD = 0.7;
-      const passScore = Math.ceil(totalQuestions * PASS_THRESHOLD);
+      const isPassed = score >= totalQuestionsInSubmission;
 
-      if (userCorrectAnswers < passScore) {
-        throw new BadRequestException(
-          `Quiz failed. You got ${userCorrectAnswers} out of ${totalQuestions} correct. Need at least ${passScore} to pass.`,
-        );
+      if (isPassed) {
+        const allQuestionsInCourse = await tx.quizQuestion.count({
+          where: { lesson: { courseId } },
+        });
+        
+        const totalCorrectAnswersInDb = await tx.quizAnswer.count({
+            where: { question: { lesson: { courseId } }, isCorrect: true }
+        });
+
+        if (completionDto.answers.length >= totalCorrectAnswersInDb && score >= allQuestionsInCourse) {
+           await tx.userCertificate.create({
+              data: { userId, courseId },
+           });
+        }
       }
 
-      return tx.userCertificate.create({
-        data: { userId, courseId },
-      });
+      return { isPassed, score, totalQuestions: totalQuestionsInSubmission };
     });
   }
 }
