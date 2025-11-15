@@ -28,4 +28,5 @@ export const {
   fetchOrganizationDashboardStats,
   fetchOrganizationDetails,
   fetchWeeklyChallenge,
+  completeCourse,
 } = api;

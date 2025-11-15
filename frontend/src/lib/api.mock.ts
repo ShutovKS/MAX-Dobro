@@ -195,3 +195,13 @@ export const fetchOrganizationDetails = (): Promise<OrganizationDetails> => {
 export const fetchWeeklyChallenge = (): Promise<WeeklyChallenge> => {
   return simulateRequest(mockWeeklyChallenge);
 };
+
+export const completeCourse = async (
+  courseId: number,
+  answers: { questionId: number; answerId: number }[]
+): Promise<void> => {
+  // Mock implementation - просто делаем задержку
+  await new Promise(resolve => setTimeout(resolve, 500));
+  console.log('Mock: Course completed', { courseId, answers });
+};
+
