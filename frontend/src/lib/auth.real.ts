@@ -114,7 +114,7 @@ export const register = async (userData: {
 
   await new Promise(resolve => setTimeout(resolve, 1500));
 
-  const profileResponse = await fetch(`${process.env.VITE_API_BASE_URL}/profile/me`, {
+  const profileResponse = await fetch(`${API_BASE_URL}/profile/me`, {
     headers: {'Authorization': `Bearer ${data.session.access_token}`}
   });
 
@@ -139,18 +139,20 @@ export const logout = async (): Promise<void> => {
 };
 
 export const getCurrentSession = async (): Promise<{ user: User; token: string } | null> => {
-  const {data, error} = await supabase.auth.getSession();
-
-  if (error || !data.session) {
-    return null;
-  }
-
   try {
-    const profileResponse = await fetch(`${process.env.VITE_API_BASE_URL}/profile/me`, {
+    const {data, error} = await supabase.auth.getSession();
+
+    if (error || !data.session) {
+      return null;
+    }
+
+    const profileResponse = await fetch(`${API_BASE_URL}/profile/me`, {
       headers: {'Authorization': `Bearer ${data.session.access_token}`}
     });
 
-    if (!profileResponse.ok) return null;
+    if (!profileResponse.ok) {
+      return null;
+    }
 
     const backendProfile = await profileResponse.json();
 
@@ -160,6 +162,7 @@ export const getCurrentSession = async (): Promise<{ user: User; token: string }
     };
 
   } catch (e) {
+    console.error("Error during session check:", e);
     return null;
   }
 };

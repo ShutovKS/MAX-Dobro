@@ -84,9 +84,7 @@ const App: React.FC = () => {
           navigate(getRedirectPath(session.user));
         }
       } else {
-        if (location.pathname !== ROUTES.ONBOARDING) {
-          navigate(ROUTES.AUTH);
-        }
+        // Do not navigate here, let the routing logic handle it
       }
       setIsInitialized(true);
 
@@ -301,3 +299,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
