@@ -1,7 +1,8 @@
 import 'dotenv/config';
+import http from 'http';
 import { Bot, Keyboard, Context } from '@maxhub/max-bot-api';
 
-const { BOT_TOKEN, BOT_NAME } = process.env;
+const { BOT_TOKEN, BOT_NAME, PORT } = process.env;
 
 if (!BOT_TOKEN || !BOT_NAME) {
   throw new Error('BOT_TOKEN and BOT_NAME must be provided as environment variables');
@@ -109,3 +110,13 @@ console.log('Bot started successfully with long-polling!');
 const stopBot = () => bot.stop();
 process.once('SIGINT', stopBot);
 process.once('SIGTERM', stopBot);
+
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Bot is running');
+});
+
+const port = PORT || 10000;
+server.listen(port, () => {
+  console.log(`Dummy server started on port ${port} to keep Render happy.`);
+});
