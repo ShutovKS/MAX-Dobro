@@ -113,14 +113,53 @@ export const fetchEventById = async (id: number): Promise<AppEvent | HistoryEven
   return mapEventData(event);
 };
 
+const mapCourseData = (courseData: any): Course => {
+  const mappedProgram = (courseData.lessons || []).map((lesson: any, index: number) => {
+    const lessonType = (lesson.questions && lesson.questions.length > 0) ? 'test' : 'lesson';
+
+    // TODO: Временная логика для статуса. В идеале, это должно приходить с бэкенда.
+    const lessonStatus = index === 0 ? 'current' : 'locked';
+
+    const mappedQuiz = (lesson.questions || []).map((q: any) => ({
+      id: q.id.toString(),
+      question: q.question,
+      type: 'single',
+      options: q.answers.map((a: any) => a.answer),
+    }));
+
+    return {
+      title: lesson.title,
+      type: lessonType,
+      status: lessonStatus,
+      contentTitle: lesson.title,
+      content: lesson.content,
+      quiz: mappedQuiz.length > 0 ? mappedQuiz : undefined,
+    };
+  });
+
+  return {
+    ...mapIcon(courseData),
+    id: courseData.id,
+    title: courseData.title,
+    description: courseData.description,
+    duration: courseData.duration || "N/A",
+    hasCertificate: courseData.hasCertificate || false,
+    category: courseData.category || "General",
+    status: courseData.status || 'not-started',
+    progress: courseData.progress || 0,
+    level: courseData.level || 'Для новичков',
+    program: mappedProgram,
+  };
+};
+
 export const fetchAllCourses = async (): Promise<Course[]> => {
   const courses = await apiFetch<(Omit<Course, 'Icon'> & { icon?: string | null })[]>('/courses');
   return courses.map(mapIcon);
 };
 
 export const fetchCourseById = async (id: number): Promise<Course> => {
-  const course = await apiFetch<Omit<Course, 'Icon'> & { icon?: string | null }>(`/courses/${id}`);
-  return mapIcon(course);
+  const rawCourseData = await apiFetch<any>(`/courses/${id}`);
+  return mapCourseData(rawCourseData);
 };
 
 export const fetchAllOrganizations = (): Promise<Organization[]> => apiFetch('/organizations');
