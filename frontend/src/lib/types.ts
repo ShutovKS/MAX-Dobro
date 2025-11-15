@@ -48,6 +48,7 @@ export type QuizQuestion = {
   options: string[];
   correctAnswer?: string;
   correctAnswers?: string[];
+  answerIds?: Record<string, number>; // Маппинг текста ответа -> ID
 }
 export type CourseLesson = {
   id: number;

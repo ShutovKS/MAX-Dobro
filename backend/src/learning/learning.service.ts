@@ -97,21 +97,47 @@ export class LearningService {
         where: { questionId: { in: questionIds }, isCorrect: true },
       });
 
-      const correctAnswersMap = new Map(
-        correctAnswers.map((a) => [a.questionId, a.id]),
-      );
+      // Группируем правильные ответы по вопросам
+      const correctAnswersMap = new Map<number, Set<number>>();
+      for (const answer of correctAnswers) {
+        if (!correctAnswersMap.has(answer.questionId)) {
+          correctAnswersMap.set(answer.questionId, new Set());
+        }
+        correctAnswersMap.get(answer.questionId)!.add(answer.id);
+      }
 
-      let userCorrectAnswers = 0;
+      // Группируем ответы пользователя по вопросам
+      const userAnswersMap = new Map<number, Set<number>>();
       for (const userAnswer of completionDto.answers) {
+        if (!userAnswersMap.has(userAnswer.questionId)) {
+          userAnswersMap.set(userAnswer.questionId, new Set());
+        }
+        userAnswersMap.get(userAnswer.questionId)!.add(userAnswer.answerId);
+      }
+
+      // Проверяем каждый вопрос
+      let userCorrectAnswers = 0;
+      for (const questionId of questionIds) {
+        const correctSet = correctAnswersMap.get(questionId) || new Set();
+        const userSet = userAnswersMap.get(questionId) || new Set();
+
+        // Проверяем, что пользователь выбрал ВСЕ правильные ответы и НЕ выбрал лишних
         if (
-          correctAnswersMap.get(userAnswer.questionId) === userAnswer.answerId
+          correctSet.size === userSet.size &&
+          [...correctSet].every((id) => userSet.has(id))
         ) {
           userCorrectAnswers++;
         }
       }
 
-      if (userCorrectAnswers !== totalQuestions) {
-        throw new BadRequestException('Quiz failed. Please try again.');
+      // Требуем минимум 70% правильных ответов (как на фронтенде)
+      const PASS_THRESHOLD = 0.7;
+      const passScore = Math.ceil(totalQuestions * PASS_THRESHOLD);
+
+      if (userCorrectAnswers < passScore) {
+        throw new BadRequestException(
+          `Quiz failed. You got ${userCorrectAnswers} out of ${totalQuestions} correct. Need at least ${passScore} to pass.`,
+        );
       }
 
       return tx.userCertificate.create({

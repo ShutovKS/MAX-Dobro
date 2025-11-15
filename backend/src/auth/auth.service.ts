@@ -25,7 +25,11 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    this.jwtSecret = this.configService.getOrThrow<string>(
+      'JWT_INTERNAL_SECRET',
+    );
+  }
 
   async getProfile(userId: number) {
     return this.prisma.user.findUnique({
@@ -223,15 +227,24 @@ export class AuthService {
   }
 
   async getUserAchievements(userId: number) {
-    return this.prisma.userAchievement.findMany({
-      where: { userId },
-      include: {
-        achievement: true,
-      },
-      orderBy: {
-        unlockedAt: 'desc',
-      },
-    });
+    const [allAchievements, userAchievements] = await this.prisma.$transaction([
+      this.prisma.achievement.findMany({ orderBy: { id: 'asc' } }),
+      this.prisma.userAchievement.findMany({
+        where: { userId },
+        select: { achievementId: true, unlockedAt: true },
+      }),
+    ]);
+
+    const unlockedIds = new Map(
+      userAchievements.map((ua) => [ua.achievementId, ua.unlockedAt]),
+    );
+
+    return allAchievements.map((ach) => ({
+      ...ach,
+      unlocked: unlockedIds.has(ach.id),
+      unlockedDate:
+        unlockedIds.get(ach.id)?.toLocaleDateString('ru-RU') || null,
+    }));
   }
 
   private isValidMaxHash(initData: string): boolean {

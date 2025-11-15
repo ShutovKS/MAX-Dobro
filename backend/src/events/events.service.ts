@@ -120,6 +120,9 @@ export class EventsService {
     const skip = (page - 1) * limit;
 
     const events = await this.prisma.event.findMany({
+      where: {
+        status: 'PLANNED',
+      },
       skip,
       take: limit,
       orderBy: {

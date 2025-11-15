@@ -18,6 +18,7 @@ export const {
   fetchActivityHistoryEvents,
   fetchLeaderboardData,
   fetchAllAchievements,
+  fetchUserAchievements,
   fetchMyChats,
   fetchAllStories,
   fetchStoryById,
@@ -28,4 +29,5 @@ export const {
   fetchOrganizationDashboardStats,
   fetchOrganizationDetails,
   fetchWeeklyChallenge,
+  completeCourse,
 } = api;

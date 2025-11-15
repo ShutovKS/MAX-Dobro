@@ -34,15 +34,16 @@ import type {
   OrganizationStat,
   RewardItem,
   Story,
-  WeeklyChallenge
+  WeeklyChallenge,
 } from './types';
+import { CURRENT_USER_ID } from './constants';
 
 const SIMULATED_DELAY = 500;
 
 const deepCopy = (inObject: any) => {
   let outObject: any, value: any, key: any;
 
-  if (typeof inObject !== "object" || inObject === null) {
+  if (typeof inObject !== 'object' || inObject === null) {
     return inObject;
   }
 
@@ -50,19 +51,17 @@ const deepCopy = (inObject: any) => {
 
   for (key in inObject) {
     value = inObject[key];
-
     outObject[key] = deepCopy(value);
   }
 
   return outObject;
 };
 
-
 const simulateRequest = <T>(data: T, failRate = 0): Promise<T> => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       if (Math.random() < failRate) {
-        reject(new Error("Simulated API Error"));
+        reject(new Error('Simulated API Error'));
       } else {
         resolve(deepCopy(data));
       }
@@ -74,8 +73,10 @@ export const fetchAllEvents = (): Promise<AppEvent[]> => {
   return simulateRequest(allEvents);
 };
 
-export const fetchEventById = (id: number): Promise<AppEvent | HistoryEvent | undefined> => {
-  const event = [...allEvents, ...activityHistoryEvents].find(e => e.id === id);
+export const fetchEventById = (
+  id: number,
+): Promise<AppEvent | HistoryEvent | undefined> => {
+  const event = [...allEvents, ...activityHistoryEvents].find((e) => e.id === id);
   return simulateRequest(event);
 };
 
@@ -84,7 +85,7 @@ export const fetchAllCourses = (): Promise<Course[]> => {
 };
 
 export const fetchCourseById = (id: number): Promise<Course | undefined> => {
-  const course = allCourses.find(c => c.id === id);
+  const course = allCourses.find((c) => c.id === id);
   return simulateRequest(course);
 };
 
@@ -94,44 +95,48 @@ export const fetchAllOrganizations = (): Promise<Organization[]> => {
   if (cachedOrgs) {
     return simulateRequest(cachedOrgs);
   }
-  const orgsWithSubscription = allOrganizationsData.map(org => ({
+  const orgsWithSubscription = allOrganizationsData.map((org) => ({
     ...org,
-    isSubscribed: Math.random() > 0.7
+    isSubscribed: Math.random() > 0.7,
   }));
   cachedOrgs = orgsWithSubscription;
   return simulateRequest(orgsWithSubscription);
 };
 
-export const updateOrganizationSubscription = (organizationId: number, isSubscribed: boolean): Promise<Organization | undefined> => {
+export const updateOrganizationSubscription = (
+  organizationId: number,
+  isSubscribed: boolean,
+): Promise<void> => {
   return new Promise((resolve, reject) => {
     const updateCache = () => {
       if (!cachedOrgs) {
-        reject(new Error("Organization cache is not initialized."));
+        reject(new Error('Organization cache is not initialized.'));
         return;
       }
-      const orgIndex = cachedOrgs.findIndex(o => o.id === organizationId);
+      const orgIndex = cachedOrgs.findIndex((o) => o.id === organizationId);
       if (orgIndex > -1) {
         cachedOrgs[orgIndex].isSubscribed = isSubscribed;
-        resolve(deepCopy(cachedOrgs[orgIndex]));
+        resolve();
       } else {
-        reject(new Error("Organization not found."));
+        reject(new Error('Organization not found.'));
       }
-    }
+    };
 
     if (!cachedOrgs) {
       fetchAllOrganizations().then(updateCache).catch(reject);
     } else {
-      updateCache();
+      setTimeout(() => updateCache(), SIMULATED_DELAY);
     }
   });
-}
+};
 
-
-export const fetchOrganizationById = async (id: number): Promise<Organization | undefined> => {
+export const fetchOrganizationById = async (
+  id: number,
+): Promise<Organization | undefined> => {
   if (!cachedOrgs) {
     await fetchAllOrganizations();
   }
-  const org = cachedOrgs!.find(o => o.id === id);
+  const org = cachedOrgs!.find((o) => o.id === id);
   return simulateRequest(org);
 };
 
@@ -139,7 +144,9 @@ export const fetchOrganizationEvents = (): Promise<OrganizationEvent[]> => {
   return simulateRequest(mockOrganizationEvents);
 };
 
-export const fetchEventParticipants = (eventId: number): Promise<EventParticipant[]> => {
+export const fetchEventParticipants = (
+  eventId: number,
+): Promise<EventParticipant[]> => {
   return simulateRequest(mockParticipants);
 };
 
@@ -147,11 +154,19 @@ export const fetchActivityHistoryEvents = (): Promise<HistoryEvent[]> => {
   return simulateRequest(activityHistoryEvents);
 };
 
-export const fetchLeaderboardData = (period: 'week' | 'month' | 'allTime'): Promise<LeaderboardUser[]> => {
-  return simulateRequest(leaderboardsData[period]);
+export const fetchLeaderboardData = (
+  period: 'week' | 'month' | 'allTime',
+): Promise<{ topUsers: LeaderboardUser[]; currentUser: LeaderboardUser | null }> => {
+  const data = leaderboardsData[period];
+  const currentUser = data.find((u) => u.id === CURRENT_USER_ID) || null;
+  return simulateRequest({ topUsers: data, currentUser });
 };
 
 export const fetchAllAchievements = (): Promise<Achievement[]> => {
+  return simulateRequest(allAchievements);
+};
+
+export const fetchUserAchievements = (): Promise<Achievement[]> => {
   return simulateRequest(allAchievements);
 };
 
@@ -164,7 +179,7 @@ export const fetchAllStories = (): Promise<Story[]> => {
 };
 
 export const fetchStoryById = (id: number): Promise<Story | undefined> => {
-  const story = allStories.find(s => s.id === id);
+  const story = allStories.find((s) => s.id === id);
   return simulateRequest(story);
 };
 
@@ -180,7 +195,9 @@ export const fetchFriends = (): Promise<Friend[]> => {
   return simulateRequest(mockFriends);
 };
 
-export const fetchEventChatMessages = (eventId: number): Promise<EventChatMessage[]> => {
+export const fetchEventChatMessages = (
+  eventId: number,
+): Promise<EventChatMessage[]> => {
   return simulateRequest(mockEventChatMessages);
 };
 
@@ -194,4 +211,10 @@ export const fetchOrganizationDetails = (): Promise<OrganizationDetails> => {
 
 export const fetchWeeklyChallenge = (): Promise<WeeklyChallenge> => {
   return simulateRequest(mockWeeklyChallenge);
+};
+
+export const completeCourse = (courseId: number, answers: any): Promise<void> => {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(), SIMULATED_DELAY);
+  });
 };
