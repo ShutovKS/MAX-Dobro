@@ -1,5 +1,3 @@
-// src/lib/api.real.ts
-
 import { supabase } from './auth.real';
 import type {
   Achievement,
@@ -132,18 +130,6 @@ const mapEventData = (event: any): AppEvent => ({
   pos: { top: '0', left: '0' },
 });
 
-export const fetchAllEvents = async (): Promise<AppEvent[]> => {
-  const events = await apiFetch<any[]>('/events');
-  return events.map(mapEventData);
-};
-
-export const fetchEventById = async (
-  id: number,
-): Promise<AppEvent | HistoryEvent> => {
-  const event = await apiFetch<any>(`/events/${id}`);
-  return mapEventData(event);
-};
-
 const mapCourseData = (courseData: any): Course => {
   const courseStatus = courseData.status || 'not-started';
 
@@ -198,6 +184,18 @@ const mapCourseData = (courseData: any): Course => {
   };
 };
 
+export const fetchAllEvents = async (): Promise<AppEvent[]> => {
+  const events = await apiFetch<any[]>('/events');
+  return events.map(mapEventData);
+};
+
+export const fetchEventById = async (
+  id: number,
+): Promise<AppEvent | HistoryEvent> => {
+  const event = await apiFetch<any>(`/events/${id}`);
+  return mapEventData(event);
+};
+
 export const fetchAllCourses = async (): Promise<Course[]> => {
   const coursesData = await apiFetch<any[]>('/profile/me/courses');
   return coursesData.map(mapCourseData);
@@ -210,11 +208,20 @@ export const fetchCourseById = async (
   return allUserCourses.find((c) => c.id === id);
 };
 
+export const completeCourse = async (
+  courseId: number,
+  answers: { questionId: number; answerId: number }[],
+): Promise<{ isPassed: boolean; score: number; totalQuestions: number }> => {
+  return await apiFetch(`/courses/${courseId}/complete`, {
+    method: 'POST',
+    body: JSON.stringify({ answers }),
+  });
+};
+
 export const fetchAllOrganizations = (): Promise<Organization[]> =>
   apiFetch('/organizations');
 export const fetchOrganizationById = (id: number): Promise<Organization> =>
   apiFetch(`/organizations/${id}`);
-
 export const updateOrganizationSubscription = (
   organizationId: number,
   isSubscribed: boolean,
@@ -224,19 +231,16 @@ export const updateOrganizationSubscription = (
     body: JSON.stringify({ isSubscribed }),
   });
 };
-
 export const fetchOrganizationEvents = (): Promise<OrganizationEvent[]> =>
   apiFetch(`/organization/events`);
 export const fetchEventParticipants = (
   eventId: number,
 ): Promise<EventParticipant[]> =>
   apiFetch(`/organization/events/${eventId}/participants`);
-
 export const fetchOrganizationDashboardStats = (): Promise<OrganizationStat[]> =>
   apiFetch(`/organization/dashboard/stats`);
 export const fetchOrganizationDetails = (): Promise<OrganizationDetails> =>
   apiFetch(`/organization/details`);
-
 export const fetchActivityHistoryEvents = async (): Promise<HistoryEvent[]> => {
   const data = await apiFetch<any[]>('/profile/me/events');
   return data.map((event) => ({
@@ -244,19 +248,16 @@ export const fetchActivityHistoryEvents = async (): Promise<HistoryEvent[]> => {
     status: new Date(event.date) < new Date() ? 'past' : 'upcoming',
   }));
 };
-
 export const fetchLeaderboardData = (
   period: 'week' | 'month' | 'allTime',
 ): Promise<{ topUsers: LeaderboardUser[]; currentUser: LeaderboardUser | null }> =>
   apiFetch(`/leaderboard?period=${period}`);
-
 export const fetchAllAchievements = async (): Promise<Achievement[]> => {
   const achievements = await apiFetch<
     (Omit<Achievement, 'Icon'> & { icon?: string | null })[]
   >('/achievements');
   return achievements.map(mapIcon);
 };
-
 export const fetchUserAchievements = async (): Promise<Achievement[]> => {
   const achievements = await apiFetch<any[]>('/profile/me/achievements');
   return achievements.map((ach) => {
@@ -267,7 +268,6 @@ export const fetchUserAchievements = async (): Promise<Achievement[]> => {
     };
   });
 };
-
 export const fetchMyChats = async (): Promise<MyChatItem[]> => {
   const chats = await apiFetch<any[]>('/profile/chats');
   return chats.map((chat) => ({
@@ -275,7 +275,6 @@ export const fetchMyChats = async (): Promise<MyChatItem[]> => {
     Icon: getIconForCategory(chat.category),
   }));
 };
-
 export const fetchAllStories = (): Promise<Story[]> => apiFetch('/stories');
 export const fetchStoryById = (id: number): Promise<Story> =>
   apiFetch(`/stories/${id}`);
@@ -286,20 +285,9 @@ export const fetchFriends = (): Promise<Friend[]> => apiFetch('/friends');
 export const fetchEventChatMessages = (
   eventId: number,
 ): Promise<EventChatMessage[]> => apiFetch(`/events/${eventId}/messages`);
-
 export const fetchWeeklyChallenge = async (): Promise<WeeklyChallenge> => {
   const challenge = await apiFetch<
     Omit<WeeklyChallenge, 'Icon'> & { icon?: string | null }
   >('/challenge/weekly');
   return mapIcon(challenge);
-};
-
-export const completeCourse = async (
-  courseId: number,
-  answers: { questionId: number; answerId: number }[],
-): Promise<{ isPassed: boolean; score: number; totalQuestions: number }> => {
-  return await apiFetch(`/courses/${courseId}/complete`, {
-    method: 'POST',
-    body: JSON.stringify({ answers }),
-  });
 };
