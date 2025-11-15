@@ -17,6 +17,7 @@ EXCLUDE_PATTERNS=(
   ".*\.avif"
   ".*\.png"
   ".*\.svg"
+  ".*\.jpg"
 
   ".github/.*"
   ".husky/.*"

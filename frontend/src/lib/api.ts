@@ -5,6 +5,14 @@ const isReal = import.meta.env.VITE_API_MODE === 'real';
 
 const api = isReal ? realApi : mockApi;
 
+export const fetchOrganizationDashboardStats = mockApi.fetchOrganizationDashboardStats;
+export const fetchOrganizationDetails = mockApi.fetchOrganizationDetails;
+export const fetchOrganizationEvents = mockApi.fetchOrganizationEvents;
+export const fetchEventParticipants = mockApi.fetchEventParticipants;
+
+export const fetchAllStories = mockApi.fetchAllStories;
+export const fetchStoryById = mockApi.fetchStoryById;
+
 export const {
   fetchAllEvents,
   fetchEventById,
@@ -13,21 +21,15 @@ export const {
   fetchAllOrganizations,
   updateOrganizationSubscription,
   fetchOrganizationById,
-  fetchOrganizationEvents,
-  fetchEventParticipants,
   fetchActivityHistoryEvents,
   fetchLeaderboardData,
   fetchAllAchievements,
   fetchUserAchievements,
   fetchMyChats,
-  fetchAllStories,
-  fetchStoryById,
   fetchRewards,
   fetchMapMarkers,
   fetchFriends,
   fetchEventChatMessages,
-  fetchOrganizationDashboardStats,
-  fetchOrganizationDetails,
   fetchWeeklyChallenge,
   completeCourse,
 } = api;

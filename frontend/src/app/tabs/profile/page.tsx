@@ -96,14 +96,6 @@ const ProfilePage: React.FC = () => {
     {id: 'rewardsStore', label: 'Магазин наград', Icon: Star, action: () => onNavigate('rewardsStore')},
   ];
 
-  if (user.role === 'volunteer') {
-    navigationItems.push({
-      id: 'switchToOrganization',
-      label: 'Режим организатора',
-      Icon: Briefcase,
-      action: onSwitchToOrganizationMode
-    });
-  }
 
   return (
     <div className="w-full min-h-full bg-gray-50 pb-10">
