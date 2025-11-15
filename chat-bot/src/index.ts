@@ -1,35 +1,31 @@
 import 'dotenv/config';
-import { Bot, Keyboard } from '@maxhub/max-bot-api';
+import { Bot, Keyboard, Context } from '@maxhub/max-bot-api';
 
-const BOT_TOKEN = process.env.MAX_BOT_TOKEN;
-const MINI_APP_URL = process.env.MINI_APP_URL;
+const { BOT_TOKEN, BOT_NAME } = process.env;
 
-if (!BOT_TOKEN || !MINI_APP_URL) {
-  throw new Error(
-    'MAX_BOT_TOKEN and MINI_APP_URL must be provided as environment variables',
-  );
+if (!BOT_TOKEN || !BOT_NAME) {
+  throw new Error('BOT_TOKEN and BOT_NAME must be provided as environment variables');
 }
 
 const bot = new Bot(BOT_TOKEN);
+const miniAppUrl = `https://max.ru/${BOT_NAME}?startapp`;
 
 const webAppButton = Keyboard.inlineKeyboard([
-  [Keyboard.button.link('💫 Открыть MAX Добро', MINI_APP_URL)],
+  [Keyboard.button.link('🚀 Запустить', miniAppUrl)],
 ]);
 
 const welcomeText = (name: string) =>
   `Привет, ${name}! 👋\n\nЯ бот MAX Добро. Помогу вам найти интересные волонтерские события, пройти обучение и стать частью нашего сообщества.\n\nНажмите кнопку ниже, чтобы начать!`;
 
-const startText = 'Нажмите кнопку ниже, чтобы запустить приложение.';
-
-bot.on('bot_started', (ctx) => {
+bot.on('bot_started', (ctx: Context) => {
   const userName = ctx.user?.name ?? 'пользователь';
   ctx.reply(welcomeText(userName), {
     attachments: [webAppButton],
   });
 });
 
-bot.command('start', (ctx) =>
-  ctx.reply(startText, {
+bot.command('start', (ctx: Context) =>
+  ctx.reply('Нажмите кнопку ниже, чтобы запустить приложение.', {
     attachments: [webAppButton],
   }),
 );

@@ -3,10 +3,11 @@ services:
     name: max-dobro-bot
     env: node
     plan: free
+    rootDir: ./chat-bot 
     buildCommand: "npm install && npm run build"
     startCommand: "npm start"
     envVars:
-      - key: MAX_BOT_TOKEN
+      - key: BOT_TOKEN
         sync: false
-      - key: MINI_APP_URL
+      - key: BOT_NAME
         sync: false
