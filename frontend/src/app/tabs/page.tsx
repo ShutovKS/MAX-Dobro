@@ -296,26 +296,23 @@ const MapScreen: React.FC<{
   onResetSearch: () => void;
   onResetFilters: () => void;
 }> = ({markers, onSelectEvent, isSearchActive, onResetSearch, onResetFilters}) => {
-  if (markers.length === 0) {
-    return (
-      <div className="relative w-full h-full bg-gray-200">
-        <div className="absolute inset-0 pt-36 flex items-center justify-center z-10 p-4 bg-white/80 backdrop-blur-sm">
-          {isSearchActive ? (
-            <EmptyState Icon={MagnifyingGlassIllustrationIcon} title="Ничего не найдено"
-                        subtitle="Возможно, в запросе опечатка? Попробуйте переформулировать."
-                        action={{text: "Сбросить поиск", onClick: onResetSearch, type: 'secondary'}}/>
-          ) : (
-            <EmptyState Icon={BinocularsIllustrationIcon} title="По этим фильтрам тихо"
-                        subtitle="Попробуйте изменить параметры или расширить радиус поиска."
-                        action={{text: "Сбросить фильтры", onClick: onResetFilters, type: 'secondary'}}/>
-          )}
-        </div>
+  const containerContent = markers.length === 0 ? (
+      <div className="absolute inset-0 pt-36 flex items-center justify-center z-10 p-4 bg-white/80 backdrop-blur-sm">
+        {isSearchActive ? (
+          <EmptyState Icon={MagnifyingGlassIllustrationIcon} title="Ничего не найдено"
+                      subtitle="Возможно, в запросе опечатка? Попробуйте переформулировать."
+                      action={{text: "Сбросить поиск", onClick: onResetSearch, type: 'secondary'}}/>
+        ) : (
+          <EmptyState Icon={BinocularsIllustrationIcon} title="По этим фильтрам тихо"
+                      subtitle="Попробуйте изменить параметры или расширить радиус поиска."
+                      action={{text: "Сбросить фильтры", onClick: onResetFilters, type: 'secondary'}}/>
+        )}
       </div>
-    );
-  }
-
+    ) : null;
+    
   return (
-    <div className="w-full h-full pt-36">
+    <div className="w-full h-full">
+      {containerContent}
       <InteractiveMap markers={markers} onMarkerClick={onSelectEvent}/>
     </div>
   );
