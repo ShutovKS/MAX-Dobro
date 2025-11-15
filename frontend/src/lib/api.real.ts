@@ -18,19 +18,7 @@ import type {
   Story,
   WeeklyChallenge
 } from './types';
-import {
-  Clock,
-  Dog,
-  GraduationCap,
-  HandHeart,
-  Leaf,
-  List,
-  MessageSquare,
-  Palette,
-  Star,
-  Trophy,
-  Users
-} from 'lucide-react';
+import {BookOpen, Clock, Dog, GraduationCap, HandHeart, Leaf, List, Palette, Star, Trophy, Users} from 'lucide-react';
 import React from 'react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -52,6 +40,23 @@ const iconMap: { [key: string]: React.FC<any> } = {
 const getIcon = (iconName?: string | null): React.FC<any> => {
   if (!iconName) return iconMap['default'];
   return iconMap[iconName] || iconMap['default'];
+};
+
+const categoryIconMap: { [key: string]: React.FC<any> } = {
+  'Экология': Leaf,
+  'Животные': Dog,
+  'Помощь старшим': HandHeart,
+  'Арт': Palette,
+  'Онлайн': BookOpen,
+  'Спорт': Trophy,
+  'Культура': Palette,
+  'Дети': Users,
+  'default': Star,
+};
+
+const getIconForCategory = (category?: string | null): React.FC<any> => {
+  if (!category) return categoryIconMap['default'];
+  return categoryIconMap[category] || categoryIconMap['default'];
 };
 
 const getAuthToken = async (): Promise<string | null> => {
@@ -84,13 +89,29 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
   return response.json();
 }
 
+// Helper for mapping icon property
 const mapIcon = <T extends { icon?: string | null }>(item: T): Omit<T, 'icon'> & { Icon: React.FC<any> } => {
   const {icon, ...rest} = item;
   return {...rest, Icon: getIcon(icon)};
 };
 
-export const fetchAllEvents = (): Promise<AppEvent[]> => apiFetch('/events');
-export const fetchEventById = (id: number): Promise<AppEvent | HistoryEvent> => apiFetch(`/events/${id}`);
+const mapEventData = (event: any): AppEvent => ({
+  ...event,
+  Icon: getIconForCategory(event.category),
+  participantCount: event._count?.participants ?? 0,
+  organizationName: event.organization?.name ?? 'Организация', // Placeholder
+  pos: {top: '0', left: '0'}, // Dummy value, not used
+});
+
+export const fetchAllEvents = async (): Promise<AppEvent[]> => {
+  const events = await apiFetch<any[]>('/events');
+  return events.map(mapEventData);
+};
+
+export const fetchEventById = async (id: number): Promise<AppEvent | HistoryEvent> => {
+  const event = await apiFetch<any>(`/events/${id}`);
+  return mapEventData(event);
+};
 
 export const fetchAllCourses = async (): Promise<Course[]> => {
   const courses = await apiFetch<(Omit<Course, 'Icon'> & { icon?: string | null })[]>('/courses');
@@ -118,7 +139,13 @@ export const fetchEventParticipants = (eventId: number): Promise<EventParticipan
 export const fetchOrganizationDashboardStats = (): Promise<OrganizationStat[]> => apiFetch(`/organization/dashboard/stats`);
 export const fetchOrganizationDetails = (): Promise<OrganizationDetails> => apiFetch(`/organization/details`);
 
-export const fetchActivityHistoryEvents = (): Promise<HistoryEvent[]> => apiFetch('/profile/me/events');
+export const fetchActivityHistoryEvents = async (): Promise<HistoryEvent[]> => {
+  const data = await apiFetch<{ upcoming: any[], past: any[] }>('/profile/me/events');
+  const upcoming = data.upcoming.map(event => ({...mapEventData(event), status: 'upcoming' as const}));
+  const past = data.past.map(event => ({...mapEventData(event), status: 'past' as const}));
+  return [...upcoming, ...past];
+};
+
 export const fetchLeaderboardData = (period: 'week' | 'month' | 'allTime'): Promise<LeaderboardUser[]> => apiFetch(`/leaderboard?period=${period}`);
 
 export const fetchAllAchievements = async (): Promise<Achievement[]> => {
@@ -128,7 +155,7 @@ export const fetchAllAchievements = async (): Promise<Achievement[]> => {
 
 export const fetchMyChats = async (): Promise<MyChatItem[]> => {
   const chats = await apiFetch<any[]>('/profile/chats');
-  return chats.map(chat => ({...chat, Icon: MessageSquare}));
+  return chats.map(chat => ({...chat, Icon: getIconForCategory(chat.category)}));
 };
 
 export const fetchAllStories = (): Promise<Story[]> => apiFetch('/stories');
