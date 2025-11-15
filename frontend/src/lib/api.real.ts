@@ -152,36 +152,35 @@ const mapCourseData = (courseData: any): Course => {
       id: lesson.id,
       title: lesson.title,
       type: lesson.questions && lesson.questions.length > 0 ? 'test' : 'lesson',
-      status: lesson.status,
+      status: 'locked',
       contentTitle: lesson.title,
       content: lesson.content,
       quiz: (lesson.questions || []).map((q: any) => {
-        const correctAnswers = q.answers
-          .filter((a: any) => a.isCorrect)
-          .map((a: any) => a.answer);
-
-        const isMultiple = correctAnswers.length > 1;
-
+        const correctAnswersCount = q.answers.filter(
+          (a: any) => a.isCorrect,
+        ).length;
         return {
           id: q.id.toString(),
           question: q.question,
-          type: isMultiple ? 'multiple' : 'single',
-          options: q.answers.map((a: any) => a.answer),
-          answerIds: Object.fromEntries(
-            q.answers.map((a: any) => [a.answer, a.id]),
-          ),
-          correctAnswer: isMultiple ? undefined : correctAnswers[0],
-          correctAnswers: isMultiple ? correctAnswers : undefined,
+          type: correctAnswersCount > 1 ? 'multiple' : 'single',
+          answers: q.answers,
         };
       }),
     };
   });
 
-  if (courseStatus === 'in-progress' && mappedProgram.length > 0) {
-    const firstIncomplete = mappedProgram.find((l) => l.status !== 'completed');
-    if (firstIncomplete) {
-      firstIncomplete.status = 'current';
-    }
+  let isCurrentSet = false;
+  if (courseStatus === 'completed') {
+    mappedProgram.forEach((l) => (l.status = 'completed'));
+  } else {
+    mappedProgram.forEach((l) => {
+      if (!isCurrentSet) {
+        l.status = 'current';
+        isCurrentSet = true;
+      } else {
+        l.status = 'locked';
+      }
+    });
   }
 
   return {

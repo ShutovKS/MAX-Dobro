@@ -42,12 +42,14 @@ const TestResultModal: React.FC<{
               Вы набрали {score}/{totalQuestions} баллов. Теперь вы готовы
               помогать еще эффективнее!
             </p>
-            <button
-              onClick={onViewCertificate}
-              className="w-full bg-[linear-gradient(158deg,#14E1D5_6.15%,#03C722_85.68%)] text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:opacity-90 transition-opacity"
-            >
-              Посмотреть сертификат
-            </button>
+            {isSuccess && totalQuestions > 0 && (
+              <button
+                onClick={onViewCertificate}
+                className="w-full bg-[linear-gradient(158deg,#14E1D5_6.15%,#03C722_85.68%)] text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:opacity-90 transition-opacity"
+              >
+                Посмотреть сертификат
+              </button>
+            )}
             <button
               onClick={onBackToLesson}
               className="text-sm text-[rgb(12,13,14,0.52)] font-semibold"
@@ -131,6 +133,7 @@ const LessonPage: React.FC<{
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [showResultModal, setShowResultModal] = useState(false);
   const [showCourseCompleteModal, setShowCourseCompleteModal] = useState(false);
+  const [isFinalTest, setIsFinalTest] = useState(false);
 
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
@@ -191,7 +194,8 @@ const LessonPage: React.FC<{
 
     setIsSubmitted(true);
 
-    const isFinalTest = lessonIndex === course.program.length - 1;
+    const isThisTheFinalTest = lessonIndex === course.program.length - 1;
+    setIsFinalTest(isThisTheFinalTest);
 
     let answersToSubmit = Object.entries(answers).flatMap(
       ([questionId, answerIds]: [string, number[]]) =>
@@ -201,7 +205,7 @@ const LessonPage: React.FC<{
         })),
     );
 
-    if (isFinalTest) {
+    if (isThisTheFinalTest) {
       answersToSubmit = Object.entries(allAnswers).flatMap(
         ([questionId, answerIds]: [string, number[]]) =>
           answerIds.map((answerId) => ({
@@ -221,7 +225,7 @@ const LessonPage: React.FC<{
 
       if (result.isPassed) {
         saveLessonProgress(courseId, lessonId);
-        if (isFinalTest) {
+        if (isThisTheFinalTest) {
           localStorage.removeItem(storageKey);
           setTimeout(() => {
             setShowResultModal(false);
@@ -325,28 +329,13 @@ const LessonPage: React.FC<{
                     q.question
                   }`}</p>
                   <div className="mt-2 space-y-2">
-                    {q.options.map((opt) => {
-                      const answerId = q.answerIds?.[opt];
-                      if (answerId === undefined) return null;
-
-                      const isChecked = answers[q.id]?.includes(answerId);
-
-                      const correctAnswersForQuestion =
-                        q.type === 'single'
-                          ? q.correctAnswer
-                            ? [q.answerIds?.[q.correctAnswer]]
-                            : []
-                          : q.correctAnswers?.map(
-                              (ans) => q.answerIds?.[ans],
-                            ) || [];
-
-                      const isCorrect = correctAnswersForQuestion.includes(
-                        answerId,
-                      );
+                    {q.answers.map((answer) => {
+                      const isChecked = answers[q.id]?.includes(answer.id);
+                      const isCorrect = answer.isCorrect;
 
                       return (
                         <label
-                          key={opt}
+                          key={answer.id}
                           className={`flex items-center space-x-3 p-3 rounded-lg border-2 ${
                             isSubmitted
                               ? isCorrect
@@ -360,13 +349,15 @@ const LessonPage: React.FC<{
                           <input
                             type={q.type === 'single' ? 'radio' : 'checkbox'}
                             name={q.id}
-                            value={opt}
+                            value={answer.id}
                             checked={isChecked}
-                            onChange={() => handleAnswerChange(q.id, answerId)}
+                            onChange={() =>
+                              handleAnswerChange(q.id, answer.id)
+                            }
                             disabled={isSubmitted}
                             className="w-5 h-5"
                           />
-                          <span>{opt}</span>
+                          <span>{answer.answer}</span>
                         </label>
                       );
                     })}
@@ -398,7 +389,12 @@ const LessonPage: React.FC<{
         score={score}
         totalQuestions={totalQuestions}
         onTryAgain={handleTryAgain}
-        onBackToLesson={() => setShowResultModal(false)}
+        onBackToLesson={() => {
+          setShowResultModal(false);
+          if (testResult === 'passed' && !isFinalTest) {
+            onClose();
+          }
+        }}
         onViewCertificate={() => onComplete(courseId)}
       />
       <CourseCompleteModal
