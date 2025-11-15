@@ -1,18 +1,8 @@
-import React, {useEffect, useMemo, useState} from 'react';
-import type {Course} from '../../../lib/types';
-import {Check, Puzzle, Trophy, X} from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import type { Course } from '../../../lib/types';
+import { Check, Puzzle, Trophy, X } from 'lucide-react';
 import CourseCompleteModal from '../../../components/ui/CourseCompleteModal';
-import {COURSE_PASS_THRESHOLD} from '../../../lib/constants';
-import {fetchCourseById, completeCourse} from '../../../lib/api'; // Импортируем функцию для загрузки курса и завершения
-
-const saveLessonProgress = (courseId: number, lessonId: number) => {
-  const storageKey = `course_progress_${courseId}`;
-  const completedLessons: number[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
-  if (!completedLessons.includes(lessonId)) {
-    completedLessons.push(lessonId);
-    localStorage.setItem(storageKey, JSON.stringify(completedLessons));
-  }
-};
+import { fetchCourseById, completeCourse } from '../../../lib/api';
 
 const TestResultModal: React.FC<{
   isOpen: boolean;
@@ -22,7 +12,15 @@ const TestResultModal: React.FC<{
   onTryAgain: () => void;
   onViewCertificate: () => void;
   onBackToLesson: () => void;
-}> = ({isOpen, result, score, totalQuestions, onTryAgain, onViewCertificate, onBackToLesson}) => {
+}> = ({
+  isOpen,
+  result,
+  score,
+  totalQuestions,
+  onTryAgain,
+  onViewCertificate,
+  onBackToLesson,
+}) => {
   if (!isOpen) return null;
 
   const isSuccess = result === 'passed';
@@ -33,14 +31,16 @@ const TestResultModal: React.FC<{
       role="dialog"
       aria-modal="true"
     >
-      <div
-        className="bg-white rounded-2xl shadow-xl p-8 m-4 w-full max-w-sm text-center flex flex-col items-center space-y-4 animate-scale-in">
+      <div className="bg-white rounded-2xl shadow-xl p-8 m-4 w-full max-w-sm text-center flex flex-col items-center space-y-4 animate-scale-in">
         {isSuccess ? (
           <>
-            <Trophy className="w-24 h-24 text-yellow-400"/>
-            <h2 className="text-2xl font-bold text-[#1ABE43]">Отлично! Тест пройден!</h2>
+            <Trophy className="w-24 h-24 text-yellow-400" />
+            <h2 className="text-2xl font-bold text-[#1ABE43]">
+              Отлично! Тест пройден!
+            </h2>
             <p className="text-[rgb(12,13,14,0.52)]">
-              Вы набрали {score}/{totalQuestions} баллов. Теперь вы готовы помогать еще эффективнее!
+              Вы набрали {score}/{totalQuestions} баллов. Теперь вы готовы
+              помогать еще эффективнее!
             </p>
             <button
               onClick={onViewCertificate}
@@ -48,13 +48,16 @@ const TestResultModal: React.FC<{
             >
               Посмотреть сертификат
             </button>
-            <button onClick={onBackToLesson} className="text-sm text-[rgb(12,13,14,0.52)] font-semibold">
+            <button
+              onClick={onBackToLesson}
+              className="text-sm text-[rgb(12,13,14,0.52)] font-semibold"
+            >
               Закрыть
             </button>
           </>
         ) : (
           <>
-            <Puzzle className="w-24 h-24 text-[#FF9315]"/>
+            <Puzzle className="w-24 h-24 text-[#FF9315]" />
             <h2 className="text-2xl font-bold text-[#0C0D0E]">Почти у цели!</h2>
             <p className="text-[rgb(12,13,14,0.52)]">
               {`Ваш результат: ${score} из ${totalQuestions}. Повторение — мать учения. Попробуйте еще раз, чтобы закрепить знания!`}
@@ -80,6 +83,17 @@ const TestResultModal: React.FC<{
   );
 };
 
+const saveLessonProgress = (courseId: number, lessonId: number) => {
+  const storageKey = `course_progress_${courseId}`;
+  const completedLessons: number[] = JSON.parse(
+    localStorage.getItem(storageKey) || '[]',
+  );
+  if (!completedLessons.includes(lessonId)) {
+    completedLessons.push(lessonId);
+    localStorage.setItem(storageKey, JSON.stringify(completedLessons));
+  }
+};
+
 const renderMarkdown = (text: string | undefined) => {
   if (!text) return null;
 
@@ -99,29 +113,28 @@ const renderMarkdown = (text: string | undefined) => {
     })
     .join('');
 
-  return <div dangerouslySetInnerHTML={{__html: html}}/>;
+  return <div dangerouslySetInnerHTML={{ __html: html }} />;
 };
-
 
 const LessonPage: React.FC<{
   courseId: number;
   lessonId: number;
-  allCourses: Course[]; // Этот пропс больше не нужен, но оставим для совместимости
   onClose: () => void;
   onComplete: (courseId: number) => void;
-}> = ({courseId, lessonId, allCourses, onClose, onComplete}) => {
-  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
+}> = ({ courseId, lessonId, onClose, onComplete }) => {
+  const [answers, setAnswers] = useState<Record<string, number[]>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [testResult, setTestResult] = useState<'passed' | 'failed' | null>(null);
+  const [testResult, setTestResult] = useState<'passed' | 'failed' | null>(
+    null,
+  );
   const [score, setScore] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
   const [showResultModal, setShowResultModal] = useState(false);
   const [showCourseCompleteModal, setShowCourseCompleteModal] = useState(false);
 
-  // Новые состояния для загрузки данных
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Загружаем полные данные о курсе самостоятельно
   useEffect(() => {
     const loadCourse = async () => {
       setLoading(true);
@@ -129,7 +142,7 @@ const LessonPage: React.FC<{
         const data = await fetchCourseById(courseId);
         setCourse(data);
       } catch (error) {
-        console.error("Failed to load course for lesson page:", error);
+        console.error('Failed to load course for lesson page:', error);
         setCourse(null);
       } finally {
         setLoading(false);
@@ -140,127 +153,69 @@ const LessonPage: React.FC<{
   }, [courseId]);
 
   const lesson = useMemo(() => {
-    if (!course || !course.program || course.program.length === 0) {
-      return null;
-    }
-    return course.program.find(l => l.id === lessonId);
+    if (!course?.program) return null;
+    return course.program.find((l) => l.id === lessonId);
   }, [course, lessonId]);
 
   const lessonIndex = useMemo(() => {
-    if (!course || !course.program || !lesson) return -1;
-    return course.program.findIndex(l => l.id === lessonId);
+    if (!course?.program || !lesson) return -1;
+    return course.program.findIndex((l) => l.id === lessonId);
   }, [course, lesson, lessonId]);
 
-  const handleAnswerChange = (questionId: string, answer: string) => {
+  const handleAnswerChange = (questionId: string, answerId: number) => {
     if (!lesson?.quiz) return;
-    const question = lesson.quiz.find(q => q.id === questionId);
+    const question = lesson.quiz.find((q) => q.id === questionId);
     if (!question) return;
 
-    if (question.type === 'single') {
-      setAnswers(prev => ({...prev, [questionId]: answer}));
-    } else {
-      const currentAnswers = (answers[questionId] as string[] | undefined) || [];
-      const newAnswers = currentAnswers.includes(answer)
-        ? currentAnswers.filter(a => a !== answer)
-        : [...currentAnswers, answer];
-      setAnswers(prev => ({...prev, [questionId]: newAnswers}));
-    }
+    setAnswers((prev) => {
+      const newAnswers = { ...prev };
+      if (question.type === 'single') {
+        newAnswers[questionId] = [answerId];
+      } else {
+        const currentAnswers = prev[questionId] || [];
+        newAnswers[questionId] = currentAnswers.includes(answerId)
+          ? currentAnswers.filter((id) => id !== answerId)
+          : [...currentAnswers, answerId];
+      }
+      return newAnswers;
+    });
   };
 
   const handleSubmitTest = async () => {
     if (!lesson?.quiz || !course) return;
-
-    // Локальная проверка для отображения результатов
-    let correctAnswers = 0;
-    lesson.quiz.forEach(q => {
-      const userAnswer = answers[q.id];
-      if (q.type === 'single' && userAnswer === q.correctAnswer) {
-        correctAnswers++;
-      } else if (q.type === 'multiple') {
-        const userAnswersSet = new Set(userAnswer as string[]);
-        const correctAnswersSet = new Set(q.correctAnswers);
-        if (userAnswersSet.size === correctAnswersSet.size && [...userAnswersSet].every(a => correctAnswersSet.has(a))) {
-          correctAnswers++;
-        }
-      }
-    });
-
-    const newScore = correctAnswers;
-    setScore(newScore);
     setIsSubmitted(true);
 
-    const passed = newScore / lesson.quiz.length >= COURSE_PASS_THRESHOLD;
-    setTestResult(passed ? 'passed' : 'failed');
-    setShowResultModal(true);
+    const answersToSubmit = Object.entries(answers).flatMap(
+      ([questionId, answerIds]: [string, number[]]) =>
+        answerIds.map((answerId) => ({
+          questionId: parseInt(questionId, 10),
+          answerId,
+        })),
+    );
 
-    if (passed) {
-      saveLessonProgress(courseId, lessonId); // Сохраняем прогресс урока
-    }
+    try {
+      const result = await completeCourse(course.id, answersToSubmit);
 
-    // Сохраняем ответы текущего урока в localStorage
-    if (passed && lesson.quiz) {
-      const storageKey = `course_${courseId}_answers`;
-      const savedAnswers = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      setScore(result.score);
+      setTotalQuestions(result.totalQuestions);
+      setTestResult(result.isPassed ? 'passed' : 'failed');
+      setShowResultModal(true);
 
-      // Сохраняем ответы текущего урока
-      for (const question of lesson.quiz) {
-        const questionId = parseInt(question.id);
-        const userAnswer = answers[question.id];
-
-        if (!savedAnswers[questionId]) {
-          savedAnswers[questionId] = [];
-        }
-
-        if (question.type === 'single' && typeof userAnswer === 'string') {
-          const answerId = question.answerIds?.[userAnswer];
-          if (answerId) {
-            savedAnswers[questionId] = [answerId];
-          }
-        } else if (question.type === 'multiple' && Array.isArray(userAnswer)) {
-          savedAnswers[questionId] = userAnswer
-            .map(ans => question.answerIds?.[ans])
-            .filter(id => id !== undefined);
+      if (result.isPassed) {
+        saveLessonProgress(courseId, lessonId);
+        if (lessonIndex === course.program.length - 1) {
+          setTimeout(() => {
+            setShowResultModal(false);
+            setShowCourseCompleteModal(true);
+          }, 1500);
         }
       }
-
-      localStorage.setItem(storageKey, JSON.stringify(savedAnswers));
-    }
-
-    // Если тест пройден и это последний урок, отправляем данные на бэкенд
-    if (passed && course.program && lessonIndex === course.program.length - 1) {
-      try {
-        // Загружаем все сохраненные ответы
-        const storageKey = `course_${courseId}_answers`;
-        const savedAnswers = JSON.parse(localStorage.getItem(storageKey) || '{}');
-
-        // Формируем массив ответов для бэкенда
-        const backendAnswers: { questionId: number; answerId: number }[] = [];
-
-        for (const [questionIdStr, answerIds] of Object.entries(savedAnswers)) {
-          const questionId = parseInt(questionIdStr);
-          for (const answerId of answerIds as number[]) {
-            backendAnswers.push({ questionId, answerId });
-          }
-        }
-
-        // Отправляем на бэкенд
-        await completeCourse(courseId, backendAnswers);
-
-        // Очищаем сохраненные ответы после успешной отправки
-        localStorage.removeItem(storageKey);
-
-        setTimeout(() => {
-          setShowResultModal(false);
-          setShowCourseCompleteModal(true);
-        }, 1500);
-      } catch (error) {
-        console.error('Failed to complete course on backend:', error);
-        // Все равно показываем модалку, но без сертификата с бэкенда
-        setTimeout(() => {
-          setShowResultModal(false);
-          setShowCourseCompleteModal(true);
-        }, 1500);
-      }
+    } catch (error) {
+      console.error('Failed to submit test:', error);
+      setScore(0);
+      setTotalQuestions(lesson.quiz.length);
+      setTestResult('failed');
+      setShowResultModal(true);
     }
   };
 
@@ -276,25 +231,28 @@ const LessonPage: React.FC<{
     if (lesson?.type === 'lesson') {
       saveLessonProgress(courseId, lessonId);
     }
-
-    if (course && course.program && lessonIndex === course.program.length - 1) {
-      setShowCourseCompleteModal(true);
-    } else {
-      onClose();
-    }
+    onClose();
   };
 
   if (loading) {
-    return <div className="w-full h-screen flex items-center justify-center">Загрузка...</div>;
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        Загрузка...
+      </div>
+    );
   }
 
   if (!course || !lesson) {
-    return <div className="w-full h-screen flex items-center justify-center">Урок не найден.</div>;
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        Урок не найден.
+      </div>
+    );
   }
 
   const isTest = lesson.type === 'test';
-  const totalQuestions = lesson.quiz?.length || 0;
-  const allQuestionsAnswered = isTest && lesson.quiz?.every(q => answers[q.id] && (answers[q.id] as any[]).length > 0);
+  const allQuestionsAnswered =
+    isTest && lesson.quiz?.every((q) => answers[q.id]?.length > 0);
 
   return (
     <>
@@ -302,23 +260,37 @@ const LessonPage: React.FC<{
         <header className="flex-shrink-0 p-4 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-100">
-              {isTest ? <Puzzle className="w-5 h-5 text-[#007AFF]"/> : <Check className="w-5 h-5 text-[#007AFF]"/>}
+              {isTest ? (
+                <Puzzle className="w-5 h-5 text-[#007AFF]" />
+              ) : (
+                <Check className="w-5 h-5 text-[#007AFF]" />
+              )}
             </div>
             <div>
               <p className="text-sm text-gray-500">{course.title}</p>
               <h1 className="text-lg font-bold text-[#0C0D0E]">{lesson.title}</h1>
             </div>
           </div>
-          <button onClick={onClose}
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
-                  aria-label="Закрыть">
-            <X className="w-6 h-6 text-gray-700"/>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
+            aria-label="Закрыть"
+          >
+            <X className="w-6 h-6 text-gray-700" />
           </button>
         </header>
 
         <div className="w-full h-1 bg-gray-200">
-          <div className="h-1 bg-[#007AFF]"
-               style={{width: `${course.program ? ((lessonIndex + 1) / course.program.length) * 100 : 0}%`}}></div>
+          <div
+            className="h-1 bg-[#007AFF]"
+            style={{
+              width: `${
+                course.program
+                  ? ((lessonIndex + 1) / course.program.length) * 100
+                  : 0
+              }%`,
+            }}
+          ></div>
         </div>
 
         <main className="flex-grow overflow-y-auto p-6 space-y-6">
@@ -332,24 +304,42 @@ const LessonPage: React.FC<{
                 <div key={q.id} className="border-t border-gray-200 pt-4">
                   <p className="font-semibold">{`${index + 1}. ${q.question}`}</p>
                   <div className="mt-2 space-y-2">
-                    {q.options.map(opt => (
-                      <label key={opt} className={`flex items-center space-x-3 p-3 rounded-lg border-2 ${
-                        isSubmitted
-                          ? (q.correctAnswer === opt || q.correctAnswers?.includes(opt)) ? 'border-green-400 bg-green-50' : ((answers[q.id] === opt || (answers[q.id] as string[])?.includes(opt))) ? 'border-red-400 bg-red-50' : 'border-gray-200'
-                          : 'border-gray-200'
-                      }`}>
-                        <input
-                          type={q.type === 'single' ? 'radio' : 'checkbox'}
-                          name={q.id}
-                          value={opt}
-                          checked={q.type === 'single' ? answers[q.id] === opt : (answers[q.id] as string[] | undefined)?.includes(opt)}
-                          onChange={() => handleAnswerChange(q.id, opt)}
-                          disabled={isSubmitted}
-                          className="w-5 h-5"
-                        />
-                        <span>{opt}</span>
-                      </label>
-                    ))}
+                    {q.options.map((opt) => {
+                      const answerId = q.answerIds?.[opt];
+                      if (answerId === undefined) return null;
+
+                      const isChecked = answers[q.id]?.includes(answerId);
+                      const isCorrect =
+                        q.type === 'single'
+                          ? q.correctAnswer === opt
+                          : q.correctAnswers?.includes(opt);
+
+                      return (
+                        <label
+                          key={opt}
+                          className={`flex items-center space-x-3 p-3 rounded-lg border-2 ${
+                            isSubmitted
+                              ? isCorrect
+                                ? 'border-green-400 bg-green-50'
+                                : isChecked
+                                ? 'border-red-400 bg-red-50'
+                                : 'border-gray-200'
+                              : 'border-gray-200'
+                          }`}
+                        >
+                          <input
+                            type={q.type === 'single' ? 'radio' : 'checkbox'}
+                            name={q.id}
+                            value={opt}
+                            checked={isChecked}
+                            onChange={() => handleAnswerChange(q.id, answerId)}
+                            disabled={isSubmitted}
+                            className="w-5 h-5"
+                          />
+                          <span>{opt}</span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -393,5 +383,5 @@ const LessonPage: React.FC<{
     </>
   );
 };
-export default LessonPage;
 
+export default LessonPage;

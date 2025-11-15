@@ -298,8 +298,8 @@ export const fetchWeeklyChallenge = async (): Promise<WeeklyChallenge> => {
 export const completeCourse = async (
   courseId: number,
   answers: { questionId: number; answerId: number }[],
-): Promise<void> => {
-  await apiFetch(`/courses/${courseId}/complete`, {
+): Promise<{ isPassed: boolean; score: number; totalQuestions: number }> => {
+  return await apiFetch(`/courses/${courseId}/complete`, {
     method: 'POST',
     body: JSON.stringify({ answers }),
   });

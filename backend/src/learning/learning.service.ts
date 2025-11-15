@@ -1,5 +1,3 @@
-// src/learning/learning.service.ts
-
 import {
   BadRequestException,
   ConflictException,
@@ -69,10 +67,7 @@ export class LearningService {
     completionDto: CompleteCourseDto,
   ) {
     return this.prisma.$transaction(async (tx) => {
-      const course = await tx.course.findUnique({
-        where: { id: courseId },
-      });
-
+      const course = await tx.course.findUnique({ where: { id: courseId } });
       if (!course) {
         throw new NotFoundException(`Course with ID ${courseId} not found`);
       }
@@ -80,7 +75,6 @@ export class LearningService {
       const existingCertificate = await tx.userCertificate.findUnique({
         where: { userId_courseId: { userId, courseId } },
       });
-
       if (existingCertificate) {
         throw new ConflictException('You have already completed this course.');
       }
@@ -89,10 +83,11 @@ export class LearningService {
         where: { lesson: { courseId } },
         select: { id: true },
       });
-      const totalQuestionsInCourse = questionsInCourse.length;
+      const totalQuestions = questionsInCourse.length;
 
-      if (totalQuestionsInCourse === 0) {
-        return tx.userCertificate.create({ data: { userId, courseId } });
+      if (totalQuestions === 0) {
+        await tx.userCertificate.create({ data: { userId, courseId } });
+        return { isPassed: true, score: 0, totalQuestions: 0 };
       }
       if (completionDto.answers.length === 0) {
         throw new BadRequestException('Answers not provided.');
@@ -122,7 +117,7 @@ export class LearningService {
         userAnswersMap.get(answer.questionId)!.add(answer.answerId);
       }
 
-      let userCorrectAnswersCount = 0;
+      let score = 0;
       const areSetsEqual = (a: Set<number>, b: Set<number>) =>
         a.size === b.size && [...a].every((value) => b.has(value));
 
@@ -130,19 +125,19 @@ export class LearningService {
         const correctSet = correctAnswersMap.get(questionId);
         const userSet = userAnswersMap.get(questionId);
         if (correctSet && userSet && areSetsEqual(correctSet, userSet)) {
-          userCorrectAnswersCount++;
+          score++;
         }
       }
 
-      if (userCorrectAnswersCount < totalQuestionsInCourse) {
-        throw new BadRequestException(
-          'Тест не пройден. Пожалуйста, проверьте ответы и попробуйте снова.',
-        );
+      const isPassed = score >= totalQuestions;
+
+      if (isPassed) {
+        await tx.userCertificate.create({
+          data: { userId, courseId },
+        });
       }
 
-      return tx.userCertificate.create({
-        data: { userId, courseId },
-      });
+      return { isPassed, score, totalQuestions };
     });
   }
 }
