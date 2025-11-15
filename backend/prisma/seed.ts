@@ -82,14 +82,18 @@ async function main() {
   });
   console.log('✅ Organizations created.');
 
-  // 4. Курсы с уроками и квизами
-  const courseHelp = await prisma.course.create({
-    data: { id: 1, title: "Основы первой помощи", description: "Научитесь оказывать первую помощь в экстренных ситуациях.", icon: 'first-aid', lessons: { create: { title: 'Итоговый тест', content: 'Проверьте свои знания по оказанию первой помощи.', questions: { create: [
-      { question: 'Что является первым шагом при оказании помощи?', answers: { create: [{ answer: 'Убедиться в собственной безопасности', isCorrect: true }, { answer: 'Позвонить в скорую', isCorrect: false }, { answer: 'Проверить дыхание пострадавшего', isCorrect: false }, { answer: 'Начать делать массаж сердца', isCorrect: false }] } },
-      { question: 'При артериальном кровотечении (ярко-алая кровь) что нужно делать?', answers: { create: [{ answer: 'Наложить жгут выше раны', isCorrect: true }, { answer: 'Промыть рану водой', isCorrect: false }, { answer: 'Наложить давящую повязку на рану', isCorrect: false }, { answer: 'Ничего не делать до приезда скорой', isCorrect: false }] } },
-      { question: 'Что делать при обмороке?', answers: { create: [{ answer: 'Потрясти человека, чтобы привести в чувство', isCorrect: false }, { answer: 'Приподнять ноги пострадавшего', isCorrect: true }, { answer: 'Дать понюхать нашатырный спирт', isCorrect: false }, { answer: 'Посадить и дать сладкий чай', isCorrect: false }] } },
-    ] } } } }
+  const course1 = await prisma.course.create({
+    data: { id: 1, title: "Основы первой помощи", description: "Научитесь оказывать первую помощь в экстренных ситуациях.", icon: 'first-aid' }
   });
+
+  const [courseEco, courseAnimals, course4] = await prisma.course.createManyAndReturn({
+    data: [
+        { id: 2, title: "Основы эковолонтерства", description: "Узнайте, как сделать мир чище.", icon: 'leaf' },
+        { id: 3, title: "Уход за животными в приюте", description: "Все, что нужно знать о помощи животным.", icon: 'pet' },
+        { id: 4, title: "Эффективная коммуникация с подопечными", description: "Как найти общий язык и оказать поддержку.", icon: 'chat' },
+    ]
+  });
+
   await prisma.userCertificate.createMany({ data: [{ userId: mainUser.id, courseId: course1.id }, { userId: mainUser.id, courseId: course4.id }] });
   console.log('✅ Courses and certificates created.');
 
@@ -152,7 +156,6 @@ async function main() {
   });
 
   console.log('✅ Lessons created.');
-
 
   // 5. События (как в mockData, с динамическими датами)
   const now = new Date();
