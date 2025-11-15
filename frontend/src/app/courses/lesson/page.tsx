@@ -3,7 +3,7 @@ import type {Course} from '../../../lib/types';
 import {Check, Puzzle, Trophy, X} from 'lucide-react';
 import CourseCompleteModal from '../../../components/ui/CourseCompleteModal';
 import {COURSE_PASS_THRESHOLD} from '../../../lib/constants';
-import {fetchCourseById} from '../../../lib/api'; // Импортируем функцию для загрузки курса
+import {fetchCourseById, completeCourse} from '../../../lib/api'; // Импортируем функцию для загрузки курса и завершения
 
 const TestResultModal: React.FC<{
   isOpen: boolean;
@@ -158,9 +158,10 @@ const LessonPage: React.FC<{
     }
   };
 
-  const handleSubmitTest = () => {
+  const handleSubmitTest = async () => {
     if (!lesson?.quiz || !course) return;
 
+    // Локальная проверка для отображения результатов
     let correctAnswers = 0;
     lesson.quiz.forEach(q => {
       const userAnswer = answers[q.id];
@@ -183,11 +184,70 @@ const LessonPage: React.FC<{
     setTestResult(passed ? 'passed' : 'failed');
     setShowResultModal(true);
 
+    // Сохраняем ответы текущего урока в localStorage
+    if (passed && lesson.quiz) {
+      const storageKey = `course_${courseId}_answers`;
+      const savedAnswers = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+      // Сохраняем ответы текущего урока
+      for (const question of lesson.quiz) {
+        const questionId = parseInt(question.id);
+        const userAnswer = answers[question.id];
+
+        if (!savedAnswers[questionId]) {
+          savedAnswers[questionId] = [];
+        }
+
+        if (question.type === 'single' && typeof userAnswer === 'string') {
+          const answerId = question.answerIds?.[userAnswer];
+          if (answerId) {
+            savedAnswers[questionId] = [answerId];
+          }
+        } else if (question.type === 'multiple' && Array.isArray(userAnswer)) {
+          savedAnswers[questionId] = userAnswer
+            .map(ans => question.answerIds?.[ans])
+            .filter(id => id !== undefined);
+        }
+      }
+
+      localStorage.setItem(storageKey, JSON.stringify(savedAnswers));
+    }
+
+    // Если тест пройден и это последний урок, отправляем данные на бэкенд
     if (passed && course.program && lessonIndex === course.program.length - 1) {
-      setTimeout(() => {
-        setShowResultModal(false);
-        setShowCourseCompleteModal(true);
-      }, 1500);
+      try {
+        // Загружаем все сохраненные ответы
+        const storageKey = `course_${courseId}_answers`;
+        const savedAnswers = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+        // Формируем массив ответов для бэкенда
+        const backendAnswers: { questionId: number; answerId: number }[] = [];
+
+        for (const [questionIdStr, answerIds] of Object.entries(savedAnswers)) {
+          const questionId = parseInt(questionIdStr);
+          for (const answerId of answerIds as number[]) {
+            backendAnswers.push({ questionId, answerId });
+          }
+        }
+
+        // Отправляем на бэкенд
+        await completeCourse(courseId, backendAnswers);
+
+        // Очищаем сохраненные ответы после успешной отправки
+        localStorage.removeItem(storageKey);
+
+        setTimeout(() => {
+          setShowResultModal(false);
+          setShowCourseCompleteModal(true);
+        }, 1500);
+      } catch (error) {
+        console.error('Failed to complete course on backend:', error);
+        // Все равно показываем модалку, но без сертификата с бэкенда
+        setTimeout(() => {
+          setShowResultModal(false);
+          setShowCourseCompleteModal(true);
+        }, 1500);
+      }
     }
   };
 

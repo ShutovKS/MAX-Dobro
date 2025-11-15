@@ -138,6 +138,10 @@ const mapCourseData = (courseData: any): Course => {
         options: q.answers.map((a: any) => a.answer),
         correctAnswer: correctAnswers.length === 1 ? correctAnswers[0] : undefined,
         correctAnswers: correctAnswers.length > 1 ? correctAnswers : undefined,
+        // Добавляем маппинг текст ответа -> ID для отправки на бэкенд
+        answerIds: Object.fromEntries(
+          q.answers.map((a: any) => [a.answer, a.id])
+        ),
       };
     });
 
@@ -226,3 +230,14 @@ export const fetchWeeklyChallenge = async (): Promise<WeeklyChallenge> => {
   const challenge = await apiFetch<Omit<WeeklyChallenge, 'Icon'> & { icon?: string | null }>('/challenge/weekly');
   return mapIcon(challenge);
 };
+
+export const completeCourse = async (
+  courseId: number,
+  answers: { questionId: number; answerId: number }[]
+): Promise<void> => {
+  await apiFetch(`/courses/${courseId}/complete`, {
+    method: 'POST',
+    body: JSON.stringify({ answers }),
+  });
+};
+
