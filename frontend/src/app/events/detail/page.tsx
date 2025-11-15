@@ -123,7 +123,7 @@ const SuccessModal: React.FC<{
   );
 };
 
-const EventDetailPage: React.FC = () => {
+export const EventDetailPage: React.FC = () => {
   const {id} = useParams();
   const navigate = useNavigate();
 
@@ -286,7 +286,7 @@ const EventDetailPage: React.FC = () => {
           {event.location !== 'Онлайн' && eventMarker && (
             <section>
               <h2 className="text-xl font-bold text-[#0C0D0E] mb-3">Место проведения</h2>
-              <div className="h-64 w-full rounded-2xl overflow-hidden shadow-md">
+              <div className="h-64 w-full rounded-2xl overflow-hidden shadow-md relative z-0">
                 <InteractiveMap
                   markers={[eventMarker]}
                   center={eventMarker.position}
@@ -350,7 +350,7 @@ const EventDetailPage: React.FC = () => {
           </section>
         </div>
         <div className="h-28"></div>
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100 z-30">
           <button onClick={mainButtonAction}
                   className={`w-full py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg ${isSignedUp ? 'bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300' : 'bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] text-white font-bold hover:opacity-90'}`}>
             {isSignedUp ? (<><Check className="w-5 h-5 mr-2"/>Вы участвуете</>) : ('Я помогу!')}
@@ -368,5 +368,3 @@ const EventDetailPage: React.FC = () => {
     </>
   );
 };
-
-export default EventDetailPage;
