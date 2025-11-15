@@ -21,7 +21,7 @@ export class LearningService {
             questions: {
               include: {
                 answers: {
-                  select: { id: true, answer: true },
+                  select: { id: true, answer: true, isCorrect: true },
                 },
               },
             },
@@ -40,7 +40,7 @@ export class LearningService {
             questions: {
               include: {
                 answers: {
-                  select: { id: true, answer: true },
+                  select: { id: true, answer: true, isCorrect: true },
                 },
               },
             },
@@ -85,43 +85,56 @@ export class LearningService {
         throw new ConflictException('You have already completed this course.');
       }
 
-      const submittedQuestionIds = completionDto.answers.map(
-        (a) => a.questionId,
-      );
+      const questionsInCourse = await tx.quizQuestion.findMany({
+        where: { lesson: { courseId } },
+        select: { id: true },
+      });
+      const totalQuestionsInCourse = questionsInCourse.length;
 
-      if (submittedQuestionIds.length === 0) {
+      if (totalQuestionsInCourse === 0) {
+        return tx.userCertificate.create({ data: { userId, courseId } });
+      }
+      if (completionDto.answers.length === 0) {
         throw new BadRequestException('Answers not provided.');
       }
 
-      const questionsInDb = await tx.quizQuestion.count({
-        where: { id: { in: submittedQuestionIds } },
-      });
-
-      if (questionsInDb !== submittedQuestionIds.length) {
-        throw new BadRequestException('Some questions do not exist.');
-      }
-
-      const correctAnswers = await tx.quizAnswer.findMany({
+      const correctAnswersFromDb = await tx.quizAnswer.findMany({
         where: {
-          questionId: { in: submittedQuestionIds },
+          questionId: { in: questionsInCourse.map((q) => q.id) },
           isCorrect: true,
         },
+        select: { id: true, questionId: true },
       });
 
-      const correctAnswersMap = new Map(
-        correctAnswers.map((a) => [a.questionId, a.id]),
-      );
+      const correctAnswersMap = new Map<number, Set<number>>();
+      for (const answer of correctAnswersFromDb) {
+        if (!correctAnswersMap.has(answer.questionId)) {
+          correctAnswersMap.set(answer.questionId, new Set());
+        }
+        correctAnswersMap.get(answer.questionId)!.add(answer.id);
+      }
 
-      let userCorrectAnswers = 0;
-      for (const userAnswer of completionDto.answers) {
-        if (
-          correctAnswersMap.get(userAnswer.questionId) === userAnswer.answerId
-        ) {
-          userCorrectAnswers++;
+      const userAnswersMap = new Map<number, Set<number>>();
+      for (const answer of completionDto.answers) {
+        if (!userAnswersMap.has(answer.questionId)) {
+          userAnswersMap.set(answer.questionId, new Set());
+        }
+        userAnswersMap.get(answer.questionId)!.add(answer.answerId);
+      }
+
+      let userCorrectAnswersCount = 0;
+      const areSetsEqual = (a: Set<number>, b: Set<number>) =>
+        a.size === b.size && [...a].every((value) => b.has(value));
+
+      for (const questionId of correctAnswersMap.keys()) {
+        const correctSet = correctAnswersMap.get(questionId);
+        const userSet = userAnswersMap.get(questionId);
+        if (correctSet && userSet && areSetsEqual(correctSet, userSet)) {
+          userCorrectAnswersCount++;
         }
       }
 
-      if (userCorrectAnswers < completionDto.answers.length) {
+      if (userCorrectAnswersCount < totalQuestionsInCourse) {
         throw new BadRequestException(
           'Тест не пройден. Пожалуйста, проверьте ответы и попробуйте снова.',
         );

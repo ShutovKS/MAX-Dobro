@@ -151,22 +151,34 @@ const mapCourseData = (courseData: any): Course => {
     return {
       id: lesson.id,
       title: lesson.title,
-      type: (lesson.questions && lesson.questions.length > 0) ? 'test' : 'lesson',
+      type: lesson.questions && lesson.questions.length > 0 ? 'test' : 'lesson',
       status: lesson.status,
       contentTitle: lesson.title,
       content: lesson.content,
-      quiz: (lesson.questions || []).map((q: any) => ({
-        id: q.id.toString(),
-        question: q.question,
-        type: 'single',
-        options: q.answers.map((a: any) => a.answer),
-        answerIds: Object.fromEntries(q.answers.map((a: any) => [a.answer, a.id])),
-      })),
+      quiz: (lesson.questions || []).map((q: any) => {
+        const correctAnswers = q.answers
+          .filter((a: any) => a.isCorrect)
+          .map((a: any) => a.answer);
+
+        const isMultiple = correctAnswers.length > 1;
+
+        return {
+          id: q.id.toString(),
+          question: q.question,
+          type: isMultiple ? 'multiple' : 'single',
+          options: q.answers.map((a: any) => a.answer),
+          answerIds: Object.fromEntries(
+            q.answers.map((a: any) => [a.answer, a.id]),
+          ),
+          correctAnswer: isMultiple ? undefined : correctAnswers[0],
+          correctAnswers: isMultiple ? correctAnswers : undefined,
+        };
+      }),
     };
   });
 
   if (courseStatus === 'in-progress' && mappedProgram.length > 0) {
-    const firstIncomplete = mappedProgram.find(l => l.status !== 'completed');
+    const firstIncomplete = mappedProgram.find((l) => l.status !== 'completed');
     if (firstIncomplete) {
       firstIncomplete.status = 'current';
     }
@@ -177,9 +189,9 @@ const mapCourseData = (courseData: any): Course => {
     id: courseData.id,
     title: courseData.title,
     description: courseData.description,
-    duration: courseData.duration || "N/A",
+    duration: courseData.duration || 'N/A',
     hasCertificate: courseData.hasCertificate || false,
-    category: courseData.category || "General",
+    category: courseData.category || 'General',
     status: courseData.status || 'not-started',
     progress: courseData.progress || 0,
     level: courseData.level || 'Для новичков',
@@ -192,30 +204,43 @@ export const fetchAllCourses = async (): Promise<Course[]> => {
   return coursesData.map(mapCourseData);
 };
 
-export const fetchCourseById = async (id: number): Promise<Course | undefined> => {
+export const fetchCourseById = async (
+  id: number,
+): Promise<Course | undefined> => {
   const allUserCourses = await fetchAllCourses();
-  return allUserCourses.find(c => c.id === id);
+  return allUserCourses.find((c) => c.id === id);
 };
 
-export const fetchAllOrganizations = (): Promise<Organization[]> => apiFetch('/organizations');
-export const fetchOrganizationById = (id: number): Promise<Organization> => apiFetch(`/organizations/${id}`);
+export const fetchAllOrganizations = (): Promise<Organization[]> =>
+  apiFetch('/organizations');
+export const fetchOrganizationById = (id: number): Promise<Organization> =>
+  apiFetch(`/organizations/${id}`);
 
-export const updateOrganizationSubscription = (organizationId: number, isSubscribed: boolean): Promise<void> => {
+export const updateOrganizationSubscription = (
+  organizationId: number,
+  isSubscribed: boolean,
+): Promise<void> => {
   return apiFetch(`/organizations/${organizationId}/subscription`, {
     method: 'POST',
     body: JSON.stringify({ isSubscribed }),
   });
 };
 
-export const fetchOrganizationEvents = (): Promise<OrganizationEvent[]> => apiFetch(`/organization/events`);
-export const fetchEventParticipants = (eventId: number): Promise<EventParticipant[]> => apiFetch(`/organization/events/${eventId}/participants`);
+export const fetchOrganizationEvents = (): Promise<OrganizationEvent[]> =>
+  apiFetch(`/organization/events`);
+export const fetchEventParticipants = (
+  eventId: number,
+): Promise<EventParticipant[]> =>
+  apiFetch(`/organization/events/${eventId}/participants`);
 
-export const fetchOrganizationDashboardStats = (): Promise<OrganizationStat[]> => apiFetch(`/organization/dashboard/stats`);
-export const fetchOrganizationDetails = (): Promise<OrganizationDetails> => apiFetch(`/organization/details`);
+export const fetchOrganizationDashboardStats = (): Promise<OrganizationStat[]> =>
+  apiFetch(`/organization/dashboard/stats`);
+export const fetchOrganizationDetails = (): Promise<OrganizationDetails> =>
+  apiFetch(`/organization/details`);
 
 export const fetchActivityHistoryEvents = async (): Promise<HistoryEvent[]> => {
   const data = await apiFetch<any[]>('/profile/me/events');
-  return data.map(event => ({
+  return data.map((event) => ({
     ...mapEventData(event),
     status: new Date(event.date) < new Date() ? 'past' : 'upcoming',
   }));
@@ -223,10 +248,13 @@ export const fetchActivityHistoryEvents = async (): Promise<HistoryEvent[]> => {
 
 export const fetchLeaderboardData = (
   period: 'week' | 'month' | 'allTime',
-): Promise<{ topUsers: LeaderboardUser[]; currentUser: LeaderboardUser | null }> => apiFetch(`/leaderboard?period=${period}`);
+): Promise<{ topUsers: LeaderboardUser[]; currentUser: LeaderboardUser | null }> =>
+  apiFetch(`/leaderboard?period=${period}`);
 
 export const fetchAllAchievements = async (): Promise<Achievement[]> => {
-  const achievements = await apiFetch<(Omit<Achievement, 'Icon'> & { icon?: string | null })[]>('/achievements');
+  const achievements = await apiFetch<
+    (Omit<Achievement, 'Icon'> & { icon?: string | null })[]
+  >('/achievements');
   return achievements.map(mapIcon);
 };
 
@@ -243,18 +271,27 @@ export const fetchUserAchievements = async (): Promise<Achievement[]> => {
 
 export const fetchMyChats = async (): Promise<MyChatItem[]> => {
   const chats = await apiFetch<any[]>('/profile/chats');
-  return chats.map(chat => ({ ...chat, Icon: getIconForCategory(chat.category) }));
+  return chats.map((chat) => ({
+    ...chat,
+    Icon: getIconForCategory(chat.category),
+  }));
 };
 
 export const fetchAllStories = (): Promise<Story[]> => apiFetch('/stories');
-export const fetchStoryById = (id: number): Promise<Story> => apiFetch(`/stories/${id}`);
+export const fetchStoryById = (id: number): Promise<Story> =>
+  apiFetch(`/stories/${id}`);
 export const fetchRewards = (): Promise<RewardItem[]> => apiFetch('/rewards');
-export const fetchMapMarkers = (): Promise<MapMarker[]> => apiFetch('/map-markers');
+export const fetchMapMarkers = (): Promise<MapMarker[]> =>
+  apiFetch('/map-markers');
 export const fetchFriends = (): Promise<Friend[]> => apiFetch('/friends');
-export const fetchEventChatMessages = (eventId: number): Promise<EventChatMessage[]> => apiFetch(`/events/${eventId}/messages`);
+export const fetchEventChatMessages = (
+  eventId: number,
+): Promise<EventChatMessage[]> => apiFetch(`/events/${eventId}/messages`);
 
 export const fetchWeeklyChallenge = async (): Promise<WeeklyChallenge> => {
-  const challenge = await apiFetch<Omit<WeeklyChallenge, 'Icon'> & { icon?: string | null }>('/challenge/weekly');
+  const challenge = await apiFetch<
+    Omit<WeeklyChallenge, 'Icon'> & { icon?: string | null }
+  >('/challenge/weekly');
   return mapIcon(challenge);
 };
 
