@@ -41,7 +41,7 @@ const Toast: React.FC<ToastProps> = ({
     >
       <div className="bg-gray-800 text-white py-3 px-4 rounded-2xl shadow-lg flex flex-col items-start space-y-2">
         <div className="flex items-center space-x-3">
-          {type === 'success' && <CheckCircle className="w-6 h-6 text-action-success" fill="currentColor"/>}
+          {type === 'success' && <CheckCircle className="w-6 h-6 text-[#1ABE43]" fill="currentColor"/>}
           <span className="text-sm">{message}</span>
         </div>
         {onUndo && (
