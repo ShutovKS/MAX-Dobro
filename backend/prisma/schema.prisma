@@ -37,7 +37,8 @@ model User {
   challenges UserChallenge[]
   reviews    Review[]
 
-  supabaseUserId String @unique @map("supabase_user_id")
+  supabaseUserId String? @unique @map("supabase_user_id")
+  maxUserId      String?   @unique @map("max_user_id")
 
   @@index([karmaPoints(sort: Desc)])
   @@map("users")
