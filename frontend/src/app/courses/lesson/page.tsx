@@ -5,6 +5,15 @@ import CourseCompleteModal from '../../../components/ui/CourseCompleteModal';
 import {COURSE_PASS_THRESHOLD} from '../../../lib/constants';
 import {fetchCourseById, completeCourse} from '../../../lib/api'; // Импортируем функцию для загрузки курса и завершения
 
+const saveLessonProgress = (courseId: number, lessonId: number) => {
+  const storageKey = `course_progress_${courseId}`;
+  const completedLessons: number[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
+  if (!completedLessons.includes(lessonId)) {
+    completedLessons.push(lessonId);
+    localStorage.setItem(storageKey, JSON.stringify(completedLessons));
+  }
+};
+
 const TestResultModal: React.FC<{
   isOpen: boolean;
   result: 'passed' | 'failed' | null;
@@ -184,6 +193,10 @@ const LessonPage: React.FC<{
     setTestResult(passed ? 'passed' : 'failed');
     setShowResultModal(true);
 
+    if (passed) {
+      saveLessonProgress(courseId, lessonId); // Сохраняем прогресс урока
+    }
+
     // Сохраняем ответы текущего урока в localStorage
     if (passed && lesson.quiz) {
       const storageKey = `course_${courseId}_answers`;
@@ -260,6 +273,10 @@ const LessonPage: React.FC<{
   };
 
   const handleContinue = () => {
+    if (lesson?.type === 'lesson') {
+      saveLessonProgress(courseId, lessonId);
+    }
+
     if (course && course.program && lessonIndex === course.program.length - 1) {
       setShowCourseCompleteModal(true);
     } else {
