@@ -1,23 +1,21 @@
 {
-  "name": "chat-bot",
+  "name": "max-dobro-bot",
   "version": "1.0.0",
-  "private": true,
+  "description": "Bot for MAX Dobro",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "vercel dev",
-    "deploy": "vercel --prod",
     "build": "tsc",
-    "vercel-build": "tsc && ts-node src/api/setup-webhook.ts",
-    "setup-webhook": "ts-node src/api/setup-webhook.ts"
-    },
+    "start": "node dist/index.js"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  },
   "dependencies": {
-    "@maxhub/max-bot-api": "0.2.1",
-    "axios": "^1.7.2",
+    "@maxhub/max-bot-api": "^0.2.1",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
-    "@types/node": "^20.14.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.4.5",
-    "vercel": "^34.2.7"
+    "@types/node": "^20.12.12",
+    "typescript": "^5.4.5"
   }
 }
