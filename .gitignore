@@ -2,7 +2,5 @@
 
 all_sources.md
 
-.env.*
+*/.env
 !.env.example
-frontend/.env
-chat-bot/.env
