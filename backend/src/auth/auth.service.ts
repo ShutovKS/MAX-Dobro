@@ -25,7 +25,11 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    this.jwtSecret = this.configService.getOrThrow<string>(
+      'JWT_INTERNAL_SECRET',
+    );
+  }
 
   async getProfile(userId: number) {
     return this.prisma.user.findUnique({
