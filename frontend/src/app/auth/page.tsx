@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   ArrowLeft,
+  Briefcase,
   CheckCircle,
   Eye,
   EyeOff,
@@ -38,6 +39,13 @@ const LoginView: React.FC<{
     try {
       const initData = getMaxInitData();
       if (!initData) {
+        // Для удобства локальной разработки можно использовать моковый вход
+        if (import.meta.env.DEV) {
+          console.warn("MAX initData not found. Using mock volunteer login.");
+          const session = await login('volunteer@test.com', 'password');
+          onAuthSuccess(session);
+          return;
+        }
         throw new Error('Вход возможен только через приложение MAX');
       }
 
@@ -65,6 +73,20 @@ const LoginView: React.FC<{
       }
     } catch (err: any) {
       setLoginError(err.message || MESSAGES.AUTH.LOGIN_ERROR);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleOrganizerLogin = async () => {
+    setLoginError('');
+    setIsLoading(true);
+    try {
+      // Это моковый вход, который работает только с mock API
+      const session = await login('organizer@test.com', 'password');
+      onAuthSuccess(session);
+    } catch (err) {
+      setLoginError('Демо-вход для организатора не удался.');
     } finally {
       setIsLoading(false);
     }
@@ -135,6 +157,13 @@ const LoginView: React.FC<{
           >
             <MaxIcon className="w-6 h-6 mr-3" />
             Войти через MAX
+          </button>
+           <button
+            onClick={handleOrganizerLogin}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center bg-gray-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 disabled:opacity-50">
+            <Briefcase className="w-5 h-5 mr-3"/>
+            Войти как Организатор (демо)
           </button>
           <div className="flex items-center w-full py-2">
             <div className="flex-grow border-t border-gray-200"></div>
