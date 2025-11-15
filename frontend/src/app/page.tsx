@@ -50,7 +50,6 @@ import {
   logout,
   setOnboardingComplete,
 } from '../lib/auth';
-import { getMaxInitData } from '../lib/max-sdk';
 import { MESSAGES, ROUTES } from '../lib/constants';
 
 const App: React.FC = () => {
@@ -82,27 +81,7 @@ const App: React.FC = () => {
     setError(null);
     let sessionFound = false;
     try {
-      let session = await getCurrentSession();
-
-      if (!session) {
-        const initData = getMaxInitData();
-        if (initData) {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/auth/max-login`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ initData }),
-            },
-          );
-
-          if (response.ok) {
-            const { accessToken } = await response.json();
-            localStorage.setItem('internal_jwt', accessToken);
-            session = await getCurrentSession();
-          }
-        }
-      }
+      const session = await getCurrentSession();
 
       if (session) {
         sessionFound = true;
@@ -128,7 +107,7 @@ const App: React.FC = () => {
     } finally {
       setIsInitialized(true);
       window.WebApp?.ready();
-      if (!sessionFound && location.pathname !== ROUTES.AUTH) {
+      if (!sessionFound && ![ROUTES.AUTH, ROUTES.ONBOARDING].includes(location.pathname)) {
         navigate(ROUTES.AUTH);
       }
     }
@@ -137,16 +116,10 @@ const App: React.FC = () => {
   useEffect(() => {
     initializeApp();
   }, []);
-
+  
   const handleAuthSuccess = (session: { user: User; token: string }) => {
     setUserData(session.user);
-    if (!localStorage.getItem('internal_jwt')) {
-    }
-    if (!isOnboardingComplete()) {
-      navigate(ROUTES.ONBOARDING);
-    } else {
-      navigate(getRedirectPath(session.user));
-    }
+    initializeApp(); // Переинициализируем приложение, чтобы загрузить все данные
   };
 
   const handleOnboardingComplete = () => {
@@ -308,7 +281,11 @@ const App: React.FC = () => {
       ]
   );
 
-  if (!isInitialized || (isAuthenticated && (!userData || allCourses.length === 0))) {
+  if (!isInitialized) {
+    return <SplashPage />;
+  }
+  
+  if (isAuthenticated && (!userData || allCourses.length === 0)) {
     return <SplashPage />;
   }
 
