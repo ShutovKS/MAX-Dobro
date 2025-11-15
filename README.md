@@ -201,7 +201,8 @@ cd MAX-Dobro
 
 #### `chat-bot/.env`
 
-* `MAX_BOT_TOKEN`: Токен вашего бота из платформы MAX.
+* `BOT_TOKEN`: Токен бота от платформы MAX
+* `BOT_NAME`: Ник бота в MAX без @
 
 ### 3. Запуск с помощью Docker Compose
 
