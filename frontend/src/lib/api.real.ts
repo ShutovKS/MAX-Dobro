@@ -120,14 +120,24 @@ const mapCourseData = (courseData: any): Course => {
     // TODO: Временная логика для статуса. В идеале, это должно приходить с бэкенда.
     const lessonStatus = index === 0 ? 'current' : 'locked';
 
-    const mappedQuiz = (lesson.questions || []).map((q: any) => ({
-      id: q.id.toString(),
-      question: q.question,
-      type: 'single',
-      options: q.answers.map((a: any) => a.answer),
-    }));
+    const mappedQuiz = (lesson.questions || []).map((q: any) => {
+      // Находим правильные ответы (предполагаем, что в БД есть поле isCorrect)
+      const correctAnswers = q.answers
+        .filter((a: any) => a.isCorrect)
+        .map((a: any) => a.answer);
+
+      return {
+        id: q.id.toString(),
+        question: q.question,
+        type: correctAnswers.length > 1 ? 'multiple' : 'single',
+        options: q.answers.map((a: any) => a.answer),
+        correctAnswer: correctAnswers.length === 1 ? correctAnswers[0] : undefined,
+        correctAnswers: correctAnswers.length > 1 ? correctAnswers : undefined,
+      };
+    });
 
     return {
+      id: lesson.id,
       title: lesson.title,
       type: lessonType,
       status: lessonStatus,
@@ -138,23 +148,23 @@ const mapCourseData = (courseData: any): Course => {
   });
 
   return {
-    ...mapIcon(courseData),
+    ...mapIcon(courseData), // Используем существующий маппер для иконки
     id: courseData.id,
     title: courseData.title,
     description: courseData.description,
-    duration: courseData.duration || "N/A",
+    duration: courseData.duration || "N/A", // Добавляем запасные значения
     hasCertificate: courseData.hasCertificate || false,
     category: courseData.category || "General",
     status: courseData.status || 'not-started',
     progress: courseData.progress || 0,
     level: courseData.level || 'Для новичков',
-    program: mappedProgram,
+    program: mappedProgram.length > 0 ? mappedProgram : [], // Гарантируем, что program всегда массив
   };
 };
 
 export const fetchAllCourses = async (): Promise<Course[]> => {
-  const courses = await apiFetch<(Omit<Course, 'Icon'> & { icon?: string | null })[]>('/courses');
-  return courses.map(mapIcon);
+  const coursesData = await apiFetch<any[]>('/courses');
+  return coursesData.map(mapCourseData);
 };
 
 export const fetchCourseById = async (id: number): Promise<Course> => {

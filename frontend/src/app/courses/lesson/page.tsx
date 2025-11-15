@@ -1,8 +1,9 @@
-import React, {useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import type {Course} from '../../../lib/types';
 import {Check, Puzzle, Trophy, X} from 'lucide-react';
 import CourseCompleteModal from '../../../components/ui/CourseCompleteModal';
 import {COURSE_PASS_THRESHOLD} from '../../../lib/constants';
+import {fetchCourseById} from '../../../lib/api'; // Импортируем функцию для загрузки курса
 
 const TestResultModal: React.FC<{
   isOpen: boolean;
@@ -95,11 +96,11 @@ const renderMarkdown = (text: string | undefined) => {
 
 const LessonPage: React.FC<{
   courseId: number;
-  lessonIndex: number;
-  allCourses: Course[]; // Passed down to avoid re-fetching
+  lessonId: number;
+  allCourses: Course[]; // Этот пропс больше не нужен, но оставим для совместимости
   onClose: () => void;
   onComplete: (courseId: number) => void;
-}> = ({courseId, lessonIndex, allCourses, onClose, onComplete}) => {
+}> = ({courseId, lessonId, allCourses, onClose, onComplete}) => {
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [testResult, setTestResult] = useState<'passed' | 'failed' | null>(null);
@@ -107,8 +108,39 @@ const LessonPage: React.FC<{
   const [showResultModal, setShowResultModal] = useState(false);
   const [showCourseCompleteModal, setShowCourseCompleteModal] = useState(false);
 
-  const course = useMemo(() => allCourses.find(c => c.id === courseId), [allCourses, courseId]);
-  const lesson = useMemo(() => course?.program[lessonIndex], [course, lessonIndex]);
+  // Новые состояния для загрузки данных
+  const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Загружаем полные данные о курсе самостоятельно
+  useEffect(() => {
+    const loadCourse = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchCourseById(courseId);
+        setCourse(data);
+      } catch (error) {
+        console.error("Failed to load course for lesson page:", error);
+        setCourse(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCourse();
+  }, [courseId]);
+
+  const lesson = useMemo(() => {
+    if (!course || !course.program || course.program.length === 0) {
+      return null;
+    }
+    return course.program.find(l => l.id === lessonId);
+  }, [course, lessonId]);
+
+  const lessonIndex = useMemo(() => {
+    if (!course || !course.program || !lesson) return -1;
+    return course.program.findIndex(l => l.id === lessonId);
+  }, [course, lesson, lessonId]);
 
   const handleAnswerChange = (questionId: string, answer: string) => {
     if (!lesson?.quiz) return;
@@ -151,7 +183,7 @@ const LessonPage: React.FC<{
     setTestResult(passed ? 'passed' : 'failed');
     setShowResultModal(true);
 
-    if (passed && lessonIndex === course.program.length - 1) {
+    if (passed && course.program && lessonIndex === course.program.length - 1) {
       setTimeout(() => {
         setShowResultModal(false);
         setShowCourseCompleteModal(true);
@@ -168,12 +200,16 @@ const LessonPage: React.FC<{
   };
 
   const handleContinue = () => {
-    if (course && lessonIndex === course.program.length - 1) {
+    if (course && course.program && lessonIndex === course.program.length - 1) {
       setShowCourseCompleteModal(true);
     } else {
       onClose();
     }
   };
+
+  if (loading) {
+    return <div className="w-full h-screen flex items-center justify-center">Загрузка...</div>;
+  }
 
   if (!course || !lesson) {
     return <div className="w-full h-screen flex items-center justify-center">Урок не найден.</div>;
@@ -205,7 +241,7 @@ const LessonPage: React.FC<{
 
         <div className="w-full h-1 bg-gray-200">
           <div className="h-1 bg-[#007AFF]"
-               style={{width: `${((lessonIndex + 1) / course.program.length) * 100}%`}}></div>
+               style={{width: `${course.program ? ((lessonIndex + 1) / course.program.length) * 100 : 0}%`}}></div>
         </div>
 
         <main className="flex-grow overflow-y-auto p-6 space-y-6">
@@ -281,3 +317,4 @@ const LessonPage: React.FC<{
   );
 };
 export default LessonPage;
+

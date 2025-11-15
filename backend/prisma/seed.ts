@@ -14,7 +14,7 @@ async function main() {
     'reviews', 'story_likes', 'comments', 'stories', 'event_chat_messages', 'event_chats',
     'user_challenges', 'user_rewards', 'user_certificates', 'user_achievements',
     'event_participants', 'user_organization_subscriptions', 'karma_logs', 'chat_messages',
-    'friendships', 'events', 'lessons', 'quiz_answers', 'quiz_questions',
+    'friendships', 'events', 'quiz_answers', 'quiz_questions', 'lessons',
     'courses', 'organizations', 'users', 'achievements', 'challenges', 'rewards'
   ];
   for (const tableName of tableNames) {
@@ -94,6 +94,67 @@ async function main() {
   });
   await prisma.userCertificate.createMany({ data: [{ userId: mainUser.id, courseId: course1.id }, { userId: mainUser.id, courseId: course4.id }] });
   console.log('✅ Courses and certificates created.');
+
+  // Создаем уроки для курса "Основы первой помощи"
+  const lesson1 = await prisma.lesson.create({
+    data: {
+      courseId: course1.id,
+      title: "Итоговый тест",
+      content: "Проверьте свои знания по оказанию первой помощи.",
+    }
+  });
+
+  // Создаем вопросы для теста
+  const question1 = await prisma.quizQuestion.create({
+    data: {
+      lessonId: lesson1.id,
+      question: "Что является первым шагом при оказании помощи?",
+    }
+  });
+
+  await prisma.quizAnswer.createMany({
+    data: [
+      { questionId: question1.id, answer: "Убедиться в собственной безопасности", isCorrect: true },
+      { questionId: question1.id, answer: "Позвонить в скорую", isCorrect: false },
+      { questionId: question1.id, answer: "Проверить дыхание пострадавшего", isCorrect: false },
+      { questionId: question1.id, answer: "Начать делать массаж сердца", isCorrect: false },
+    ]
+  });
+
+  const question2 = await prisma.quizQuestion.create({
+    data: {
+      lessonId: lesson1.id,
+      question: "При артериальном кровотечении (ярко-алая кровь) что нужно делать?",
+    }
+  });
+
+  await prisma.quizAnswer.createMany({
+    data: [
+      { questionId: question2.id, answer: "Наложить жгут выше раны", isCorrect: true },
+      { questionId: question2.id, answer: "Промыть рану водой", isCorrect: false },
+      { questionId: question2.id, answer: "Наложить давящую повязку на рану", isCorrect: false },
+      { questionId: question2.id, answer: "Ничего не делать до приезда скорой", isCorrect: false },
+    ]
+  });
+
+  const question3 = await prisma.quizQuestion.create({
+    data: {
+      lessonId: lesson1.id,
+      question: "Что делать при обмороке?",
+    }
+  });
+
+  await prisma.quizAnswer.createMany({
+    data: [
+      { questionId: question3.id, answer: "Потрясти человека, чтобы привести в чувство", isCorrect: false },
+      { questionId: question3.id, answer: "Приподнять ноги пострадавшего", isCorrect: true },
+      { questionId: question3.id, answer: "Дать понюхать нашатырный спирт", isCorrect: false },
+      { questionId: question3.id, answer: "Посадить и дать сладкий чай", isCorrect: false },
+    ]
+  });
+
+  console.log('✅ Lessons created.');
+
 
   // 5. События (как в mockData, с динамическими датами)
   const now = new Date();

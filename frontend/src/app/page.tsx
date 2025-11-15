@@ -147,7 +147,8 @@ const App: React.FC = () => {
   const LessonPageWrapper = () => {
     const {id, subId} = useParams();
     const courseId = parseInt(id || '0', 10);
-    return <LessonPage courseId={courseId} lessonIndex={parseInt(subId || '0', 10)} allCourses={allCourses}
+    const lessonId = parseInt(subId || '0', 10);
+    return <LessonPage courseId={courseId} lessonId={lessonId} allCourses={allCourses}
                        onClose={() => navigate(ROUTES.COURSE_DETAIL(courseId))}
                        onComplete={(cId) => navigate(ROUTES.COURSE_CERTIFICATE(cId))}/>;
   };

@@ -50,6 +50,7 @@ export type QuizQuestion = {
   correctAnswers?: string[];
 }
 export type CourseLesson = {
+  id: number;
   title: string;
   type: 'lesson' | 'test';
   status: 'completed' | 'current' | 'locked';
