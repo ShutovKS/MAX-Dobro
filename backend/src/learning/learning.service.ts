@@ -76,26 +76,22 @@ export class LearningService {
         where: { userId_courseId: { userId, courseId } },
       });
       if (existingCertificate) {
-        throw new ConflictException('You have already completed this course.');
-      }
-
-      const questionsInCourse = await tx.quizQuestion.findMany({
-        where: { lesson: { courseId } },
-        select: { id: true },
-      });
-      const totalQuestions = questionsInCourse.length;
-
-      if (totalQuestions === 0) {
-        await tx.userCertificate.create({ data: { userId, courseId } });
         return { isPassed: true, score: 0, totalQuestions: 0 };
       }
-      if (completionDto.answers.length === 0) {
-        throw new BadRequestException('Answers not provided.');
+
+      const submittedQuestionIds = [
+        ...new Set(completionDto.answers.map((a) => a.questionId)),
+      ];
+      const totalQuestionsInSubmission = submittedQuestionIds.length;
+
+      if (totalQuestionsInSubmission === 0) {
+        await tx.userCertificate.create({ data: { userId, courseId } });
+        return { isPassed: true, score: 0, totalQuestions: 0 };
       }
 
       const correctAnswersFromDb = await tx.quizAnswer.findMany({
         where: {
-          questionId: { in: questionsInCourse.map((q) => q.id) },
+          questionId: { in: submittedQuestionIds },
           isCorrect: true,
         },
         select: { id: true, questionId: true },
@@ -121,23 +117,33 @@ export class LearningService {
       const areSetsEqual = (a: Set<number>, b: Set<number>) =>
         a.size === b.size && [...a].every((value) => b.has(value));
 
-      for (const questionId of correctAnswersMap.keys()) {
-        const correctSet = correctAnswersMap.get(questionId);
-        const userSet = userAnswersMap.get(questionId);
-        if (correctSet && userSet && areSetsEqual(correctSet, userSet)) {
+      for (const questionId of submittedQuestionIds) {
+        const correctSet = correctAnswersMap.get(questionId) || new Set();
+        const userSet = userAnswersMap.get(questionId) || new Set();
+        if (areSetsEqual(correctSet, userSet)) {
           score++;
         }
       }
 
-      const isPassed = score >= totalQuestions;
+      const isPassed = score >= totalQuestionsInSubmission;
 
       if (isPassed) {
-        await tx.userCertificate.create({
-          data: { userId, courseId },
+        const allQuestionsInCourse = await tx.quizQuestion.count({
+          where: { lesson: { courseId } },
         });
+        
+        const totalCorrectAnswersInDb = await tx.quizAnswer.count({
+            where: { question: { lesson: { courseId } }, isCorrect: true }
+        });
+
+        if (completionDto.answers.length >= totalCorrectAnswersInDb && score >= allQuestionsInCourse) {
+           await tx.userCertificate.create({
+              data: { userId, courseId },
+           });
+        }
       }
 
-      return { isPassed, score, totalQuestions };
+      return { isPassed, score, totalQuestions: totalQuestionsInSubmission };
     });
   }
 }
