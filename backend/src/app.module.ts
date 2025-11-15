@@ -22,7 +22,6 @@ import { FriendsModule } from './friends/friends.module';
 import { ChallengesModule } from './challenges/challenges.module';
 import { MapModule } from './map/map.module';
 import { ReviewsModule } from './reviews/reviews.module';
-import { ChatbotModule } from './chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -46,8 +45,7 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     FriendsModule,
     ChallengesModule,
     MapModule,
-    ReviewsModule,
-    ChatbotModule,
+    ReviewsModule
   ],
   controllers: [AppController],
   providers: [AppService],

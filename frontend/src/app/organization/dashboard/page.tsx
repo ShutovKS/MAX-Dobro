@@ -56,15 +56,11 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
 
   useEffect(() => {
     const loadData = async () => {
-      if (!user.organizationId) {
-        setLoading(false);
-        return;
-      }
       setLoading(true);
       try {
         const [statsData, orgData] = await Promise.all([
-          fetchOrganizationDashboardStats(user.organizationId),
-          fetchOrganizationDetails(user.organizationId)
+          fetchOrganizationDashboardStats(),
+          fetchOrganizationDetails()
         ]);
         setStats(statsData);
         setOrganizationDetails(orgData);
@@ -75,7 +71,7 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
       }
     };
     loadData();
-  }, [user.organizationId]);
+  }, []);
 
 
   return (

@@ -73,7 +73,7 @@ const EventParticipantsPage: React.FC<{
 
   useEffect(() => {
     const loadData = async () => {
-      if (!eventId || !user.organizationId) {
+      if (!eventId) {
         setLoading(false);
         return;
       }
@@ -81,7 +81,7 @@ const EventParticipantsPage: React.FC<{
       const eventIdNum = parseInt(eventId, 10);
       try {
         const [allOrgEvents, participantsData] = await Promise.all([
-          fetchOrganizationEvents(user.organizationId),
+          fetchOrganizationEvents(),
           fetchEventParticipants(eventIdNum)
         ]);
         const currentEvent = allOrgEvents.find(e => e.id === eventIdNum);
@@ -96,7 +96,7 @@ const EventParticipantsPage: React.FC<{
       }
     };
     loadData();
-  }, [eventId, user.organizationId]);
+  }, [eventId]);
 
   const newApplications = useMemo(() => participants.filter(p => p.status === 'new'), [participants]);
   const confirmedParticipants = useMemo(() => participants.filter(p => p.status === 'confirmed'), [participants]);

@@ -1,3 +1,5 @@
+// prisma/seed.ts
+
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -5,6 +7,7 @@ const prisma = new PrismaClient();
 const TEST_USER_SUPABASE_ID = '3eec394c-a786-44f6-b29d-3b201d540502';
 const FRIEND_USER_SUPABASE_ID = '61df2213-3982-40dd-9fe4-27c1c89eed9b';
 const STRANGER_USER_SUPABASE_ID = '7d618a10-6439-4d74-9a59-8c20540f45e0';
+const ORGANIZER_USER_SUPABASE_ID = 'a1b2c3d4-e5f6-7890-1234-567890abcdef';
 
 async function main() {
   console.log('Start seeding...');
@@ -72,6 +75,18 @@ async function main() {
       role: 'volunteer',
     },
   });
+
+  // Новый пользователь-организатор
+  await prisma.user.create({
+    data: {
+      email: 'organizer@example.com',
+      supabaseUserId: ORGANIZER_USER_SUPABASE_ID,
+      firstName: 'Иван',
+      lastName: 'Организатор',
+      avatarUrl: 'https://i.pravatar.cc/150?u=organizer@example.com',
+      role: 'organization', // Роль организатора
+    },
+  });
   console.log('Users created.');
 
   // --- 3. Дружба ---
@@ -98,7 +113,24 @@ async function main() {
       category: 'Животные',
     },
   });
+  const org3 = await prisma.organization.create({
+    data: {
+      name: 'Центр "Благо-Арт"',
+      description: 'Поддержка культурных и творческих инициатив.',
+      category: 'Культура',
+      isVerified: true,
+    },
+  });
   console.log('Organizations created.');
+
+  // --- 4.1 Подписка пользователя на организацию ---
+  await prisma.userOrganizationSubscription.create({
+    data: {
+      userId: user1.id,
+      organizationId: org2.id,
+    },
+  });
+  console.log('User subscription created.');
 
   // --- 5. Курсы ---
   const course1 = await prisma.course.create({
@@ -143,7 +175,7 @@ async function main() {
       organizationId: org1.id,
       status: 'PLANNED',
       category: 'Экология',
-      location: 'Парк "Сокольники", главный вход',
+      location: 'Москва, парк "Сокольники", главный вход',
       latitude: 55.8023,
       longitude: 37.6769,
       recommendedCourseId: course1.id,
@@ -156,15 +188,48 @@ async function main() {
       date: pastEventDate,
       organizationId: org2.id,
       status: 'COMPLETED',
+      location: 'Москва, ул. Искры, 21',
+      latitude: 55.8575,
+      longitude: 37.6543,
     },
   });
   const eventForFriends = await prisma.event.create({
     data: {
-      title: 'Событие с друзьями',
+      title: 'Событие с друзьями в Парке Горького',
       description: 'Тестируем фичу "Идем вместе!"',
       date: futureEventDate,
       organizationId: org1.id,
       status: 'PLANNED',
+      category: 'Культура',
+      location: 'Москва, Парк Горького, Крымский Вал, 9',
+      latitude: 55.7302,
+      longitude: 37.6053,
+    },
+  });
+  await prisma.event.create({
+    data: {
+      title: 'Выгул собак в приюте',
+      description: 'Подарим радость и движение собакам из приюта "Лучший Друг".',
+      date: new Date(futureEventDate.getTime() + 2 * 24 * 60 * 60 * 1000), // +2 days
+      organizationId: org2.id,
+      status: 'PLANNED',
+      category: 'Животные',
+      location: 'Москва, ул. Искры, 21',
+      latitude: 55.8575,
+      longitude: 37.6543,
+    },
+  });
+  await prisma.event.create({
+    data: {
+      title: 'Арт-вечер в "Винзаводе"',
+      description: 'Помощь в организации выставки современного искусства.',
+      date: new Date(futureEventDate.getTime() + 5 * 24 * 60 * 60 * 1000), // +5 days
+      organizationId: org3.id,
+      status: 'PLANNED',
+      category: 'Арт',
+      location: 'Москва, 4-й Сыромятнический пер., 1/8с6',
+      latitude: 55.752,
+      longitude: 37.6563,
     },
   });
   console.log('Events created.');

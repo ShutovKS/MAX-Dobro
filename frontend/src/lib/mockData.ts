@@ -1,6 +1,5 @@
 import {
   BookOpen,
-  Briefcase,
   Calendar,
   CheckCircle,
   Clock,
@@ -10,7 +9,6 @@ import {
   HandHeart,
   Leaf,
   List,
-  MessageSquare,
   Palette,
   Star,
   TrendingUp,
@@ -631,15 +629,6 @@ export const defaultUserData: User = {
     {id: 4, name: 'Душа компании', Icon: Users},
     {id: 5, name: 'Мастер помощи', Icon: HandHeart},
   ],
-  navigation: [
-    {id: 'activityHistory', label: 'История активностей', Icon: List},
-    {id: 'calendar', label: 'Мой календарь', Icon: Calendar},
-    {id: 'myChats', label: 'Мои чаты', Icon: MessageSquare},
-    {id: 'myCertificates', label: 'Мои сертификаты', Icon: GraduationCap},
-    {id: 'leaderboards', label: 'Лидерборды', Icon: Trophy},
-    {id: 'rewardsStore', label: 'Магазин наград', Icon: Star},
-    {id: 'switchToOrganization', label: 'Режим организатора', Icon: Briefcase},
-  ],
 };
 
 export const organizationUserData: User = {
@@ -652,7 +641,6 @@ export const organizationUserData: User = {
   // Org-specific stats and navigation can be different
   stats: [],
   achievements: [],
-  navigation: [],
 };
 
 const firstNames = ["Александр", "Мария", "Дмитрий", "Анна", "Сергей", "Екатерина", "Андрей", "Ольга", "Алексей", "Наталья"];

@@ -10,7 +10,7 @@ import CoursesPage from './tabs/courses/page';
 import OrganizationsPage from './tabs/organizations/page';
 import StoriesPage from './tabs/stories/page';
 import ProfilePage from './tabs/profile/page';
-import EventDetailPage from './events/detail/page';
+import {EventDetailPage} from './events/detail/page';
 import CourseDetailPage from './courses/detail/page';
 import OrganizationProfilePage from './organization/detail/page';
 import LessonPage from './courses/lesson/page';

@@ -60,9 +60,11 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, o
   const [rewards, setRewards] = useState('');
 
   useEffect(() => {
-    if (event?.id && user.organizationId) {
+    if (event?.id) {
       const loadEventData = async () => {
-        const allOrgEvents = await fetchOrganizationEvents(user.organizationId);
+        // FIX: fetchOrganizationEvents was called with an argument, but it expects none.
+        // The organization is identified by the authentication token.
+        const allOrgEvents = await fetchOrganizationEvents();
         const existingEvent = allOrgEvents.find(e => e.id === event.id);
         if (existingEvent) {
           setTitle(existingEvent.title);
@@ -72,7 +74,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, o
       };
       loadEventData();
     }
-  }, [event, user.organizationId]);
+  }, [event]);
 
   const isFormValid = title && category && description && startDate && (format === 'Онлайн' || address);
 

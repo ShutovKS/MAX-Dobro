@@ -30,17 +30,18 @@ const EventManagementPage: React.FC<{
 
   useEffect(() => {
     const loadEvents = async () => {
-      if (!user.organizationId) {
-        setLoading(false);
-        return;
-      }
       setLoading(true);
-      const data = await fetchOrganizationEvents(user.organizationId);
-      setEvents(data);
-      setLoading(false);
+      try {
+        const data = await fetchOrganizationEvents();
+        setEvents(data);
+      } catch (error) {
+        console.error("Failed to load organization events", error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadEvents();
-  }, [user.organizationId]);
+  }, []);
 
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
