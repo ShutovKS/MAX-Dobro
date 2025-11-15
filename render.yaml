@@ -1,9 +1,9 @@
 services:
-  - type: web
+  - type: worker
     name: max-dobro-bot
     env: node
     plan: free
-    rootDir: ./chat-bot 
+    rootDir: ./mini-app/chat-bot
     buildCommand: "npm install && npm run build"
     startCommand: "npm start"
     envVars:
