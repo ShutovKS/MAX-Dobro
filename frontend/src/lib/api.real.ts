@@ -118,15 +118,33 @@ export const fetchEventById = async (id: number): Promise<AppEvent | HistoryEven
   return mapEventData(event);
 };
 
-const mapCourseData = (courseData: any): Course => {
+const mapCourseDetailData = (courseData: any): Course => {
+  const storageKey = `course_progress_${courseData.id}`;
+  const completedLessonIds: Set<number> = new Set(
+    JSON.parse(localStorage.getItem(storageKey) || '[]')
+  );
+
+  let firstIncompleteIndex = -1;
+
   const mappedProgram = (courseData.lessons || []).map((lesson: any, index: number) => {
+    const isCompleted = completedLessonIds.has(lesson.id);
+
+    if (!isCompleted && firstIncompleteIndex === -1) {
+      firstIncompleteIndex = index;
+    }
+
     const lessonType = (lesson.questions && lesson.questions.length > 0) ? 'test' : 'lesson';
 
-    // TODO: Временная логика для статуса. В идеале, это должно приходить с бэкенда.
-    const lessonStatus = index === 0 ? 'current' : 'locked';
+    let lessonStatus: 'completed' | 'current' | 'locked';
+    if (isCompleted) {
+      lessonStatus = 'completed';
+    } else if (index === firstIncompleteIndex) {
+      lessonStatus = 'current';
+    } else {
+      lessonStatus = 'locked';
+    }
 
     const mappedQuiz = (lesson.questions || []).map((q: any) => {
-      // Находим правильные ответы (предполагаем, что в БД есть поле isCorrect)
       const correctAnswers = q.answers
         .filter((a: any) => a.isCorrect)
         .map((a: any) => a.answer);
@@ -138,7 +156,6 @@ const mapCourseData = (courseData: any): Course => {
         options: q.answers.map((a: any) => a.answer),
         correctAnswer: correctAnswers.length === 1 ? correctAnswers[0] : undefined,
         correctAnswers: correctAnswers.length > 1 ? correctAnswers : undefined,
-        // Добавляем маппинг текст ответа -> ID для отправки на бэкенд
         answerIds: Object.fromEntries(
           q.answers.map((a: any) => [a.answer, a.id])
         ),
@@ -156,29 +173,67 @@ const mapCourseData = (courseData: any): Course => {
     };
   });
 
+  const totalLessons = mappedProgram.length;
+  const progress = totalLessons > 0 ? (completedLessonIds.size / totalLessons) * 100 : 0;
+
+  let courseStatus: 'not-started' | 'in-progress' | 'completed' = 'not-started';
+  if (progress === 100) {
+    courseStatus = 'completed';
+  } else if (progress > 0) {
+    courseStatus = 'in-progress';
+  }
+
   return {
-    ...mapIcon(courseData), // Используем существующий маппер для иконки
+    ...mapIcon(courseData),
     id: courseData.id,
     title: courseData.title,
     description: courseData.description,
-    duration: courseData.duration || "N/A", // Добавляем запасные значения
+    duration: courseData.duration || "N/A",
     hasCertificate: courseData.hasCertificate || false,
     category: courseData.category || "General",
-    status: courseData.status || 'not-started',
-    progress: courseData.progress || 0,
+    status: courseStatus,
+    progress: progress,
     level: courseData.level || 'Для новичков',
-    program: mappedProgram.length > 0 ? mappedProgram : [], // Гарантируем, что program всегда массив
+    program: mappedProgram,
+  };
+};
+
+const mapCourseSummaryData = (courseData: any): Course => {
+  const storageKey = `course_progress_${courseData.id}`;
+  const completedLessonIds: number[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
+
+  const totalLessons = courseData._count?.lessons ?? 0;
+  const progress = totalLessons > 0 ? (completedLessonIds.length / totalLessons) * 100 : 0;
+
+  let courseStatus: 'not-started' | 'in-progress' | 'completed' = 'not-started';
+  if (progress === 100) {
+    courseStatus = 'completed';
+  } else if (progress > 0) {
+    courseStatus = 'in-progress';
+  }
+
+  return {
+    ...mapIcon(courseData),
+    id: courseData.id,
+    title: courseData.title,
+    description: courseData.description,
+    duration: courseData.duration || "N/A",
+    hasCertificate: courseData.hasCertificate || false,
+    category: courseData.category || "General",
+    status: courseStatus,
+    progress: progress,
+    level: courseData.level || 'Для новичков',
   };
 };
 
 export const fetchAllCourses = async (): Promise<Course[]> => {
   const coursesData = await apiFetch<any[]>('/courses');
-  return coursesData.map(mapCourseData);
+  return coursesData.map(mapCourseSummaryData);
 };
 
 export const fetchCourseById = async (id: number): Promise<Course> => {
   const rawCourseData = await apiFetch<any>(`/courses/${id}`);
-  return mapCourseData(rawCourseData);
+  return mapCourseDetailData(rawCourseData);
 };
 
 export const fetchAllOrganizations = (): Promise<Organization[]> => apiFetch('/organizations');
@@ -198,7 +253,7 @@ export const fetchOrganizationDashboardStats = (): Promise<OrganizationStat[]> =
 export const fetchOrganizationDetails = (): Promise<OrganizationDetails> => apiFetch(`/organization/details`);
 
 export const fetchActivityHistoryEvents = async (): Promise<HistoryEvent[]> => {
-  const data = await apiFetch<{ upcoming: any[], past: any[] }>('/profile/me/events');
+  const data = await apiFetch<{ upcoming: any[], past: any[] }>( '/profile/me/events');
   const upcoming = data.upcoming.map(event => ({...mapEventData(event), status: 'upcoming' as const}));
   const past = data.past.map(event => ({...mapEventData(event), status: 'past' as const}));
   return [...upcoming, ...past];
@@ -207,7 +262,7 @@ export const fetchActivityHistoryEvents = async (): Promise<HistoryEvent[]> => {
 export const fetchLeaderboardData = (period: 'week' | 'month' | 'allTime'): Promise<LeaderboardUser[]> => apiFetch(`/leaderboard?period=${period}`);
 
 export const fetchAllAchievements = async (): Promise<Achievement[]> => {
-  const achievements = await apiFetch<(Omit<Achievement, 'Icon'> & { icon?: string | null })[]>('/achievements');
+  const achievements = await apiFetch<(Omit<Achievement, 'Icon'> & { icon?: string | null })[]>( '/achievements');
   return achievements.map(mapIcon);
 };
 
@@ -227,7 +282,7 @@ export const fetchFriends = (): Promise<Friend[]> => apiFetch('/friends');
 export const fetchEventChatMessages = (eventId: number): Promise<EventChatMessage[]> => apiFetch(`/events/${eventId}/messages`);
 
 export const fetchWeeklyChallenge = async (): Promise<WeeklyChallenge> => {
-  const challenge = await apiFetch<Omit<WeeklyChallenge, 'Icon'> & { icon?: string | null }>('/challenge/weekly');
+  const challenge = await apiFetch<Omit<WeeklyChallenge, 'Icon'> & { icon?: string | null }>( '/challenge/weekly');
   return mapIcon(challenge);
 };
 
@@ -240,4 +295,3 @@ export const completeCourse = async (
     body: JSON.stringify({ answers }),
   });
 };
-
