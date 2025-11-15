@@ -22,8 +22,9 @@ interface SupabaseUserPayload {
 export class AuthService {
   private readonly jwtSecret: string;
 
-  constructor(private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
   ) {}
 
   async getProfile(userId: number) {
@@ -102,7 +103,7 @@ export class AuthService {
             },
             organization: {
               select: { name: true },
-            }
+            },
           },
         },
       },
@@ -116,7 +117,7 @@ export class AuthService {
     const now = new Date();
     const upcoming: any[] = [];
     const past: any[] = [];
-    
+
     const mapToHistoryEvent = (participation: any) => {
       const { event, ...restParticipation } = participation;
       const { organization, durationHours, karmaPoints, ...restEvent } = event;
@@ -130,7 +131,6 @@ export class AuthService {
           hours: durationHours,
           karma: karmaPoints,
         },
-        // 'role' пока не реализовано, можно вернуть null или не включать
       };
     };
 
@@ -142,7 +142,7 @@ export class AuthService {
         past.push({ ...historyEvent, status: 'past' });
       }
     }
-    
+
     return [...upcoming, ...past.reverse()];
   }
 
@@ -175,12 +175,12 @@ export class AuthService {
 
     return allCourses.map((course) => {
       const isCompleted = completedCourseIds.has(course.id);
-      
+
       const status = isCompleted ? 'completed' : 'not-started';
       const progress = isCompleted ? 1 : 0;
-      
+
       const { lessons, ...courseData } = course;
-      
+
       lessons.forEach((lesson) => {
         lesson.questions.forEach((question) => {
           // @ts-expect-error
@@ -197,7 +197,7 @@ export class AuthService {
       };
     });
   }
-  
+
   async getUserCertificates(userId: number) {
     return this.prisma.userCertificate.findMany({
       where: { userId },
@@ -265,7 +265,7 @@ export class AuthService {
     );
   }
 
-    async loginWithMax(dto: MaxAuthDto) {
+  async loginWithMax(dto: MaxAuthDto) {
     if (!this.isValidMaxHash(dto.initData)) {
       throw new UnauthorizedException('Invalid hash from MAX');
     }
@@ -285,6 +285,7 @@ export class AuthService {
       user = await this.prisma.user.create({
         data: {
           maxUserId,
+          email: `${maxUserId}@max-app.placeholder.com`,
           firstName: maxUserData.first_name || null,
           lastName: maxUserData.last_name || null,
           avatarUrl: maxUserData.photo_url || null,
