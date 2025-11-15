@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "npx vercel dev",
-    "deploy": "npx vercel --prod",
-    "setup-webhook": "npx ts-node src/setup-webhook.ts"
+    "dev": "vercel dev",
+    "deploy": "vercel --prod",
+    "build": "tsc",
+    "vercel-build": "tsc && ts-node src/api/setup-webhook.ts",
+    "setup-webhook": "ts-node src/api/setup-webhook.ts"
   },
   "dependencies": {
     "@maxhub/max-bot-api": "0.2.1",
@@ -13,8 +15,9 @@
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
-    "@types/node": "^22.10.7",
+    "@types/node": "^20.14.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.4.5",
+    "vercel": "^34.2.7"
   }
 }
