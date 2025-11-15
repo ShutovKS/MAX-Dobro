@@ -9,11 +9,11 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "scripts": {
-    "postinstall": "dotenv -- prisma generate",
+    "postinstall": "prisma generate",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "dotenv -- nest start --watch",
+    "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -22,9 +22,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json --runInBand",
-    "prisma:generate": "dotenv -- npx prisma generate",
-    "seed": "dotenv -- npx prisma db seed",
-    "migrate:dev": "dotenv -- npx prisma migrate dev",
+    "prisma:generate": "npx prisma generate",
+    "seed": "npx prisma db seed",
+    "migrate:dev": "npx prisma migrate dev",
     "migrate:dev:debug": "cross-env DEBUG=\"prisma:*\" npm run migrate:dev"
   },
   "dependencies": {
