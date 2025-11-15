@@ -1,10 +1,12 @@
 import * as realApi from './api.real';
 import * as mockApi from './api.mock';
+import * as organizerApi from './api.organizer';
 
 const isReal = import.meta.env.VITE_API_MODE === 'real';
 
 const api = isReal ? realApi : mockApi;
 
+// Экспортируем все обычные функции
 export const {
   fetchAllEvents,
   fetchEventById,
@@ -13,8 +15,6 @@ export const {
   fetchAllOrganizations,
   updateOrganizationSubscription,
   fetchOrganizationById,
-  fetchOrganizationEvents,
-  fetchEventParticipants,
   fetchActivityHistoryEvents,
   fetchLeaderboardData,
   fetchAllAchievements,
@@ -26,8 +26,14 @@ export const {
   fetchMapMarkers,
   fetchFriends,
   fetchEventChatMessages,
-  fetchOrganizationDashboardStats,
-  fetchOrganizationDetails,
   fetchWeeklyChallenge,
   completeCourse,
 } = api;
+
+// А функции организатора экспортируем из нашего "переключателя"
+export const {
+  fetchOrganizationDashboardStats,
+  fetchOrganizationDetails,
+  fetchOrganizationEvents,
+  fetchEventParticipants,
+} = organizerApi;

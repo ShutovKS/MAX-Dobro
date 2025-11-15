@@ -33,15 +33,17 @@ const LoginView: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
   
+  const isMockMode = import.meta.env.VITE_API_MODE === 'mock';
+
   const handleMaxLogin = async () => {
     setLoginError('');
     setIsLoading(true);
     try {
       await logout();
+      localStorage.removeItem('isDemoOrganizer'); // Очищаем флаг демо-режима
       const initData = getMaxInitData();
       if (!initData) {
-        if (import.meta.env.DEV && import.meta.env.VITE_API_MODE === 'mock') {
-          console.warn('MAX initData not found. Using mock volunteer login.');
+        if (import.meta.env.DEV && isMockMode) {
           const session = await login('volunteer@test.com', 'password');
           onAuthSuccess(session);
           return;
@@ -58,21 +60,15 @@ const LoginView: React.FC<{
         },
       );
 
-      if (!response.ok) {
-        throw new Error('Не удалось войти через MAX');
-      }
-
+      if (!response.ok) throw new Error('Не удалось войти через MAX');
       const { accessToken } = await response.json();
       localStorage.setItem('internal_jwt', accessToken);
-
       const session = await getCurrentSession();
-      if (session) {
-        onAuthSuccess(session);
-      } else {
-        throw new Error('Не удалось получить сессию после входа');
-      }
+      if (session) onAuthSuccess(session);
+      else throw new Error('Не удалось получить сессию после входа');
     } catch (err: any) {
       setLoginError(err.message || MESSAGES.AUTH.LOGIN_ERROR);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -82,27 +78,11 @@ const LoginView: React.FC<{
     setIsLoading(true);
     try {
       await logout();
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/demo-organizer-login`,
-        { method: 'POST' },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Демо-пользователь организатора не найден. Убедитесь, что база данных наполнена (seeded).');
-      }
-
-      const { accessToken } = await response.json();
-      localStorage.setItem('internal_jwt', accessToken);
-
-      const session = await getCurrentSession();
-      if (session) {
-        onAuthSuccess(session);
-      } else {
-        throw new Error('Не удалось получить сессию после демо-входа');
-      }
-    } catch (err: any) {
-      setLoginError(err.message);
+      localStorage.setItem('isDemoOrganizer', 'true'); // Устанавливаем флаг демо-режима
+      const session = await login('organizer@test.com', 'password'); // Используем mock-логин
+      onAuthSuccess(session);
+    } catch (err) {
+      setLoginError('Демо-вход для организатора не удался.');
     } finally {
       setIsLoading(false);
     }
@@ -116,21 +96,16 @@ const LoginView: React.FC<{
     } else if (!/^\S+@\S+\.\S+$/.test(email)) {
       setEmailError(MESSAGES.AUTH.EMAIL_INVALID);
       isValid = false;
-    } else {
-      setEmailError('');
     }
-
     if (!password) {
       setPasswordError(MESSAGES.AUTH.PASSWORD_REQUIRED);
       isValid = false;
-    } else {
-      setPasswordError('');
     }
-
     if (isValid) {
       setLoginError('');
       setIsLoading(true);
       try {
+        localStorage.removeItem('isDemoOrganizer'); // Очищаем флаг демо-режима
         const session = await login(email, password);
         onAuthSuccess(session);
       } catch (err) {
@@ -152,6 +127,7 @@ const LoginView: React.FC<{
     if (passwordError) setPasswordError('');
     if (loginError) setLoginError('');
   };
+
 
   return (
     <div className="bg-white w-full h-screen flex flex-col items-center justify-center p-6 font-sans antialiased">
