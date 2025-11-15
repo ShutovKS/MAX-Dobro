@@ -182,16 +182,34 @@ const LessonPage: React.FC<{
   };
 
   const handleSubmitTest = async () => {
-    if (!lesson?.quiz || !course) return;
+    if (!lesson?.quiz || !course?.program) return;
+
+    const storageKey = `course_${courseId}_answers`;
+    const allAnswers = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    Object.assign(allAnswers, answers);
+    localStorage.setItem(storageKey, JSON.stringify(allAnswers));
+
     setIsSubmitted(true);
 
-    const answersToSubmit = Object.entries(answers).flatMap(
+    const isFinalTest = lessonIndex === course.program.length - 1;
+
+    let answersToSubmit = Object.entries(answers).flatMap(
       ([questionId, answerIds]: [string, number[]]) =>
         answerIds.map((answerId) => ({
           questionId: parseInt(questionId, 10),
           answerId,
         })),
     );
+
+    if (isFinalTest) {
+      answersToSubmit = Object.entries(allAnswers).flatMap(
+        ([questionId, answerIds]: [string, number[]]) =>
+          answerIds.map((answerId) => ({
+            questionId: parseInt(questionId, 10),
+            answerId,
+          })),
+      );
+    }
 
     try {
       const result = await completeCourse(course.id, answersToSubmit);
@@ -203,7 +221,8 @@ const LessonPage: React.FC<{
 
       if (result.isPassed) {
         saveLessonProgress(courseId, lessonId);
-        if (lessonIndex === course.program.length - 1) {
+        if (isFinalTest) {
+          localStorage.removeItem(storageKey);
           setTimeout(() => {
             setShowResultModal(false);
             setShowCourseCompleteModal(true);
@@ -302,17 +321,28 @@ const LessonPage: React.FC<{
               </div>
               {lesson.quiz?.map((q, index) => (
                 <div key={q.id} className="border-t border-gray-200 pt-4">
-                  <p className="font-semibold">{`${index + 1}. ${q.question}`}</p>
+                  <p className="font-semibold">{`${index + 1}. ${
+                    q.question
+                  }`}</p>
                   <div className="mt-2 space-y-2">
                     {q.options.map((opt) => {
                       const answerId = q.answerIds?.[opt];
                       if (answerId === undefined) return null;
 
                       const isChecked = answers[q.id]?.includes(answerId);
-                      const isCorrect =
+
+                      const correctAnswersForQuestion =
                         q.type === 'single'
-                          ? q.correctAnswer === opt
-                          : q.correctAnswers?.includes(opt);
+                          ? q.correctAnswer
+                            ? [q.answerIds?.[q.correctAnswer]]
+                            : []
+                          : q.correctAnswers?.map(
+                              (ans) => q.answerIds?.[ans],
+                            ) || [];
+
+                      const isCorrect = correctAnswersForQuestion.includes(
+                        answerId,
+                      );
 
                       return (
                         <label
