@@ -65,7 +65,6 @@ const App: React.FC = () => {
     try {
       let session = await getCurrentSession();
 
-      // Попытка авто-логина через MAX, если нет текущей сессии
       if (!session) {
         const initData = getMaxInitData();
         if (initData) {
@@ -78,12 +77,11 @@ const App: React.FC = () => {
           if (response.ok) {
             const { accessToken } = await response.json();
             localStorage.setItem('internal_jwt', accessToken);
-            session = await getCurrentSession(); // Повторно запрашиваем сессию с новым токеном
+            session = await getCurrentSession();
           }
         }
       }
 
-      // Загружаем остальные данные параллельно
       const rewardsPromise = fetchRewards();
       const coursesPromise = fetchAllCourses();
       const [rewards, courses] = await Promise.all([rewardsPromise, coursesPromise]);
@@ -93,7 +91,6 @@ const App: React.FC = () => {
 
       if (session) {
         setUserData(session.user);
-        // Добавляем Promise.all для параллельной загрузки
         const [rewards, courses] = await Promise.all([
           fetchRewards(),
           fetchAllCourses(),
@@ -111,13 +108,11 @@ const App: React.FC = () => {
 
       setIsInitialized(true);
       window.WebApp?.ready();
-    } catch (err: any) { // <-- Указываем тип any для err
-      // --- ДОБАВЬ ЭТИ СТРОКИ ДЛЯ ЛОГИРОВАНИЯ ---
+    } catch (err: any) {
       console.error("===================================");
       console.error("CRITICAL APP INITIALIZATION ERROR:");
       console.error(err);
       console.error("===================================");
-      // --- КОНЕЦ БЛОКА ДЛЯ ЛОГИРОВАНИЯ ---
       setError('network');
       setIsInitialized(true);
     }
@@ -159,8 +154,6 @@ const App: React.FC = () => {
   const showToast = (message: string, type: 'success' | 'info' = 'info') => {
     setToast({ show: true, message, type });
   };
-
-  // --- (Далее идет без изменений код с обертками для роутинга) ---
 
   const EventChatPageWrapper = () => {
     const { id } = useParams();
