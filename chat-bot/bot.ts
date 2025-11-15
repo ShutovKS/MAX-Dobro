@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-import { Bot, Keyboard, Context } from '@maxhub/max-bot-api';
+import { Bot, Context, Keyboard } from '@maxhub/max-bot-api';
 
 dotenv.config();
 
@@ -40,3 +40,5 @@ bot.command('start', sendWelcomeMessage);
 bot.on('bot_started', sendWelcomeMessage);
 
 bot.start();
+
+console.log('Бот запущен...');
