@@ -58,7 +58,7 @@ const ReviewModal: React.FC<{
           <div className="w-12"></div>
           <div className="text-center">
             <div className="w-10 h-1.5 bg-gray-300 rounded-full mx-auto mb-2"></div>
-            <h2 id="review-title" className="text-xl font-bold text-[#0C0D0E]">Как все прошло?</h2>
+            <h2 id="review-title" className="text-xl font-bold text-text-primary">Как все прошло?</h2>
           </div>
           <button onClick={onClose}
                   className="w-12 h-10 flex items-center justify-center text-gray-500 hover:text-gray-800"
@@ -75,7 +75,7 @@ const ReviewModal: React.FC<{
                 <button key={star} onClick={() => handleRating(star)}
                         className="transform transition-transform active:scale-90">
                   <Star
-                    className={`w-12 h-12 transition-colors ${rating >= star ? 'text-[#FF9315] fill-current' : 'text-gray-300'}`}/>
+                    className={`w-12 h-12 transition-colors ${rating >= star ? 'text-action-warning fill-current' : 'text-gray-300'}`}/>
                 </button>
               ))}
             </div>
@@ -88,7 +88,7 @@ const ReviewModal: React.FC<{
                 <button
                   key={tag}
                   onClick={() => toggleTag(tag)}
-                  className={`px-4 py-2 text-sm font-semibold rounded-full border-2 transition-colors ${selectedTags.includes(tag) ? 'bg-[#007AFF] text-white border-transparent' : 'bg-white text-[#007AFF] border-[#007AFF]/50'}`}
+                  className={`px-4 py-2 text-sm font-semibold rounded-full border-2 transition-colors ${selectedTags.includes(tag) ? 'bg-brand text-white border-transparent' : 'bg-white text-brand border-brand/50'}`}
                 >
                   {tag}
                 </button>
@@ -118,7 +118,7 @@ const ReviewModal: React.FC<{
           <button
             onClick={handleSubmit}
             disabled={rating === 0}
-            className="w-full text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed bg-[#007AFF] hover:bg-blue-600"
+            className="w-full text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed bg-brand hover:bg-brand-dark"
           >
             Отправить отзыв
           </button>

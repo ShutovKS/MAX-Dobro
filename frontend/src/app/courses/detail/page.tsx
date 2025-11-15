@@ -66,11 +66,11 @@ const CourseDetailPage: React.FC<{
     if (course.status === 'completed') {
       onViewCertificate(course.id);
     } else {
-      const currentLessonIndex = course.program.findIndex(l => l.status === 'current');
+      const currentLessonIndex = course.program?.findIndex(l => l.status === 'current') ?? -1;
       if (currentLessonIndex !== -1) {
         onSelectLesson(course.id, currentLessonIndex);
       } else {
-        const firstLessonIndex = course.program.findIndex(l => l.status !== 'completed');
+        const firstLessonIndex = course.program?.findIndex(l => l.status !== 'completed') ?? -1;
         if (firstLessonIndex !== -1) {
           onSelectLesson(course.id, firstLessonIndex);
         }
@@ -137,7 +137,7 @@ const CourseDetailPage: React.FC<{
         <section>
           <h2 className="text-xl font-bold text-[#0C0D0E] mb-3">Программа</h2>
           <div className="space-y-2">
-            {course.program.map((lesson, index) => (
+            {course.program?.map((lesson, index) => (
               <LessonRow key={index} lesson={lesson} index={index} onSelect={() => onSelectLesson(course.id, index)}/>
             ))}
           </div>

@@ -8,7 +8,7 @@ const CheckboxIcon: React.FC<{ checked: boolean }> = ({checked}) => {
   if (checked) {
     return (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-           className="w-7 h-7 text-[#007AFF]">
+           className="w-7 h-7 text-brand">
         <path fillRule="evenodd"
               d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
               clipRule="evenodd"/>
@@ -79,7 +79,7 @@ const InviteFriendModal: React.FC<{
           <div className="w-12"></div>
           <div className="text-center">
             <div className="w-10 h-1.5 bg-gray-300 rounded-full mx-auto mb-2"></div>
-            <h2 id="invite-friend-title" className="text-xl font-bold text-[#0C0D0E]">Пригласить друзей</h2>
+            <h2 id="invite-friend-title" className="text-xl font-bold text-text-primary">Пригласить друзей</h2>
           </div>
           <button onClick={onClose}
                   className="w-12 h-10 flex items-center justify-center text-gray-500 hover:text-gray-800"
@@ -92,7 +92,7 @@ const InviteFriendModal: React.FC<{
           <div className="bg-gray-50 p-3 rounded-xl mb-4">
             <div className="flex items-center space-x-3">
               <List className="w-5 h-5 text-gray-500 flex-shrink-0"/>
-              <span className="font-semibold text-sm text-[#0C0D0E] truncate">{event.title}</span>
+              <span className="font-semibold text-sm text-text-primary truncate">{event.title}</span>
             </div>
             <div className="flex items-center space-x-3 mt-1.5">
               <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0"/>
@@ -123,7 +123,7 @@ const InviteFriendModal: React.FC<{
                 className="w-full flex items-center py-3 text-left"
               >
                 <img loading="lazy" src={friend.avatarUrl} alt={friend.name} className="w-12 h-12 rounded-full"/>
-                <span className="flex-1 ml-4 font-semibold text-[#0C0D0E]">{friend.name}</span>
+                <span className="flex-1 ml-4 font-semibold text-text-primary">{friend.name}</span>
                 <CheckboxIcon checked={selectedFriends.includes(friend.id)}/>
               </button>
             ))}
@@ -134,7 +134,7 @@ const InviteFriendModal: React.FC<{
           <button
             onClick={handleSend}
             disabled={selectedFriends.length === 0}
-            className="w-full text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed bg-[#007AFF] hover:bg-blue-600"
+            className="w-full text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed bg-brand hover:bg-brand-dark"
           >
             {selectedFriends.length > 0 ? `Отправить (${selectedFriends.length})` : 'Отправить'}
           </button>
@@ -145,3 +145,4 @@ const InviteFriendModal: React.FC<{
 };
 
 export default InviteFriendModal;
+

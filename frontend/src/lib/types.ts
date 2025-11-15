@@ -69,7 +69,7 @@ export type Course = {
   status: 'completed' | 'in-progress' | 'not-started';
   progress: number;
   level: 'Для новичков' | 'Средний' | 'Продвинутый';
-  program: CourseLesson[];
+  program?: CourseLesson[];
 };
 
 export type Tab = 'home' | 'training' | 'organizations' | 'stories' | 'profile';

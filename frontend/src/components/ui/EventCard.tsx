@@ -7,7 +7,7 @@ const EventCard: React.FC<{ event: AppEvent }> = React.memo(({event}) => (
       <event.Icon className="w-12 h-12"/>
     </div>
     <div className="text-left">
-      <h3 className="font-bold text-md text-[#0C0D0E]">{event.title}</h3>
+      <h3 className="font-bold text-md text-text-primary">{event.title}</h3>
       <p className="text-sm text-gray-500">{event.category}</p>
       <p className="text-xs text-gray-400 mt-1">{event.date} &middot; {event.location}</p>
     </div>

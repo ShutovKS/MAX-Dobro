@@ -29,14 +29,14 @@ const AchievementDetailModal: React.FC<{
         {achievement.unlocked ? (
           <>
             <div
-              className="w-32 h-32 rounded-full bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] flex items-center justify-center shadow-lg -mt-20 mb-2 animate-pop-in">
+              className="w-32 h-32 rounded-full bg-gradient-primary flex items-center justify-center shadow-lg -mt-20 mb-2 animate-pop-in">
               <achievement.Icon className="w-20 h-20 text-white"/>
             </div>
-            <h2 className="text-2xl font-bold text-[#0C0D0E]">{achievement.name}</h2>
-            <p className="text-[rgb(12,13,14,0.52)] max-w-sm">{achievement.description}</p>
-            <p className="text-sm text-[rgb(12,13,14,0.52)]">Получено: {achievement.unlockedDate}</p>
+            <h2 className="text-2xl font-bold text-text-primary">{achievement.name}</h2>
+            <p className="text-text-secondary max-w-sm">{achievement.description}</p>
+            <p className="text-sm text-text-secondary">Получено: {achievement.unlockedDate}</p>
             <button
-              className="w-full bg-[#007AFF] text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-colors mt-2">
+              className="w-full bg-brand text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-brand-dark transition-colors mt-2">
               Поделиться достижением
             </button>
           </>
@@ -46,22 +46,22 @@ const AchievementDetailModal: React.FC<{
               className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center -mt-20 mb-2 animate-pop-in">
               <Lock className="w-20 h-20 text-gray-400"/>
             </div>
-            <h2 className="text-2xl font-bold text-[rgb(12,13,14,0.52)]">{achievement.name}</h2>
-            <p className="text-[#0C0D0E] font-medium max-w-sm">{achievement.description}</p>
+            <h2 className="text-2xl font-bold text-text-secondary">{achievement.name}</h2>
+            <p className="text-text-primary font-medium max-w-sm">{achievement.description}</p>
 
             {achievement.progress !== undefined && achievement.target !== undefined && (
               <div className="w-full max-w-xs pt-2">
                 <p
-                  className="text-sm text-[rgb(12,13,14,0.52)] mb-1">Прогресс: {achievement.progress} из {achievement.target}</p>
+                  className="text-sm text-text-secondary mb-1">Прогресс: {achievement.progress} из {achievement.target}</p>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-[#007AFF] h-2 rounded-full" style={{width: `${progressPercentage}%`}}></div>
+                  <div className="bg-brand h-2 rounded-full" style={{width: `${progressPercentage}%`}}></div>
                 </div>
               </div>
             )}
 
             <button
               onClick={() => onNavigateWithFilter(achievement.filterCategory || 'Все')}
-              className="w-full bg-[#007AFF] text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-colors mt-2"
+              className="w-full bg-brand text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-brand-dark transition-colors mt-2"
             >
               {achievement.cta || "К цели!"}
             </button>

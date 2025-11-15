@@ -25,23 +25,23 @@ const CourseCompleteModal: React.FC<CourseCompleteModalProps> = ({
       <div
         className="bg-white rounded-2xl shadow-xl p-8 m-4 w-full max-w-sm text-center flex flex-col items-center space-y-4 animate-scale-in">
         <div className="w-32 h-32 flex items-center justify-center animate-pop-in">
-          <GraduationCap className="w-24 h-24 text-[#007AFF]"/>
+          <GraduationCap className="w-24 h-24 text-brand"/>
         </div>
 
-        <h2 className="text-3xl font-bold text-[#1ABE43]">Курс пройден!</h2>
+        <h2 className="text-3xl font-bold text-action-success">Курс пройден!</h2>
 
-        <p className="text-[rgb(12,13,14,0.52)]">
+        <p className="text-text-secondary">
           Вы успешно завершили курс «{courseTitle}». Ваш сертификат уже в профиле!
         </p>
 
         <button
           onClick={onViewCertificate}
-          className="w-full bg-[linear-gradient(158deg,#14E1D5_6.15%,#03C722_85.68%)] text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:opacity-90 transition-opacity"
+          className="w-full bg-gradient-success text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:opacity-90 transition-opacity"
         >
           Посмотреть сертификат
         </button>
 
-        <button onClick={onClose} className="text-sm text-[rgb(12,13,14,0.52)] font-semibold hover:underline">
+        <button onClick={onClose} className="text-sm text-text-secondary font-semibold hover:underline">
           Закрыть
         </button>
       </div>
