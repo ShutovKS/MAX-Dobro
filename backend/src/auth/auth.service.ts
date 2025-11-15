@@ -1,5 +1,13 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as jwt from 'jsonwebtoken';
+import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { MaxAuthDto } from './dto/max-auth.dto';
 
 interface SupabaseUserPayload {
   id: string;
@@ -12,7 +20,12 @@ interface SupabaseUserPayload {
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly jwtSecret: string;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async getProfile(userId: number) {
     return this.prisma.user.findUnique({
@@ -90,7 +103,7 @@ export class AuthService {
             },
             organization: {
               select: { name: true },
-            }
+            },
           },
         },
       },
@@ -104,7 +117,7 @@ export class AuthService {
     const now = new Date();
     const upcoming: any[] = [];
     const past: any[] = [];
-    
+
     const mapToHistoryEvent = (participation: any) => {
       const { event, ...restParticipation } = participation;
       const { organization, durationHours, karmaPoints, ...restEvent } = event;
@@ -118,7 +131,6 @@ export class AuthService {
           hours: durationHours,
           karma: karmaPoints,
         },
-        // 'role' пока не реализовано, можно вернуть null или не включать
       };
     };
 
@@ -130,7 +142,7 @@ export class AuthService {
         past.push({ ...historyEvent, status: 'past' });
       }
     }
-    
+
     return [...upcoming, ...past.reverse()];
   }
 
@@ -163,12 +175,12 @@ export class AuthService {
 
     return allCourses.map((course) => {
       const isCompleted = completedCourseIds.has(course.id);
-      
+
       const status = isCompleted ? 'completed' : 'not-started';
       const progress = isCompleted ? 1 : 0;
-      
+
       const { lessons, ...courseData } = course;
-      
+
       lessons.forEach((lesson) => {
         lesson.questions.forEach((question) => {
           // @ts-expect-error
@@ -185,7 +197,7 @@ export class AuthService {
       };
     });
   }
-  
+
   async getUserCertificates(userId: number) {
     return this.prisma.userCertificate.findMany({
       where: { userId },
@@ -220,5 +232,70 @@ export class AuthService {
         unlockedAt: 'desc',
       },
     });
+  }
+
+  private isValidMaxHash(initData: string): boolean {
+    const params = new URLSearchParams(initData);
+    const hash = params.get('hash');
+    if (!hash) {
+      return false;
+    }
+
+    const dataToCheck: string[] = [];
+    params.forEach((value, key) => {
+      if (key !== 'hash') {
+        dataToCheck.push(`${key}=${value}`);
+      }
+    });
+
+    dataToCheck.sort();
+    const dataCheckString = dataToCheck.join('\n');
+
+    const botToken = this.configService.getOrThrow<string>('MAX_BOT_TOKEN');
+    const secretKey = crypto
+      .createHmac('sha256', 'WebAppData')
+      .update(botToken)
+      .digest();
+    const hmac = crypto.createHmac('sha256', secretKey);
+    const calculatedHash = hmac.update(dataCheckString).digest('hex');
+
+    return crypto.timingSafeEqual(
+      Buffer.from(calculatedHash),
+      Buffer.from(hash),
+    );
+  }
+
+  async loginWithMax(dto: MaxAuthDto) {
+    if (!this.isValidMaxHash(dto.initData)) {
+      throw new UnauthorizedException('Invalid hash from MAX');
+    }
+
+    const params = new URLSearchParams(dto.initData);
+    const userParam = params.get('user');
+    if (!userParam) {
+      throw new UnauthorizedException('User data is missing in initData');
+    }
+
+    const maxUserData = JSON.parse(userParam);
+    const maxUserId = String(maxUserData.id);
+
+    let user = await this.prisma.user.findUnique({ where: { maxUserId } });
+
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          maxUserId,
+          email: `${maxUserId}@max-app.placeholder.com`,
+          firstName: maxUserData.first_name || null,
+          lastName: maxUserData.last_name || null,
+          avatarUrl: maxUserData.photo_url || null,
+          role: 'volunteer',
+        },
+      });
+    }
+
+    const payload = { sub: user.id, type: 'internal' };
+    const accessToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });
+    return { accessToken };
   }
 }

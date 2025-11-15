@@ -60,10 +60,15 @@ const getIconForCategory = (category?: string | null): React.FC<any> => {
 };
 
 const getAuthToken = async (): Promise<string | null> => {
+  const internalToken = localStorage.getItem('internal_jwt');
+  if (internalToken) {
+    return internalToken;
+  }
+
   if (!supabase) return null;
-  const {data} = await supabase.auth.getSession();
+  const { data } = await supabase.auth.getSession();
   return data.session?.access_token || null;
-}
+};
 
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = await getAuthToken();

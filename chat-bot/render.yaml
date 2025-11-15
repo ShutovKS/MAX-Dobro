@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: max-dobro-bot
+    env: node
+    plan: free
+    buildCommand: "npm install && npm run build"
+    startCommand: "npm start"
+    envVars:
+      - key: MAX_BOT_TOKEN
+        sync: false
+      - key: MINI_APP_URL
+        sync: false
