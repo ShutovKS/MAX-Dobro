@@ -1,11 +1,8 @@
-// prisma/seed.ts
-
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// --- UUIDs для ключевых пользователей из mockData ---
-const volunteerId = '3eec394c-a786-44f6-b29d-3b201d540502'; // Corresponds to defaultUserData
+const volunteerId = '3eec394c-a786-44f6-b29d-3b201d540502';
 const friendId = '61df2213-3982-40dd-9fe4-27c1c89eed9b';
 const organizerId = 'a1b2c3d4-e5f6-7890-1234-567890abcdef';
 
@@ -16,7 +13,7 @@ async function main() {
   const tableNames = [
     'reviews', 'story_likes', 'comments', 'stories', 'event_chat_messages', 'event_chats',
     'user_challenges', 'user_rewards', 'user_certificates', 'user_achievements',
-    'event_participants', 'user_organization_subscriptions', 'karma_logs', 'chat_messages', // <-- ИСПРАВЛЕНО
+    'event_participants', 'user_organization_subscriptions', 'karma_logs', 'chat_messages',
     'friendships', 'events', 'lessons', 'quiz_answers', 'quiz_questions',
     'courses', 'organizations', 'users', 'achievements', 'challenges', 'rewards'
   ];
