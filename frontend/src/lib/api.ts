@@ -18,6 +18,7 @@ export const {
   fetchActivityHistoryEvents,
   fetchLeaderboardData,
   fetchAllAchievements,
+  fetchUserAchievements,
   fetchMyChats,
   fetchAllStories,
   fetchStoryById,

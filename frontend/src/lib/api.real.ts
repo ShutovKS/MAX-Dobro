@@ -1,3 +1,5 @@
+// src/lib/api.real.ts
+
 import { supabase } from './auth.real';
 import type {
   Achievement,
@@ -143,9 +145,9 @@ export const fetchEventById = async (
 };
 
 const mapCourseData = (courseData: any): Course => {
-  const courseStatus = courseData.status || 'not-started';
-  
-  const mappedProgram = (courseData.program || []).map((lesson: any) => {
+    const courseStatus = courseData.status || 'not-started';
+
+    const mappedProgram = (courseData.program || []).map((lesson: any) => {
     const isCompleted = courseData.completedLessons?.includes(lesson.id);
     const lessonStatus = isCompleted ? 'completed' : 'locked';
 
@@ -159,7 +161,7 @@ const mapCourseData = (courseData: any): Course => {
       quiz: (lesson.questions || []).map((q: any) => ({
         id: q.id.toString(),
         question: q.question,
-        type: 'single', // Backend currently supports only single choice validation
+        type: 'single',
         options: q.answers.map((a: any) => a.answer),
         answerIds: Object.fromEntries(q.answers.map((a: any) => [a.answer, a.id])),
       })),
@@ -229,6 +231,17 @@ export const fetchLeaderboardData = (
 export const fetchAllAchievements = async (): Promise<Achievement[]> => {
   const achievements = await apiFetch<(Omit<Achievement, 'Icon'> & { icon?: string | null })[]>('/achievements');
   return achievements.map(mapIcon);
+};
+
+export const fetchUserAchievements = async (): Promise<Achievement[]> => {
+  const achievements = await apiFetch<any[]>('/profile/me/achievements');
+  return achievements.map((ach) => {
+    const { icon, ...baseAchievement } = ach;
+    return {
+      ...baseAchievement,
+      Icon: getIcon(icon),
+    };
+  });
 };
 
 export const fetchMyChats = async (): Promise<MyChatItem[]> => {
