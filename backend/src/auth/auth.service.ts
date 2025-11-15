@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -363,6 +364,23 @@ export class AuthService {
         role: 'volunteer',
       },
     });
+    const payload = { sub: user.id, type: 'internal' };
+    const accessToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });
+    return { accessToken };
+  }
+
+  async loginAsDemoOrganizer() {
+    const demoOrganizerEmail = 'organizer@test.com';
+    const user = await this.prisma.user.findUnique({
+      where: { email: demoOrganizerEmail },
+    });
+
+    if (!user || user.role !== 'organization') {
+      throw new NotFoundException(
+        'Demo organizer user not found. Please seed the database.',
+      );
+    }
+
     const payload = { sub: user.id, type: 'internal' };
     const accessToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });
     return { accessToken };

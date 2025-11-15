@@ -1,5 +1,3 @@
-// src/auth/auth.controller.ts
-
 import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -17,5 +15,13 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Invalid hash.' })
   loginWithMax(@Body() dto: MaxAuthDto) {
     return this.authService.loginWithMax(dto);
+  }
+
+  @Post('demo-organizer-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login as a demo organization user' })
+  @ApiResponse({ status: 200, description: 'Returns internal JWT token for the demo organizer.' })
+  loginAsDemoOrganizer() {
+    return this.authService.loginAsDemoOrganizer();
   }
 }
