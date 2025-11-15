@@ -12,7 +12,21 @@ export class LearningService {
   constructor(private readonly prisma: PrismaService) {}
 
   findAll() {
-    return this.prisma.course.findMany();
+    return this.prisma.course.findMany({
+      include: {
+        lessons: {
+          include: {
+            questions: {
+              include: {
+                answers: {
+                  select: { id: true, answer: true, isCorrect: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   async findOne(id: number) {
@@ -24,7 +38,7 @@ export class LearningService {
             questions: {
               include: {
                 answers: {
-                  select: { id: true, answer: true },
+                  select: { id: true, answer: true, isCorrect: true },
                 },
               },
             },
@@ -39,7 +53,7 @@ export class LearningService {
 
     course.lessons.forEach((lesson) => {
       lesson.questions.forEach((question) => {
-        // @ts-expect-error
+        // @ts-expect-error - Converting number ID to string for compatibility with frontend
         question.id = question.id.toString();
       });
     });

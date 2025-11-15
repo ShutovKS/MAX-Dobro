@@ -58,22 +58,17 @@ const CourseDetailPage: React.FC<{
   }, [id]);
 
   const onBack = () => navigate('/app/training');
-  const onSelectLesson = (courseId: number, lessonIndex: number) => navigate(`/app/courses/${courseId}/lesson/${lessonIndex}`);
+  const onSelectLesson = (courseId: number, lessonId: number) => navigate(`/app/courses/${courseId}/lesson/${lessonId}`);
   const onViewCertificate = (courseId: number) => navigate(`/app/courses/${courseId}/certificate`);
 
   const handleCtaClick = () => {
-    if (!course) return;
+    if (!course || !course.program) return;
     if (course.status === 'completed') {
       onViewCertificate(course.id);
     } else {
-      const currentLessonIndex = course.program?.findIndex(l => l.status === 'current') ?? -1;
-      if (currentLessonIndex !== -1) {
-        onSelectLesson(course.id, currentLessonIndex);
-      } else {
-        const firstLessonIndex = course.program?.findIndex(l => l.status !== 'completed') ?? -1;
-        if (firstLessonIndex !== -1) {
-          onSelectLesson(course.id, firstLessonIndex);
-        }
+      const firstIncompleteLesson = course.program.find(l => l.status !== 'completed');
+      if (firstIncompleteLesson) {
+        onSelectLesson(course.id, firstIncompleteLesson.id);
       }
     }
   };
@@ -138,7 +133,8 @@ const CourseDetailPage: React.FC<{
           <h2 className="text-xl font-bold text-[#0C0D0E] mb-3">Программа</h2>
           <div className="space-y-2">
             {course.program?.map((lesson, index) => (
-              <LessonRow key={index} lesson={lesson} index={index} onSelect={() => onSelectLesson(course.id, index)}/>
+              <LessonRow key={index} lesson={lesson} index={index}
+                         onSelect={() => onSelectLesson(course.id, lesson.id)}/>
             ))}
           </div>
         </section>
