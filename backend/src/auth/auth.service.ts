@@ -81,8 +81,12 @@ export class AuthService {
     const lastName = nameParts.slice(1).join(' ');
 
     try {
-      return await this.prisma.user.create({
-        data: {
+      return await this.prisma.user.upsert({
+        where: { supabaseUserId: payload.id },
+        update: {
+          email: payload.email,
+        },
+        create: {
           supabaseUserId: payload.id,
           email: payload.email,
           firstName: firstName || null,
@@ -91,8 +95,16 @@ export class AuthService {
         },
       });
     } catch (error) {
-      console.error('Error creating local user:', error);
-      throw new InternalServerErrorException('Could not create local user.');
+      console.error('Error in upsert local user via Supabase:', error);
+      if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+        return this.prisma.user.update({
+          where: { email: payload.email },
+          data: { supabaseUserId: payload.id },
+        });
+      }
+      throw new InternalServerErrorException(
+        'Could not create or update local user.',
+      );
     }
   }
 
@@ -227,13 +239,15 @@ export class AuthService {
   }
 
   async getUserAchievements(userId: number) {
-    const [allAchievements, userAchievements] = await this.prisma.$transaction([
-      this.prisma.achievement.findMany({ orderBy: { id: 'asc' } }),
-      this.prisma.userAchievement.findMany({
-        where: { userId },
-        select: { achievementId: true, unlockedAt: true },
-      }),
-    ]);
+    const [allAchievements, userAchievements] = await this.prisma.$transaction(
+      [
+        this.prisma.achievement.findMany({ orderBy: { id: 'asc' } }),
+        this.prisma.userAchievement.findMany({
+          where: { userId },
+          select: { achievementId: true, unlockedAt: true },
+        }),
+      ],
+    );
 
     const unlockedIds = new Map(
       userAchievements.map((ua) => [ua.achievementId, ua.unlockedAt]),
@@ -292,20 +306,22 @@ export class AuthService {
     const maxUserData = JSON.parse(userParam);
     const maxUserId = String(maxUserData.id);
 
-    let user = await this.prisma.user.findUnique({ where: { maxUserId } });
-
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          maxUserId,
-          email: `${maxUserId}@max-app.placeholder.com`,
-          firstName: maxUserData.first_name || null,
-          lastName: maxUserData.last_name || null,
-          avatarUrl: maxUserData.photo_url || null,
-          role: 'volunteer',
-        },
-      });
-    }
+    const user = await this.prisma.user.upsert({
+      where: { maxUserId },
+      update: {
+        firstName: maxUserData.first_name || null,
+        lastName: maxUserData.last_name || null,
+        avatarUrl: maxUserData.photo_url || null,
+      },
+      create: {
+        maxUserId,
+        email: `${maxUserId}@max-app.placeholder.com`,
+        firstName: maxUserData.first_name || null,
+        lastName: maxUserData.last_name || null,
+        avatarUrl: maxUserData.photo_url || null,
+        role: 'volunteer',
+      },
+    });
 
     const payload = { sub: user.id, type: 'internal' };
     const accessToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });

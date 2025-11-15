@@ -2,7 +2,7 @@ import React from 'react';
 import type {IconProps} from './types';
 
 const NatureProtectorIcon: React.FC<IconProps> = (props) => (
-<svg width="800px" height="800px" viewBox="0 0 1024 1024" class="icon" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#000000">
+<svg width="64px" height="64px" viewBox="0 0 1024 1024" class="icon" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#000000">
 
 <g id="SVGRepo_bgCarrier" stroke-width="0"/>
 
