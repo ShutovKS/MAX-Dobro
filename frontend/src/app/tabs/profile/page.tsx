@@ -1,7 +1,17 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate, useOutletContext} from 'react-router';
 import type {ProfileSubScreen, User, WeeklyChallenge} from '../../../lib/types';
-import {ChevronRight, Settings} from 'lucide-react';
+import {
+  Briefcase,
+  Calendar,
+  ChevronRight,
+  GraduationCap,
+  List,
+  MessageSquare,
+  Settings,
+  Star,
+  Trophy
+} from 'lucide-react';
 import WeeklyChallengeWidget from '../../../features/challenges/components/WeeklyChallengeWidget';
 import {fetchWeeklyChallenge} from '../../../lib/api';
 
@@ -77,6 +87,24 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const navigationItems: { id: string; label: string; Icon: React.FC<any>; action: () => void; }[] = [
+    {id: 'activityHistory', label: 'История активностей', Icon: List, action: () => onNavigate('activityHistory')},
+    {id: 'calendar', label: 'Мой календарь', Icon: Calendar, action: () => onNavigate('calendar')},
+    {id: 'myChats', label: 'Мои чаты', Icon: MessageSquare, action: () => onNavigate('myChats')},
+    {id: 'myCertificates', label: 'Мои сертификаты', Icon: GraduationCap, action: () => onNavigate('myCertificates')},
+    {id: 'leaderboards', label: 'Лидерборды', Icon: Trophy, action: () => onNavigate('leaderboards')},
+    {id: 'rewardsStore', label: 'Магазин наград', Icon: Star, action: () => onNavigate('rewardsStore')},
+  ];
+
+  if (user.role === 'volunteer') {
+    navigationItems.push({
+      id: 'switchToOrganization',
+      label: 'Режим организатора',
+      Icon: Briefcase,
+      action: onSwitchToOrganizationMode
+    });
+  }
+
   return (
     <div className="w-full min-h-full bg-gray-50 pb-10">
       <header className="p-6 flex justify-between items-center">
@@ -151,20 +179,18 @@ const ProfilePage: React.FC = () => {
 
       <section className="px-6">
         <div className="bg-white rounded-2xl shadow-sm divide-y divide-gray-100">
-          {user.navigation.filter(item => item.id !== 'switchToOrganization').map(item => {
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id as ProfileSubScreen)}
-                className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 first:rounded-t-2xl last:rounded-b-2xl transition-colors">
-                <div className="flex items-center space-x-4">
-                  <item.Icon className="w-6 h-6 text-gray-500"/>
-                  <span className="font-semibold text-[#0C0D0E]">{item.label}</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400"/>
-              </button>
-            );
-          })}
+          {navigationItems.map(item => (
+            <button
+              key={item.id}
+              onClick={item.action}
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 first:rounded-t-2xl last:rounded-b-2xl transition-colors">
+              <div className="flex items-center space-x-4">
+                <item.Icon className="w-6 h-6 text-gray-500"/>
+                <span className="font-semibold text-[#0C0D0E]">{item.label}</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400"/>
+            </button>
+          ))}
         </div>
       </section>
     </div>

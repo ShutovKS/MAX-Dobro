@@ -171,7 +171,6 @@ export type User = {
   organizationId?: number;
   stats: { id: string; value: string; label: string; Icon: React.FC<React.SVGProps<SVGSVGElement>>; }[];
   achievements: { id: number; name: string; Icon: React.FC<React.SVGProps<SVGSVGElement>>; }[];
-  navigation: { id: string; label: string; Icon: React.FC<React.SVGProps<SVGSVGElement>>; }[];
 }
 
 export type Friend = {

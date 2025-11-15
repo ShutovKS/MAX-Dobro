@@ -1,5 +1,7 @@
 import {createClient} from '@supabase/supabase-js';
 import type {User} from './types';
+import {Calendar, Clock, Dog, GraduationCap, HandHeart, Leaf, List, Palette, Star, Trophy, Users} from 'lucide-react';
+import React from 'react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 if (!API_BASE_URL) {
@@ -15,10 +17,54 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Map string icon names from API to actual React components
+const iconMap: { [key: string]: React.FC<any> } = {
+  'hand-heart': HandHeart,
+  'dog': Dog,
+  'leaf': Leaf,
+  'users': Users,
+  'palette': Palette,
+  'trophy': Trophy,
+  'clock': Clock,
+  'star': Star,
+  'graduation-cap': GraduationCap,
+  'list': List,
+  'default': Star, // Fallback icon
+};
+
+const getIcon = (iconName: string): React.FC<any> => {
+  return iconMap[iconName] || iconMap['default'];
+};
+
+
 const mapSupabaseUserToAppUser = (supabaseUser: any, backendProfile: any): User => {
+  const stats = [
+    {id: 'hours', value: String(backendProfile.totalHours || 0), label: 'часов добра', Icon: Clock},
+    {id: 'karma', value: (backendProfile.karmaPoints || 0).toLocaleString('ru-RU'), label: 'баллов кармы', Icon: Star},
+    {id: 'events', value: String(backendProfile.eventCount || 0), label: 'события', Icon: Calendar},
+    {id: 'achievements', value: String(backendProfile.achievements?.length || 0), label: 'ачивок', Icon: Trophy},
+  ];
+
+  const achievements = (backendProfile.achievements || [])
+    .slice(0, 5) // Profile page shows 5 recent achievements
+    .map((userAchievement: any) => ({
+      id: userAchievement.achievement.id,
+      name: userAchievement.achievement.name,
+      Icon: getIcon(userAchievement.achievement.icon || 'default'),
+    }));
+
   return {
-    ...backendProfile,
+    firstName: backendProfile.firstName || 'Пользователь',
+    lastName: backendProfile.lastName || '',
+    avatarUrl: backendProfile.avatarUrl || `https://i.pravatar.cc/150?u=${supabaseUser.id}`,
+    about: backendProfile.about || '',
+    level: backendProfile.level || 'Новичок',
+    progress: backendProfile.progress || 0,
+    nextLevel: backendProfile.nextLevel || 'Активист',
     role: backendProfile.role || 'volunteer',
+    organizationId: backendProfile.organizationId,
+    stats: stats,
+    achievements: achievements,
   };
 };
 
@@ -68,7 +114,7 @@ export const register = async (userData: {
 
   await new Promise(resolve => setTimeout(resolve, 1500));
 
-  const profileResponse = await fetch(`${API_BASE_URL}/profile/me`, {
+  const profileResponse = await fetch(`${process.env.VITE_API_BASE_URL}/profile/me`, {
     headers: {'Authorization': `Bearer ${data.session.access_token}`}
   });
 
@@ -100,7 +146,7 @@ export const getCurrentSession = async (): Promise<{ user: User; token: string }
   }
 
   try {
-    const profileResponse = await fetch(`${API_BASE_URL}/profile/me`, {
+    const profileResponse = await fetch(`${process.env.VITE_API_BASE_URL}/profile/me`, {
       headers: {'Authorization': `Bearer ${data.session.access_token}`}
     });
 
