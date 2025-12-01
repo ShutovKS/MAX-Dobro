@@ -226,6 +226,7 @@ const LessonPage: React.FC<{
       if (result.isPassed) {
         saveLessonProgress(courseId, lessonId);
         if (isThisTheFinalTest) {
+          course.program.forEach(l => saveLessonProgress(courseId, l.id));
           localStorage.removeItem(storageKey);
           setTimeout(() => {
             setShowResultModal(false);
@@ -411,3 +412,4 @@ const LessonPage: React.FC<{
 };
 
 export default LessonPage;
+
