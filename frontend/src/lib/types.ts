@@ -230,6 +230,8 @@ export type ChatMessage = {
   event?: AppEvent;
   suggestions?: string[];
   actions?: { label: string; route: string }[];
+  variant?: 'default' | 'tip' | 'system';
+  timestamp?: string;
 };
 
 export type EventChatMessage = {
