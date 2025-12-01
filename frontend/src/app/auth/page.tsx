@@ -40,7 +40,7 @@ const LoginView: React.FC<{
       await logout();
       const initData = getMaxInitData();
       if (!initData) {
-        if (import.meta.env.DEV && import.meta.env.VITE_API_MODE === 'mock') {
+        if (import.meta.env.VITE_API_MODE === 'mock') {
           console.warn('MAX initData not found. Using mock volunteer login.');
           const session = await login('volunteer@test.com', 'password');
           onAuthSuccess(session);
@@ -82,7 +82,7 @@ const LoginView: React.FC<{
     setIsLoading(true);
     try {
       await logout();
-      if (import.meta.env.DEV && import.meta.env.VITE_API_MODE === 'mock') {
+      if (import.meta.env.VITE_API_MODE === 'mock') {
         console.warn('Using mock organizer login.');
         const session = await login('organizer@test.com', 'password');
         localStorage.setItem('isDemoOrganizer', 'true');
