@@ -173,7 +173,7 @@ export const EventDetailPage: React.FC = () => {
     loadData();
   }, [id]);
 
-  const onBack = () => navigate(-1);
+  const onBack = () => navigate('/app/events');
   const onNavigateProfile = (screen: ProfileSubScreen) => navigate(`/app/profile/${screen}`);
   const onSelectOrganization = (orgId: number) => navigate(`/app/organizations/${orgId}`);
   const onOpenChat = (evt: AppEvent) => navigate(`/app/events/${evt.id}/chat`);
