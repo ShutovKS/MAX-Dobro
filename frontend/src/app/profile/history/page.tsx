@@ -9,80 +9,87 @@ import ReviewModal from '../../../features/reviews/components/ReviewModal';
 import EmptyState from '../../../components/ui/EmptyState';
 import CancelModal from '../../../components/ui/CancelModal';
 import {MESSAGES} from '../../../lib/constants';
+import {iconMap} from '../../../lib/iconMap';
 
 const UpcomingEventCard: React.FC<{
   event: HistoryEvent;
   onCancelClick: () => void;
   onSelect: (id: number) => void;
-}> = ({event, onCancelClick, onSelect}) => (
-  <div className="bg-white rounded-2xl shadow-md p-4 w-full">
-    <div className="flex items-start space-x-4">
-      <div className="w-16 h-16 flex-shrink-0 bg-blue-100 rounded-xl flex items-center justify-center">
-        <event.Icon className="w-10 h-10 text-[#007AFF]"/>
+}> = ({event, onCancelClick, onSelect}) => {
+  const IconComponent = iconMap[event.icon] || CheckCircle;
+  return (
+    <div className="bg-white rounded-2xl shadow-md p-4 w-full">
+      <div className="flex items-start space-x-4">
+        <div className="w-16 h-16 flex-shrink-0 bg-blue-100 rounded-xl flex items-center justify-center">
+          <IconComponent className="w-10 h-10 text-[#007AFF]"/>
+        </div>
+        <div className="flex-1 text-left">
+          <h3 className="font-bold text-md text-[#0C0D0E]">{event.title}</h3>
+          <p className="text-sm text-gray-500 mt-1">{event.date}</p>
+          <p className="text-sm text-gray-500">{event.location}</p>
+        </div>
       </div>
-      <div className="flex-1 text-left">
-        <h3 className="font-bold text-md text-[#0C0D0E]">{event.title}</h3>
-        <p className="text-sm text-gray-500 mt-1">{event.date}</p>
-        <p className="text-sm text-gray-500">{event.location}</p>
+      <div className="mt-4 pt-4 border-t border-gray-100 flex space-x-2">
+        <button
+          onClick={onCancelClick}
+          className="flex-1 text-sm font-semibold py-2 px-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+          Отменить запись
+        </button>
+        <button onClick={() => onSelect(event.id)}
+                className="flex-1 text-sm font-semibold py-2 px-3 rounded-lg bg-[#007AFF] text-white hover:bg-blue-600 transition-colors">
+          Подробнее
+        </button>
       </div>
     </div>
-    <div className="mt-4 pt-4 border-t border-gray-100 flex space-x-2">
-      <button
-        onClick={onCancelClick}
-        className="flex-1 text-sm font-semibold py-2 px-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
-        Отменить запись
-      </button>
-      <button onClick={() => onSelect(event.id)}
-              className="flex-1 text-sm font-semibold py-2 px-3 rounded-lg bg-[#007AFF] text-white hover:bg-blue-600 transition-colors">
-        Подробнее
-      </button>
-    </div>
-  </div>
-);
+  );
+};
 
 const PastEventCard: React.FC<{
   event: HistoryEvent;
   onReviewClick: () => void;
   onSelect: (id: number) => void;
   onStoryClick: () => void;
-}> = ({event, onReviewClick, onSelect, onStoryClick}) => (
-  <div className="bg-white rounded-2xl shadow-sm p-4 w-full opacity-90 event-card-print">
-    <button onClick={() => onSelect(event.id)} className="flex items-start space-x-4 w-full text-left">
-      <div className="relative w-16 h-16 flex-shrink-0 bg-gray-100 rounded-xl flex items-center justify-center">
-        <event.Icon className="w-10 h-10 text-gray-400"/>
-        <div className="absolute -top-1 -right-1 bg-[#1ABE43] text-white rounded-full print:hidden">
-          <CheckCircle className="w-5 h-5"/>
-        </div>
-      </div>
-      <div className="flex-1 text-left">
-        <h3 className="font-bold text-md text-gray-700">{event.title}</h3>
-        <p className="text-sm text-gray-500 mt-1">{event.date}</p>
-        {event.role && (
-          <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
-            <UserCircle className="w-4 h-4"/>
-            <span>Роль: {event.role}</span>
+}> = ({event, onReviewClick, onSelect, onStoryClick}) => {
+  const IconComponent = iconMap[event.icon] || CheckCircle;
+  return (
+    <div className="bg-white rounded-2xl shadow-sm p-4 w-full opacity-90 event-card-print">
+      <button onClick={() => onSelect(event.id)} className="flex items-start space-x-4 w-full text-left">
+        <div className="relative w-16 h-16 flex-shrink-0 bg-gray-100 rounded-xl flex items-center justify-center">
+          <IconComponent className="w-10 h-10 text-gray-400"/>
+          <div className="absolute -top-1 -right-1 bg-[#1ABE43] text-white rounded-full print:hidden">
+            <CheckCircle className="w-5 h-5"/>
           </div>
-        )}
-        <div className="flex space-x-4 mt-2">
-          <span className="text-sm font-semibold text-[#1ABE43]">+{event.rewards?.hours} часа добра</span>
-          <span className="text-sm font-semibold text-[#FF9315]">+{event.rewards?.karma} кармы</span>
         </div>
+        <div className="flex-1 text-left">
+          <h3 className="font-bold text-md text-gray-700">{event.title}</h3>
+          <p className="text-sm text-gray-500 mt-1">{event.date}</p>
+          {event.role && (
+            <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
+              <UserCircle className="w-4 h-4"/>
+              <span>Роль: {event.role}</span>
+            </div>
+          )}
+          <div className="flex space-x-4 mt-2">
+            <span className="text-sm font-semibold text-[#1ABE43]">+{event.rewards?.hours} часа добра</span>
+            <span className="text-sm font-semibold text-[#FF9315]">+{event.rewards?.karma} кармы</span>
+          </div>
+        </div>
+      </button>
+      <div className="mt-3 pt-3 border-t border-gray-100 print:hidden flex space-x-2">
+        <button
+          onClick={onReviewClick}
+          className="flex-1 text-sm font-semibold py-2 px-3 rounded-lg bg-transparent border-2 border-[#007AFF] text-[#007AFF] hover:bg-blue-50 transition-colors">
+          Оставить отзыв
+        </button>
+        <button
+          onClick={onStoryClick}
+          className="flex-1 text-sm font-semibold py-2 px-3 rounded-lg bg-[#007AFF] text-white hover:bg-blue-600 transition-colors">
+          Рассказать историю
+        </button>
       </div>
-    </button>
-    <div className="mt-3 pt-3 border-t border-gray-100 print:hidden flex space-x-2">
-      <button
-        onClick={onReviewClick}
-        className="flex-1 text-sm font-semibold py-2 px-3 rounded-lg bg-transparent border-2 border-[#007AFF] text-[#007AFF] hover:bg-blue-50 transition-colors">
-        Оставить отзыв
-      </button>
-      <button
-        onClick={onStoryClick}
-        className="flex-1 text-sm font-semibold py-2 px-3 rounded-lg bg-[#007AFF] text-white hover:bg-blue-600 transition-colors">
-        Рассказать историю
-      </button>
     </div>
-  </div>
-);
+  );
+};
 
 const ActivityHistoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -263,3 +270,4 @@ const ActivityHistoryPage: React.FC = () => {
 };
 
 export default ActivityHistoryPage;
+

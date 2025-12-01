@@ -112,7 +112,7 @@ const LeaderboardPage: React.FC<{ user: User; onBack: () => void; }> = ({user, o
     const loadData = async () => {
       setLoading(true);
       const leaderboardData = await fetchLeaderboardData(activeTab);
-      const updatedData = leaderboardData.map(u =>
+      const updatedData = leaderboardData.topUsers.map(u =>
         u.id === CURRENT_USER_ID ? {...u, name: `${user.firstName} ${user.lastName}`} : u
       );
       setData(updatedData);

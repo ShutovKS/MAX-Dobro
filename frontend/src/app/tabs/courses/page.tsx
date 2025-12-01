@@ -6,6 +6,7 @@ import {CheckCircle, Clock, GraduationCap, SearchX} from 'lucide-react';
 import {NatureProtectorIcon} from '../../../components/ui/icons';
 import EmptyState from '../../../components/ui/EmptyState';
 import {COURSE_CATEGORIES} from '../../../lib/constants';
+import {iconMap} from '../../../lib/iconMap';
 
 const CourseSkeletonCard: React.FC = () => (
   <div className="bg-white rounded-2xl shadow-md p-4 flex items-center space-x-4 animate-pulse w-full">
@@ -19,43 +20,46 @@ const CourseSkeletonCard: React.FC = () => (
   </div>
 );
 
-const CourseCard: React.FC<{ course: Course; onSelect: () => void; }> = React.memo(({course, onSelect}) => (
-  <button onClick={onSelect}
-          className="bg-white rounded-2xl shadow-md p-4 flex items-center space-x-4 w-full text-left transition-transform duration-200 active:scale-95">
-    <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-xl flex items-center justify-center">
-      <course.Icon className="w-14 h-14"/>
-    </div>
-    <div className="flex-1">
-      <h3 className="font-bold text-lg text-[#0C0D0E]">{course.title}</h3>
-      <p className="text-sm text-[rgb(12,13,14,0.52)] mt-1">{course.description}</p>
-      <div className="flex items-center space-x-4 text-xs text-[rgb(12,13,14,0.52)] mt-2">
-        <div className="flex items-center space-x-1">
-          <Clock className="w-4 h-4"/>
-          <span>{course.duration}</span>
-        </div>
-        {course.hasCertificate && (
+const CourseCard: React.FC<{ course: Course; onSelect: () => void; }> = React.memo(({course, onSelect}) => {
+  const IconComponent = iconMap[course.icon] || GraduationCap;
+  return (
+    <button onClick={onSelect}
+            className="bg-white rounded-2xl shadow-md p-4 flex items-center space-x-4 w-full text-left transition-transform duration-200 active:scale-95">
+      <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-xl flex items-center justify-center">
+        <IconComponent className="w-14 h-14"/>
+      </div>
+      <div className="flex-1">
+        <h3 className="font-bold text-lg text-[#0C0D0E]">{course.title}</h3>
+        <p className="text-sm text-[rgb(12,13,14,0.52)] mt-1">{course.description}</p>
+        <div className="flex items-center space-x-4 text-xs text-[rgb(12,13,14,0.52)] mt-2">
           <div className="flex items-center space-x-1">
-            <GraduationCap className="w-4 h-4"/>
-            <span>Сертификат</span>
+            <Clock className="w-4 h-4"/>
+            <span>{course.duration}</span>
+          </div>
+          {course.hasCertificate && (
+            <div className="flex items-center space-x-1">
+              <GraduationCap className="w-4 h-4"/>
+              <span>Сертификат</span>
+            </div>
+          )}
+        </div>
+        {course.status === 'in-progress' && (
+          <div className="mt-3">
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
+              <div className="bg-[#007AFF] h-1.5 rounded-full" style={{width: `${course.progress}%`}}></div>
+            </div>
+          </div>
+        )}
+        {course.status === 'completed' && (
+          <div className="flex items-center space-x-1 text-[#1ABE43] mt-2 font-semibold text-sm">
+            <CheckCircle className="w-5 h-5"/>
+            <span>Курс пройден</span>
           </div>
         )}
       </div>
-      {course.status === 'in-progress' && (
-        <div className="mt-3">
-          <div className="w-full bg-gray-200 rounded-full h-1.5">
-            <div className="bg-[#007AFF] h-1.5 rounded-full" style={{width: `${course.progress}%`}}></div>
-          </div>
-        </div>
-      )}
-      {course.status === 'completed' && (
-        <div className="flex items-center space-x-1 text-[#1ABE43] mt-2 font-semibold text-sm">
-          <CheckCircle className="w-5 h-5"/>
-          <span>Курс пройден</span>
-        </div>
-      )}
-    </div>
-  </button>
-));
+    </button>
+  );
+});
 
 const CoursesPage: React.FC = () => {
   const navigate = useNavigate();

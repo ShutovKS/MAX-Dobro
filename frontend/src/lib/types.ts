@@ -19,7 +19,7 @@ export type AppEvent = {
   category: string;
   date: string;
   location: string;
-  Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  icon: string;
   pos: { top: string; left: string };
   requirements?: string[];
   participantCount?: number;
@@ -71,7 +71,7 @@ export type Course = {
   duration: string;
   hasCertificate: boolean;
   category: string;
-  Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  icon: string;
   status: 'completed' | 'in-progress' | 'not-started';
   progress: number;
   level: 'Для новичков' | 'Средний' | 'Продвинутый';
@@ -148,7 +148,7 @@ export type Achievement = {
   id: number;
   name: string;
   description: string;
-  Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  icon: string;
   unlocked: boolean;
   unlockedDate?: string;
   progress?: number;
@@ -179,12 +179,12 @@ export type User = {
     id: string;
     value: string;
     label: string;
-    Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+    icon: string;
   }[];
   achievements: {
     id: number;
     name: string;
-    Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+    icon: string;
   }[];
 };
 
@@ -249,7 +249,7 @@ export type MyChatItem = {
   id: number;
   eventId: number;
   eventTitle: string;
-  Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  icon: string;
   lastMessage: string;
   timestamp: string;
   unreadCount: number;
@@ -276,7 +276,7 @@ export type WeeklyChallenge = {
   title: string;
   description: string;
   reward: string;
-  Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  icon: string;
   progress: number;
   target: number;
   filterCategory: string;

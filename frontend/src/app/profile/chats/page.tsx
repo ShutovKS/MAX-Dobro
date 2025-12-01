@@ -5,32 +5,36 @@ import type {MyChatItem} from '../../../lib/types';
 import {ArrowLeft, Search, X} from 'lucide-react';
 import {EmptyChatIllustrationIcon} from '../../../components/ui/icons';
 import EmptyState from '../../../components/ui/EmptyState';
+import {iconMap} from '../../../lib/iconMap';
 
-const ChatCell: React.FC<{ chat: MyChatItem; onSelect: () => void }> = ({chat, onSelect}) => (
-  <button onClick={onSelect}
-          className="w-full flex items-start px-4 text-left space-x-4 hover:bg-gray-50 transition-colors">
-    <div className="relative flex-shrink-0 py-3">
-      <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center">
-        <chat.Icon className="w-8 h-8 text-gray-500"/>
+const ChatCell: React.FC<{ chat: MyChatItem; onSelect: () => void }> = ({chat, onSelect}) => {
+  const IconComponent = iconMap[chat.icon] || Search;
+  return (
+    <button onClick={onSelect}
+            className="w-full flex items-start px-4 text-left space-x-4 hover:bg-gray-50 transition-colors">
+      <div className="relative flex-shrink-0 py-3">
+        <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center">
+          <IconComponent className="w-8 h-8 text-gray-500"/>
+        </div>
       </div>
-    </div>
-    <div className="flex-1 min-w-0 border-t border-gray-100 py-3 flex flex-col justify-center">
-      <div className="flex justify-between items-start">
-        <p className="font-bold text-md text-[#0C0D0E] truncate pr-2">{chat.eventTitle}</p>
-        <p className="text-xs text-gray-400 flex-shrink-0">{chat.timestamp}</p>
-      </div>
-      <div className="flex justify-between items-start mt-1">
-        <p className="text-sm text-[rgb(12,13,14,0.52)] truncate pr-2">{chat.lastMessage}</p>
-        {chat.unreadCount > 0 && (
-          <span
-            className="bg-[#007AFF] text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full flex-shrink-0">
+      <div className="flex-1 min-w-0 border-t border-gray-100 py-3 flex flex-col justify-center">
+        <div className="flex justify-between items-start">
+          <p className="font-bold text-md text-[#0C0D0E] truncate pr-2">{chat.eventTitle}</p>
+          <p className="text-xs text-gray-400 flex-shrink-0">{chat.timestamp}</p>
+        </div>
+        <div className="flex justify-between items-start mt-1">
+          <p className="text-sm text-[rgb(12,13,14,0.52)] truncate pr-2">{chat.lastMessage}</p>
+          {chat.unreadCount > 0 && (
+            <span
+              className="bg-[#007AFF] text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full flex-shrink-0">
                         {chat.unreadCount}
                     </span>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  </button>
-);
+    </button>
+  );
+};
 
 
 const MyChatsPage: React.FC = () => {

@@ -6,6 +6,7 @@ import { ArrowLeft, Lock } from 'lucide-react';
 import { EmptyShelfIllustrationIcon } from '../../../components/ui/icons';
 import AchievementDetailModal from '../../../features/achievements/components/AchievementDetailModal';
 import EmptyState from '../../../components/ui/EmptyState';
+import {iconMap} from '../../../lib/iconMap';
 
 const CircularProgressBar: React.FC<{ progress: number; size: number; strokeWidth: number; }> = ({
                                                                                                    progress,
@@ -48,11 +49,12 @@ const CircularProgressBar: React.FC<{ progress: number; size: number; strokeWidt
 
 const AchievementBadge: React.FC<{ achievement: Achievement }> = ({achievement}) => {
   if (achievement.unlocked) {
+    const IconComponent = iconMap[achievement.icon] || Lock;
     return (
       <div className="flex flex-col items-center text-center">
         <div
           className="w-24 h-24 rounded-full bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] flex items-center justify-center shadow-md mb-2">
-          <achievement.Icon className="w-14 h-14 text-white"/>
+          <IconComponent className="w-14 h-14 text-white"/>
         </div>
         <h4 className="font-bold text-sm text-[#0C0D0E]">{achievement.name}</h4>
       </div>

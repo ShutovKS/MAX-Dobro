@@ -53,14 +53,16 @@ export const getCurrentSession = (): Promise<{ user: User; token: string } | nul
       if (sessionJson) {
         try {
           const session = JSON.parse(sessionJson);
-          // Check for new format { user, token }
+          let user: User;
           if (session.user && session.token) {
-            resolve(session);
+            user = session.user;
           } else {
-            // This handles old data format where session was just the user object
-            const user = session as User;
-            resolve({user, token: 'mock-retrieved-token'});
+            user = session as User;
           }
+          if (user.achievements && user.achievements.length > 0 && !user.achievements[0].icon) {
+            user.achievements = defaultUserData.achievements;
+          }
+          resolve({user, token: session.token || 'mock-retrieved-token'});
         } catch (e) {
           localStorage.removeItem(USER_SESSION_KEY);
           resolve(null);

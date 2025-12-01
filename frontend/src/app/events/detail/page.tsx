@@ -15,6 +15,7 @@ import NewAchievementModal from '../../../components/ui/NewAchievementModal';
 import CancelModal from '../../../components/ui/CancelModal';
 import InteractiveMap from '../../../components/ui/InteractiveMap';
 import {FIRST_STEP_ACHIEVEMENT_ID, MESSAGES, MODAL_TRANSITION_DURATION} from '../../../lib/constants';
+import {iconMap} from '../../../lib/iconMap';
 
 const ConfirmationModal: React.FC<{
   isOpen: boolean;
@@ -236,7 +237,10 @@ export const EventDetailPage: React.FC = () => {
         </header>
         <div
           className="h-[40vh] w-full bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] flex items-center justify-center">
-          <event.Icon className="w-32 h-32 text-white/60"/>
+          {(() => {
+            const IconComponent = iconMap[event.icon] || Star;
+            return <IconComponent className="w-32 h-32 text-white/60"/>;
+          })()}
         </div>
         <div className="relative bg-white rounded-t-2xl -mt-6 p-6 space-y-6">
           <section>

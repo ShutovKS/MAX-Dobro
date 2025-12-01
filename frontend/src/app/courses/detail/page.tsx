@@ -12,6 +12,7 @@ import {
   Share2,
   User,
 } from 'lucide-react';
+import { iconMap } from '../../../lib/iconMap';
 
 const getLessonProgress = (courseId: number): number[] => {
   const storageKey = `course_progress_${courseId}`;
@@ -172,7 +173,10 @@ const CourseDetailPage: React.FC<{
       </header>
 
       <div className="h-[40vh] w-full bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] flex flex-col items-center justify-center text-center p-4">
-        <course.Icon className="w-24 h-24 text-white/60 mb-4" />
+        {(() => {
+          const IconComponent = iconMap[course.icon] || GraduationCap;
+          return <IconComponent className="w-24 h-24 text-white/60 mb-4" />;
+        })()}
         <h1 className="text-3xl font-bold text-white shadow-sm">{course.title}</h1>
       </div>
 

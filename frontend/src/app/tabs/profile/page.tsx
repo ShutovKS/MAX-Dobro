@@ -14,16 +14,18 @@ import {
 } from 'lucide-react';
 import WeeklyChallengeWidget from '../../../features/challenges/components/WeeklyChallengeWidget';
 import {fetchWeeklyChallenge} from '../../../lib/api';
+import {iconMap} from '../../../lib/iconMap';
 
 const StatCard: React.FC<{
   value: string;
   label: string;
-  Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  icon: string;
   onClick?: () => void;
-}> = React.memo(({value, label, Icon, onClick}) => {
+}> = React.memo(({value, label, icon, onClick}) => {
+  const IconComponent = iconMap[icon] || Star;
   const content = (
     <div className="bg-gray-50 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-full">
-      <Icon className="w-8 h-8 text-[#007AFF] mb-2"/>
+      <IconComponent className="w-8 h-8 text-[#007AFF] mb-2"/>
       <span className="text-2xl font-bold text-[#0C0D0E]">{value}</span>
       <span className="text-sm text-[rgb(12,13,14,0.52)] leading-tight">{label}</span>
     </div>
@@ -35,15 +37,18 @@ const StatCard: React.FC<{
   return content;
 });
 
-const AchievementBadge: React.FC<{ achievement: User['achievements'][0] }> = React.memo(({achievement}) => (
-  <div className="flex-shrink-0 w-24 text-center">
-    <div
-      className="w-20 h-20 mx-auto rounded-full bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] flex items-center justify-center shadow-md mb-1">
-      <achievement.Icon className="w-12 h-12 text-white"/>
+const AchievementBadge: React.FC<{ achievement: User['achievements'][0] }> = React.memo(({achievement}) => {
+  const IconComponent = iconMap[achievement.icon] || Star;
+  return (
+    <div className="flex-shrink-0 w-24 text-center">
+      <div
+        className="w-20 h-20 mx-auto rounded-full bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] flex items-center justify-center shadow-md mb-1">
+        <IconComponent className="w-12 h-12 text-white"/>
+      </div>
+      <span className="text-xs font-semibold text-[rgb(12,13,14,0.52)]">{achievement.name}</span>
     </div>
-    <span className="text-xs font-semibold text-[rgb(12,13,14,0.52)]">{achievement.name}</span>
-  </div>
-));
+  );
+});
 
 const ProfilePage: React.FC = () => {
   const {user, onSwitchToOrganizationMode} = useOutletContext<{ user: User, onSwitchToOrganizationMode: () => void }>();

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Achievement } from '../../../lib/types';
 import { Lock } from 'lucide-react';
+import { iconMap } from '../../../lib/iconMap';
 
 const AchievementDetailModal: React.FC<{
   achievement: Achievement | null;
@@ -9,6 +10,7 @@ const AchievementDetailModal: React.FC<{
 }> = ({ achievement, onClose, onNavigateWithFilter }) => {
   if (!achievement) return null;
 
+  const IconComponent = iconMap[achievement.icon] || Lock;
   const progressPercentage =
     achievement.progress !== undefined && achievement.target
       ? (achievement.progress / achievement.target) * 100
@@ -30,7 +32,7 @@ const AchievementDetailModal: React.FC<{
         {achievement.unlocked ? (
           <>
             <div className="w-32 h-32 rounded-full bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] flex items-center justify-center shadow-lg -mt-20 mb-2 animate-pop-in">
-              <achievement.Icon className="w-20 h-20 text-white" />
+              <IconComponent className="w-20 h-20 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-[#0C0D0E]">
               {achievement.name}

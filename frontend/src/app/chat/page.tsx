@@ -218,7 +218,7 @@ const getMockAssistantResponse = async (text: string): Promise<ChatMessage> => {
 
   let payload: Partial<ChatMessage> | undefined;
   if (intent) {
-    payload = await intent.responder(text, processed);
+    payload = await intent.responder(text, processed) as Partial<ChatMessage>;
   }
 
   if (!payload) {
