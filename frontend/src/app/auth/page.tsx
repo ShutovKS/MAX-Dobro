@@ -82,6 +82,13 @@ const LoginView: React.FC<{
     setIsLoading(true);
     try {
       await logout();
+      if (import.meta.env.DEV && import.meta.env.VITE_API_MODE === 'mock') {
+        console.warn('Using mock organizer login.');
+        const session = await login('organizer@test.com', 'password');
+        localStorage.setItem('isDemoOrganizer', 'true');
+        onAuthSuccess(session);
+        return;
+      }
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/auth/demo-organizer-login`,
         { method: 'POST' },
