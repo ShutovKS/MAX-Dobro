@@ -18,6 +18,16 @@ const dailyDeeds = [
   '🐾 *Идея:* Погладь котика (если он не против).',
 ];
 
+const authorsText = `👨‍💻 *Команда MAX Добро*
+
+Мы создали этот проект, чтобы технологии помогали делать добрые дела проще и интереснее.
+
+• Михаил Данилов ([GitHub](https://github.com/seaG7))
+• Кирилл Корнилов ([GitHub](https://github.com/krl76))
+• Шутов Кирилл ([GitHub](https://github.com/ShutovKS))
+
+Сделано с любовью к коду и людям ❤️`;
+
 bot.start((ctx) => {
   const userName = ctx.from.first_name;
   ctx.reply(
@@ -53,6 +63,10 @@ bot.command('idea', (ctx) => {
   ctx.reply(randomDeed, {parse_mode: 'Markdown'});
 });
 
+bot.command('authors', (ctx) => {
+  ctx.reply(authorsText, {parse_mode: 'Markdown'});
+});
+
 bot.on('message', (ctx: any) => {
   if (ctx.message.web_app_data) {
     ctx.reply(`Получены данные из приложения: ${ctx.message.web_app_data.data}`);
@@ -67,6 +81,12 @@ bot.on('message', (ctx: any) => {
 
 bot.launch().then(() => {
   console.log('Telegram Bot started');
+  bot.telegram.setMyCommands([
+    {command: 'start', description: 'Запустить бота'},
+    {command: 'idea', description: 'Получить идею доброго дела'},
+    {command: 'authors', description: 'О разработчиках'},
+    {command: 'help', description: 'Справка'}
+  ]);
 });
 
 process.once('SIGINT', () => bot.stop('SIGINT'));

@@ -34,6 +34,16 @@ const helpMessage = `🆘 **Центр поддержки героев**
 
 Есть вопросы? Жми /info или запускай приложение!`;
 
+const authorsText = `👨‍💻 **Команда MAX Добро**
+
+Мы создали этот проект, чтобы технологии помогали делать добрые дела проще и интереснее.
+
+• Михаил Данилов
+• Кирилл Корнилов
+• Шутов Кирилл
+
+Сделано с любовью к коду и людям ❤️`;
+
 
 bot.on('bot_started', (ctx: Context) => {
   const userName = ctx.user?.name || 'Герой';
@@ -71,12 +81,20 @@ bot.command('idea', (ctx: Context) => {
   });
 });
 
+bot.command('authors', (ctx: Context) => {
+  ctx.reply(authorsText, {attachments: [mainKeyboard], format: 'markdown'});
+});
+
 bot.hears(/(привет|хай|ку)/i, (ctx: Context) => {
   ctx.reply('Салют! 👋 Готов сделать мир лучше сегодня?', {attachments: [mainKeyboard]});
 });
 
 bot.hears(/(пока|до свид)/i, (ctx: Context) => {
   ctx.reply('До встречи! Не забывай: добро всегда возвращается. ✨');
+});
+
+bot.hears(/(авторы|разработчики|команда|кто сделал)/i, (ctx: Context) => {
+  ctx.reply(authorsText, {attachments: [mainKeyboard], format: 'markdown'});
 });
 
 bot.on('message_created', (ctx: Context) => {
@@ -91,6 +109,7 @@ bot.api.setMyCommands([
   {name: 'start', description: '🚀 Главное меню'},
   {name: 'idea', description: '💡 Идея доброго дела'},
   {name: 'help', description: '❓ Что это такое?'},
+  {name: 'authors', description: '👨‍💻 О разработчиках'},
 ]);
 
 bot.start();
