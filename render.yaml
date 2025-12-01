@@ -1,13 +1,29 @@
 services:
+  # --- Сервис 1: MAX Бот ---
   - type: web
     name: max-dobro-bot
     env: node
     plan: free
-    rootDir: chat-bot
+    rootDir: bot-max           # Указываем папку с MAX ботом
     buildCommand: "npm install && npm run build"
     startCommand: "npm start"
     envVars:
-      - key: BOT_TOKEN
+      - key: MAX_BOT_TOKEN
         sync: false
-      - key: BOT_NAME
+      - key: MAX_BOT_NAME
+        sync: false
+      - key: MINI_APP_URL
+        sync: false
+  # --- Сервис 2: Telegram Бот ---
+  - type: web
+    name: tg-dobro-bot
+    env: node
+    plan: free
+    rootDir: bot-telegram       # Указываем папку с TG ботом
+    buildCommand: "npm install && npm run build"
+    startCommand: "npm start"
+    envVars:
+      - key: TG_BOT_TOKEN
+        sync: false
+      - key: MINI_APP_URL
         sync: false
