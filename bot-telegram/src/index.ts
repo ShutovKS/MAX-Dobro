@@ -79,16 +79,25 @@ bot.on('message', (ctx: any) => {
   }
 });
 
-// Настраивается в панели Telegram BotFather
-// bot.launch().then(() => {
-//   console.log('Telegram Bot started');
-//   bot.telegram.setMyCommands([
-//     {command: 'start', description: 'Запустить бота'},
-//     {command: 'idea', description: 'Получить идею доброго дела'},
-//     {command: 'authors', description: 'О разработчиках'},
-//     {command: 'help', description: 'Справка'}
-//   ]);
-// });
+async function startBot() {
+  try {
+    await bot.telegram.setMyCommands([
+      { command: 'start', description: '🚀 Запустить бота' },
+      { command: 'idea', description: '💡 Идея доброго дела' },
+      { command: 'authors', description: '👨‍💻 О разработчиках' },
+      { command: 'help', description: '❓ Справка' }
+    ]);
+    console.log('✅ Команды успешно обновлены в Telegram');
+
+    await bot.launch();
+    console.log('🤖 Telegram Bot started');
+  } catch (error) {
+    console.error('❌ Ошибка при запуске:', error);
+  }
+}
+
+startBot();
+
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
