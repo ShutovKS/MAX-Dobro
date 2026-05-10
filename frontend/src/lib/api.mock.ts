@@ -194,6 +194,10 @@ export const fetchUserAchievements = (): Promise<Achievement[]> => {
   return simulateRequest(allAchievements);
 };
 
+export const createEventReview = (): Promise<void> => {
+  return simulateRequest(undefined);
+};
+
 export const fetchMyChats = (): Promise<MyChatItem[]> => {
   return simulateRequest(myChatsData);
 };
@@ -205,6 +209,45 @@ export const fetchAllStories = (): Promise<Story[]> => {
 export const fetchStoryById = (id: number): Promise<Story | undefined> => {
   const story = allStories.find((s) => s.id === id);
   return simulateRequest(story);
+};
+
+export const createStory = (
+  eventId: number,
+  text: string,
+  imageUrl: string,
+): Promise<Story> => {
+  const story: Story = {
+    id: Date.now(),
+    author: { name: 'Вы', avatarUrl: 'https://i.pravatar.cc/48?img=1' },
+    timestamp: 'только что',
+    event: { id: eventId, name: allEvents.find((event) => event.id === eventId)?.title ?? 'Событие' },
+    text,
+    imageUrl,
+    likes: 0,
+    comments: 0,
+    commentsData: [],
+    isLiked: false,
+  };
+  allStories.unshift(story);
+  return simulateRequest(story);
+};
+
+export const likeStory = (storyId: number): Promise<void> => {
+  const story = allStories.find((item) => item.id === storyId);
+  if (story && !story.isLiked) {
+    story.likes += 1;
+    story.isLiked = true;
+  }
+  return simulateRequest(undefined);
+};
+
+export const unlikeStory = (storyId: number): Promise<void> => {
+  const story = allStories.find((item) => item.id === storyId);
+  if (story?.isLiked) {
+    story.likes = Math.max(0, story.likes - 1);
+    story.isLiked = false;
+  }
+  return simulateRequest(undefined);
 };
 
 export const fetchRewards = (): Promise<RewardItem[]> => {
@@ -244,6 +287,40 @@ export const fetchEventChatMessages = (
   eventId: number,
 ): Promise<EventChatMessage[]> => {
   return simulateRequest(mockEventChatMessages);
+};
+
+export const postEventChatMessage = (
+  eventId: number,
+  text: string,
+): Promise<EventChatMessage> => {
+  const message: EventChatMessage = {
+    id: Date.now(),
+    author: { id: CURRENT_USER_ID, name: 'Вы', avatarUrl: 'https://i.pravatar.cc/48?img=1' },
+    text,
+    timestamp: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+  };
+  mockEventChatMessages.push(message);
+  return simulateRequest(message);
+};
+
+export const fetchAssistantChatMessages = (): Promise<[]> => {
+  return simulateRequest([]);
+};
+
+export const postAssistantMessage = (text: string) => {
+  const processed = text.toLowerCase();
+  const responseText = processed.includes('событи')
+    ? 'Могу помочь подобрать событие. Откройте ленту событий и уточните интересующую категорию.'
+    : processed.includes('курс')
+      ? 'В разделе обучения есть курсы для новичков и тематические материалы.'
+      : 'Я пока не понял запрос. Может, вас интересуют события или курсы?';
+  return simulateRequest({
+    id: Date.now(),
+    sender: 'assistant' as const,
+    type: 'text' as const,
+    text: responseText,
+    timestamp: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+  });
 };
 
 export const fetchOrganizationDashboardStats = (): Promise<OrganizationStat[]> => {

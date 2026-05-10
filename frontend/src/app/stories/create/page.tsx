@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import type {HistoryEvent} from '../../../lib/types';
-import {fetchActivityHistoryEvents} from '../../../lib/api';
+import {createStory, fetchActivityHistoryEvents} from '../../../lib/api';
 import {Plus, X} from 'lucide-react';
 import SelectEventModal from './SelectEventModal';
 
@@ -38,8 +38,9 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
     setPhotos(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  const handlePublishClick = () => {
+  const handlePublishClick = async () => {
     if (isPublishEnabled && selectedEvent) {
+      await createStory(selectedEvent.id, text, photos[0]);
       onPublish({
         event: selectedEvent,
         text,

@@ -2,6 +2,7 @@ import { supabase } from './auth.real';
 import type {
   Achievement,
   AppEvent,
+  ChatMessage,
   Course,
   EventChatMessage,
   EventParticipant,
@@ -184,6 +185,29 @@ const mapCourseData = (courseData: any): Course => {
   };
 };
 
+const mapStoryData = (story: any): Story => ({
+  ...story,
+  timestamp: story.timestamp ?? story.createdAt,
+  event: {
+    id: story.event.id,
+    name: story.event.name ?? story.event.title,
+  },
+  likes: story.likes ?? story.likesCount ?? 0,
+  comments: story.comments ?? story.commentsCount ?? story.commentsData?.length ?? 0,
+  commentsData: story.commentsData ?? [],
+});
+
+const mapAssistantMessage = (message: any): ChatMessage => ({
+  id: message.id,
+  sender: message.sender,
+  type: message.type,
+  text: message.text,
+  event: message.event ? mapEventData(message.event) : undefined,
+  course: message.course ? mapCourseData(message.course) : undefined,
+  suggestions: message.suggestions,
+  timestamp: message.createdAt,
+});
+
 export const fetchAllEvents = async (): Promise<AppEvent[]> => {
   const events = await apiFetch<any[]>('/events');
   return events.map(mapEventData);
@@ -282,12 +306,39 @@ export const fetchMyChats = async (): Promise<MyChatItem[]> => {
   const chats = await apiFetch<any[]>('/profile/chats');
   return chats.map((chat) => ({
     ...chat,
-    Icon: getIconForCategory(chat.category),
+    icon: chat.icon ?? 'Users',
   }));
 };
-export const fetchAllStories = (): Promise<Story[]> => apiFetch('/stories');
-export const fetchStoryById = (id: number): Promise<Story> =>
-  apiFetch(`/stories/${id}`);
+export const createEventReview = (
+  eventId: number,
+  rating: number,
+  text?: string,
+): Promise<void> =>
+  apiFetch(`/events/${eventId}/reviews`, {
+    method: 'POST',
+    body: JSON.stringify({ rating, ...(text?.trim() ? { text: text.trim() } : {}) }),
+  });
+export const fetchAllStories = async (): Promise<Story[]> => {
+  const stories = await apiFetch<any[]>('/stories');
+  return stories.map(mapStoryData);
+};
+export const fetchStoryById = async (id: number): Promise<Story> => {
+  const story = await apiFetch<any>(`/stories/${id}`);
+  return mapStoryData(story);
+};
+export const createStory = (
+  eventId: number,
+  text: string,
+  imageUrl: string,
+): Promise<Story> =>
+  apiFetch('/stories', {
+    method: 'POST',
+    body: JSON.stringify({ eventId, text, imageUrl }),
+  });
+export const likeStory = (storyId: number): Promise<void> =>
+  apiFetch(`/stories/${storyId}/like`, { method: 'POST' });
+export const unlikeStory = (storyId: number): Promise<void> =>
+  apiFetch(`/stories/${storyId}/like`, { method: 'DELETE' });
 export const fetchRewards = (): Promise<RewardItem[]> => apiFetch('/rewards');
 export const purchaseReward = (rewardId: number): Promise<void> =>
   apiFetch(`/rewards/${rewardId}/purchase`, {
@@ -299,6 +350,25 @@ export const fetchFriends = (): Promise<Friend[]> => apiFetch('/friends');
 export const fetchEventChatMessages = (
   eventId: number,
 ): Promise<EventChatMessage[]> => apiFetch(`/events/${eventId}/messages`);
+export const postEventChatMessage = (
+  eventId: number,
+  text: string,
+): Promise<EventChatMessage> =>
+  apiFetch(`/events/${eventId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ text }),
+  });
+export const fetchAssistantChatMessages = async (): Promise<ChatMessage[]> => {
+  const messages = await apiFetch<any[]>('/assistant-chat/messages');
+  return messages.map(mapAssistantMessage).reverse();
+};
+export const postAssistantMessage = async (text: string): Promise<ChatMessage> => {
+  const message = await apiFetch<any>('/assistant-chat/messages', {
+    method: 'POST',
+    body: JSON.stringify({ text }),
+  });
+  return mapAssistantMessage(message);
+};
 export const fetchWeeklyChallenge = async (): Promise<WeeklyChallenge> => {
   const challenge = await apiFetch<
     Omit<WeeklyChallenge, 'Icon'> & { icon?: string | null }

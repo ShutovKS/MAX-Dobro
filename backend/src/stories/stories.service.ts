@@ -103,6 +103,28 @@ export class StoriesService {
     return mappedStory;
   }
 
+  async create(
+    authorId: number,
+    dto: { eventId: number; text: string; imageUrl: string },
+  ) {
+    const event = await this.prisma.event.findUnique({ where: { id: dto.eventId } });
+    if (!event) {
+      throw new NotFoundException(`Event with ID ${dto.eventId} not found`);
+    }
+
+    const story = await this.prisma.story.create({
+      data: {
+        authorId,
+        eventId: dto.eventId,
+        text: dto.text,
+        imageUrl: dto.imageUrl,
+      },
+      include: this.getStoryInclude(authorId),
+    });
+
+    return this.mapStory(story, authorId);
+  }
+
   async likeStory(storyId: number, userId: number): Promise<void> {
     try {
       await this.prisma.storyLike.create({

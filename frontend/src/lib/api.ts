@@ -13,9 +13,6 @@ export const fetchOrganizationDetails = mockApi.fetchOrganizationDetails;
 export const fetchOrganizationEvents = mockApi.fetchOrganizationEvents;
 export const fetchEventParticipants = mockApi.fetchEventParticipants;
 
-export const fetchAllStories = mockApi.fetchAllStories;
-export const fetchStoryById = mockApi.fetchStoryById;
-
 export const {
   fetchAllEvents,
   fetchEventById,
@@ -30,12 +27,21 @@ export const {
   fetchLeaderboardData,
   fetchAllAchievements,
   fetchUserAchievements,
+  createEventReview,
+  fetchAllStories,
+  fetchStoryById,
+  createStory,
+  likeStory,
+  unlikeStory,
+  fetchAssistantChatMessages,
+  postAssistantMessage,
   fetchMyChats,
   fetchRewards,
   purchaseReward,
   fetchMapMarkers,
   fetchFriends,
   fetchEventChatMessages,
+  postEventChatMessage,
   fetchWeeklyChallenge,
   completeCourse,
 } = api;

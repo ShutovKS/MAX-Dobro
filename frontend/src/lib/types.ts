@@ -220,14 +220,16 @@ export type Story = {
   likes: number;
   comments: number;
   commentsData: Comment[];
+  isLiked?: boolean;
 };
 
 export type ChatMessage = {
   id: number;
   sender: 'user' | 'assistant';
-  type: 'text' | 'event-card' | 'suggestion-chips' | 'loading';
+  type: 'text' | 'event-card' | 'course-card' | 'suggestion-chips' | 'loading';
   text?: string;
   event?: AppEvent;
+  course?: Course;
   suggestions?: string[];
   actions?: { label: string; route: string }[];
   variant?: 'default' | 'tip' | 'system';

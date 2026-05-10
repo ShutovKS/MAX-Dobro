@@ -1,12 +1,15 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {useNavigate} from 'react-router';
 import type {Story} from '../../../../lib/types';
+import {likeStory, unlikeStory} from '../../../../lib/api';
 import {Heart, MessageSquare, Upload} from 'lucide-react';
 
 const StoryCard: React.FC<{
   story: Story;
 }> = React.memo(({story}) => {
   const navigate = useNavigate();
+  const [likes, setLikes] = useState(story.likes);
+  const [isLiked, setIsLiked] = useState(story.isLiked ?? false);
 
   const onSelectEvent = (id: number) => {
     navigate(`/app/events/${id}`);
@@ -14,6 +17,22 @@ const StoryCard: React.FC<{
 
   const onSelectStory = (id: number) => {
     navigate(`/app/stories/${id}`);
+  };
+
+  const onToggleLike = async () => {
+    const nextIsLiked = !isLiked;
+    setIsLiked(nextIsLiked);
+    setLikes(prev => Math.max(0, prev + (nextIsLiked ? 1 : -1)));
+    try {
+      if (nextIsLiked) {
+        await likeStory(story.id);
+      } else {
+        await unlikeStory(story.id);
+      }
+    } catch {
+      setIsLiked(!nextIsLiked);
+      setLikes(prev => Math.max(0, prev + (nextIsLiked ? -1 : 1)));
+    }
   };
 
   return (
@@ -48,9 +67,9 @@ const StoryCard: React.FC<{
       <div className="flex justify-between items-center text-[rgb(12,13,14,0.52)] p-4 pt-0"
            onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center space-x-6">
-          <button className="flex items-center space-x-1.5 hover:text-[#FF303C]">
-            <Heart className="w-6 h-6"/>
-            <span className="font-semibold text-sm">{story.likes}</span>
+          <button onClick={onToggleLike} className="flex items-center space-x-1.5 hover:text-[#FF303C]">
+            <Heart className={`w-6 h-6 ${isLiked ? 'fill-current text-[#FF303C]' : ''}`}/>
+            <span className="font-semibold text-sm">{likes}</span>
           </button>
           <button className="flex items-center space-x-1.5 hover:text-[#007AFF]">
             <MessageSquare className="w-6 h-6"/>
