@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useNavigate} from 'react-router';
 import type {AppEvent, ChatMessage, User} from '../../lib/types';
-import {fetchEventById} from '../../lib/api';
+import {fetchAssistantChatMessages, fetchEventById, postAssistantMessage} from '../../lib/api';
 import {ArrowLeft, Send, Sparkles} from 'lucide-react';
 import EventCard from '../../components/ui/EventCard';
 import {MESSAGES, ROUTES, UI_TEXT} from '../../lib/constants';
@@ -256,7 +256,8 @@ const AssistantChatPage: React.FC<{
   const inputRef = useRef<null | HTMLInputElement>(null);
 
   useEffect(() => {
-    setMessages([
+    let isMounted = true;
+    const initialMessages: ChatMessage[] = [
       {
         id: 1,
         sender: 'assistant',
@@ -278,8 +279,19 @@ const AssistantChatPage: React.FC<{
         text: 'Совет: спрашивайте по конкретной теме, например “Помоги животным в выходные”.',
         timestamp: formatTimestamp()
       }
-    ]);
+    ];
+    setMessages(initialMessages);
+    fetchAssistantChatMessages()
+      .then((history) => {
+        if (isMounted && history.length > 0) {
+          setMessages(history);
+        }
+      })
+      .catch(() => undefined);
     inputRef.current?.focus();
+    return () => {
+      isMounted = false;
+    };
   }, [user.firstName]);
 
   useEffect(() => {
@@ -304,7 +316,12 @@ const AssistantChatPage: React.FC<{
     if (!messageText) setInput('');
     setIsLoading(true);
 
-    const assistantResponse = await getMockAssistantResponse(textToSend);
+    let assistantResponse: ChatMessage;
+    try {
+      assistantResponse = await postAssistantMessage(textToSend);
+    } catch {
+      assistantResponse = await getMockAssistantResponse(textToSend);
+    }
 
     setMessages(prev => [...prev, assistantResponse]);
     const randomTip = empatheticPhrases[Math.floor(Math.random() * empatheticPhrases.length)];
@@ -369,6 +386,18 @@ const AssistantChatPage: React.FC<{
                   </div>
                 </div>
               )}
+              {msg.type === 'course-card' && (
+                <div className="space-y-2">
+                  {msg.text && <div
+                      className="px-4 py-2 rounded-2xl bg-white text-[#0C0D0E] shadow-sm rounded-br-lg">{msg.text}</div>}
+                  <button
+                    onClick={() => navigate(ROUTES.TRAINING)}
+                    className="px-4 py-2 text-sm font-semibold bg-white border border-gray-200 text-[#007AFF] rounded-full hover:bg-gray-100 transition-colors shadow-sm"
+                  >
+                    К курсам
+                  </button>
+                </div>
+              )}
               {msg.actions && msg.sender === 'assistant' && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {msg.actions.map((action, index) => (
@@ -425,4 +454,3 @@ const AssistantChatPage: React.FC<{
 };
 
 export default AssistantChatPage;
-

@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import type {AppEvent, EventChatMessage, User} from '../../../lib/types';
-import {fetchEventById, fetchEventChatMessages} from '../../../lib/api';
+import {fetchEventById, fetchEventChatMessages, postEventChatMessage} from '../../../lib/api';
 import {ArrowLeft, MoreHorizontal, Paperclip, Pin, Send, X} from 'lucide-react';
 import {CURRENT_USER_ID} from '../../../lib/constants';
 
@@ -70,18 +70,23 @@ const EventChatPage: React.FC<{
     messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
   }, [messages]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleSend = async () => {
+    const textToSend = input.trim();
+    if (!textToSend) return;
 
-    const newMessage: EventChatMessage = {
-      id: Date.now(),
-      author: {id: CURRENT_USER_ID, name: `${user.firstName} ${user.lastName}`, avatarUrl: user.avatarUrl},
-      text: input,
-      timestamp: new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}),
-    };
-
-    setMessages(prev => [...prev, newMessage]);
     setInput('');
+    try {
+      const postedMessage = await postEventChatMessage(eventId, textToSend);
+      setMessages(prev => [...prev, postedMessage]);
+    } catch {
+      const fallbackMessage: EventChatMessage = {
+        id: Date.now(),
+        author: {id: CURRENT_USER_ID, name: `${user.firstName} ${user.lastName}`, avatarUrl: user.avatarUrl},
+        text: textToSend,
+        timestamp: new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}),
+      };
+      setMessages(prev => [...prev, fallbackMessage]);
+    }
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {

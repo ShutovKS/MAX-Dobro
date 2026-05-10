@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
   ParseIntPipe,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -42,5 +44,16 @@ export class EventChatsController {
     @Query() pagination: PaginationQueryDto,
   ) {
     return this.eventChatsService.findChatMessagesByEventId(eventId, pagination);
+  }
+
+  @Post('events/:eventId/messages')
+  @ApiOperation({ summary: 'Post a message to a specific event chat' })
+  @ApiResponse({ status: 201, type: EventChatMessageEntity })
+  postChatMessage(
+    @Param('eventId', ParseIntPipe) eventId: number,
+    @CurrentUser() user: User,
+    @Body() dto: { text: string },
+  ) {
+    return this.eventChatsService.createMessageByEventId(eventId, user.id, dto.text);
   }
 }
