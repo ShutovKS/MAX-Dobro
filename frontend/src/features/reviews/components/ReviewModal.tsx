@@ -7,7 +7,7 @@ const ReviewModal: React.FC<{
   isOpen: boolean;
   event: HistoryEvent | null;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit: (rating: number, text?: string) => void;
 }> = ({isOpen, event, onClose, onSubmit}) => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -25,7 +25,7 @@ const ReviewModal: React.FC<{
 
   const handleSubmit = () => {
     if (rating > 0) {
-      onSubmit();
+      onSubmit(rating, comment);
     }
   };
 

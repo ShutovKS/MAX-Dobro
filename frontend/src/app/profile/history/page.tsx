@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router';
-import {fetchActivityHistoryEvents} from '../../../lib/api';
+import {createEventReview, fetchActivityHistoryEvents} from '../../../lib/api';
 import type {HistoryEvent} from '../../../lib/types';
 import {ArrowLeft, CheckCircle, Download, List, UserCircle} from 'lucide-react';
 import {EmptyCalendarIllustrationIcon} from '../../../components/ui/icons';
@@ -149,7 +149,10 @@ const ActivityHistoryPage: React.FC = () => {
     }
   };
 
-  const handleReviewSubmit = () => {
+  const handleReviewSubmit = async (rating: number, text?: string) => {
+    if (reviewingEvent) {
+      await createEventReview(reviewingEvent.id, rating, text);
+    }
     setReviewingEvent(null);
     setToast({
       show: true,
@@ -270,4 +273,3 @@ const ActivityHistoryPage: React.FC = () => {
 };
 
 export default ActivityHistoryPage;
-
