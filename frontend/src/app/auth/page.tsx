@@ -25,6 +25,7 @@ const LoginView: React.FC<{
   onSwitchToRegister: () => void;
   onSwitchToForgotPassword: () => void;
 }> = ({ onAuthSuccess, onSwitchToRegister, onSwitchToForgotPassword }) => {
+  /** <context:frontend_auth_entry> Auth entrypoint for mock and real MAX login flows. </context:frontend_auth_entry> */
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

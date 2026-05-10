@@ -53,6 +53,7 @@ import {
 import { MESSAGES, ROUTES } from '../lib/constants';
 
 const App: React.FC = () => {
+  /** <context:frontend_app_shell> Route shell for auth, onboarding, and tab switching. </context:frontend_app_shell> */
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<'network' | 'server' | null>(null);
   const [userData, setUserData] = useState<User | null>(null);

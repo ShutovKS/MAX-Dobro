@@ -1,7 +1,7 @@
 import {AnimalFriendIcon, ArtVolunteerIcon, ElderlyHelperIcon, NatureProtectorIcon} from '../components/ui/icons';
 import type {FilterDate, FilterFormat, OrganizationFilters} from './types';
 
-// App-wide constants
+// <context:frontend_constants> App-wide constants used by route and API markers. </context:frontend_constants>
 export const APP_VERSION = '1.0.0';
 export const CURRENT_USER_ID = 1;
 export const TOAST_DURATION = 5000;

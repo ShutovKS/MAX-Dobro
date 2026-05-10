@@ -5,6 +5,8 @@ const isReal = import.meta.env.VITE_API_MODE === 'real';
 
 const auth = isReal ? realAuth : mockAuth;
 
+/** <context:frontend_auth_adapter> Switches between mock session state and real Supabase-backed auth. </context:frontend_auth_adapter> */
+
 export const {
   login,
   register,
