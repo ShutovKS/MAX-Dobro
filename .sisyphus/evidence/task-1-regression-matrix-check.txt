@@ -1,0 +1,216 @@
+# Task 1 Regression Matrix Completeness Check
+
+Discovery commands used: direct reads of `frontend/src/app/page.tsx`, `frontend/src/lib/constants.ts`, `frontend/src/lib/api.real.ts`, `frontend/src/lib/api.ts`, `frontend/src/lib/api.organizer.ts`, `frontend/src/lib/auth.real.ts`, `backend/src/app.module.ts`, all `backend/src/**/*.controller.ts`; grep for `useRoutes`, `ROUTES`, `export const`, `@Controller`, `@Get`, `@Post`, `@Patch`, `@Delete`, `@Put`; ast-grep for `export const $NAME = $$$`.
+
+## Expected Counts
+- Frontend routes: 37
+- Route constants: 32
+- Backend modules: 21
+- Backend endpoints: 47
+- Frontend API/auth functions and public wiring entries: 38
+
+## Exactly-once Lists
+Each discovered item below appears once in the matrix by ID. Duplicates were checked by unique ID and unique surface/path within each section.
+
+### Frontend Routes
+- FR-01 /
+- FR-02 /organization
+- FR-03 /auth
+- FR-04 /onboarding
+- FR-05 /app -> /app/home
+- FR-06 /app/home
+- FR-07 /app/training
+- FR-08 /app/organizations
+- FR-09 /app/stories
+- FR-10 /app/profile
+- FR-11 /app/events/:id/chat
+- FR-12 /app/events/:id
+- FR-13 /app/courses/:id/lesson/:subId
+- FR-14 /app/courses/:id/certificate
+- FR-15 /app/courses/:id
+- FR-16 /app/organizations/:id
+- FR-17 /app/stories/create
+- FR-18 /app/stories/:id
+- FR-19 /app/rewards/:id
+- FR-20 /app/chat
+- FR-21 /app/profile/activityHistory
+- FR-22 /app/profile/allAchievements
+- FR-23 /app/profile/calendar
+- FR-24 /app/profile/leaderboards
+- FR-25 /app/profile/settings
+- FR-26 /app/profile/editProfile
+- FR-27 /app/profile/myCertificates
+- FR-28 /app/profile/myChats
+- FR-29 /app/profile/rewardsStore
+- FR-30 /organization/dashboard
+- FR-31 /organization/events
+- FR-32 /organization/events/create
+- FR-33 /organization/events/edit/:eventId
+- FR-34 /organization/events/participants/:eventId
+- FR-35 /organization/settings
+- FR-36 * authenticated
+- FR-37 * unauthenticated
+
+### Route Constants
+- RC-01 HOME
+- RC-02 TRAINING
+- RC-03 ORGANIZATIONS
+- RC-04 STORIES
+- RC-05 PROFILE
+- RC-06 AUTH
+- RC-07 ONBOARDING
+- RC-08 EVENT_DETAIL
+- RC-09 EVENT_CHAT
+- RC-10 COURSE_DETAIL
+- RC-11 COURSE_LESSON
+- RC-12 COURSE_CERTIFICATE
+- RC-13 ORGANIZATION_DETAIL
+- RC-14 STORY_CREATE
+- RC-15 STORY_DETAIL
+- RC-16 REWARD_DETAIL
+- RC-17 CHAT
+- RC-18 PROFILE_ACTIVITY_HISTORY
+- RC-19 PROFILE_ACHIEVEMENTS
+- RC-20 PROFILE_CALENDAR
+- RC-21 PROFILE_LEADERBOARDS
+- RC-22 PROFILE_SETTINGS
+- RC-23 PROFILE_EDIT
+- RC-24 PROFILE_CERTIFICATES
+- RC-25 PROFILE_CHATS
+- RC-26 PROFILE_REWARDS
+- RC-27 ORGANIZATION_DASHBOARD
+- RC-28 ORGANIZATION_EVENTS
+- RC-29 ORGANIZATION_EVENTS_CREATE
+- RC-30 ORGANIZATION_EVENTS_EDIT
+- RC-31 ORGANIZATION_EVENTS_PARTICIPANTS
+- RC-32 ORGANIZATION_SETTINGS
+
+### Backend Modules
+- BM-01 ConfigModule.forRoot({ isGlobal: true })
+- BM-02 ScheduleModule.forRoot()
+- BM-03 AuthModule
+- BM-04 UsersModule
+- BM-05 EventsModule
+- BM-06 PrismaModule
+- BM-07 SupabaseModule
+- BM-08 WebhooksModule
+- BM-09 TasksModule
+- BM-10 AchievementsModule
+- BM-11 LearningModule
+- BM-12 OrganizationsModule
+- BM-13 RewardsModule
+- BM-14 StoriesModule
+- BM-15 AssistantChatModule
+- BM-16 LeaderboardModule
+- BM-17 EventChatsModule
+- BM-18 FriendsModule
+- BM-19 ChallengesModule
+- BM-20 MapModule
+- BM-21 ReviewsModule
+
+### Backend Endpoints
+- BE-01 GET /
+- BE-02 GET /achievements
+- BE-03 POST /auth/max-login
+- BE-04 POST /auth/demo-organizer-login
+- BE-05 GET /profile/me
+- BE-06 GET /profile/me/events
+- BE-07 GET /profile/me/certificates
+- BE-08 GET /profile/me/rewards
+- BE-09 GET /profile/me/achievements
+- BE-10 GET /profile/me/courses
+- BE-11 GET /leaderboard
+- BE-12 GET /rewards
+- BE-13 POST /rewards/:id/purchase
+- BE-14 GET /organizations
+- BE-15 GET /organizations/:id
+- BE-16 GET /organizations/:id/reviews
+- BE-17 POST /organizations/:id/subscription
+- BE-18 GET /organization/dashboard/stats
+- BE-19 GET /organization/events
+- BE-20 GET /organization/events/:eventId/participants
+- BE-21 GET /organization/details
+- BE-22 POST /webhooks/supabase-auth
+- BE-23 GET /events/:eventId/reviews
+- BE-24 POST /events/:eventId/reviews
+- BE-25 GET /friends
+- BE-26 GET /map-markers
+- BE-27 GET /stories
+- BE-28 GET /stories/:id
+- BE-29 POST /stories/:id/like
+- BE-30 DELETE /stories/:id/like
+- BE-31 GET /courses
+- BE-32 GET /courses/:id
+- BE-33 POST /courses/:id/complete
+- BE-34 POST /events
+- BE-35 GET /events
+- BE-36 GET /events/:id
+- BE-37 GET /events/:id/participants
+- BE-38 PATCH /events/:id
+- BE-39 DELETE /events/:id
+- BE-40 POST /events/:id/participate
+- BE-41 DELETE /events/:id/participate
+- BE-42 PATCH /events/:eventId/participants/:userId
+- BE-43 GET /profile/chats
+- BE-44 GET /events/:eventId/messages
+- BE-45 GET /challenge/weekly
+- BE-46 GET /assistant-chat/messages
+- BE-47 POST /assistant-chat/messages
+
+### Frontend API/Auth Functions And Public Wiring
+- FA-01 fetchAllEvents
+- FA-02 fetchEventById
+- FA-03 fetchAllCourses
+- FA-04 fetchCourseById
+- FA-05 completeCourse
+- FA-06 fetchAllOrganizations
+- FA-07 fetchOrganizationById
+- FA-08 updateOrganizationSubscription
+- FA-09 fetchOrganizationEvents
+- FA-10 fetchEventParticipants
+- FA-11 fetchOrganizationDashboardStats
+- FA-12 fetchOrganizationDetails
+- FA-13 fetchActivityHistoryEvents
+- FA-14 fetchLeaderboardData
+- FA-15 fetchAllAchievements
+- FA-16 fetchUserAchievements
+- FA-17 fetchMyChats
+- FA-18 fetchAllStories
+- FA-19 fetchStoryById
+- FA-20 fetchRewards
+- FA-21 fetchMapMarkers
+- FA-22 fetchFriends
+- FA-23 fetchEventChatMessages
+- FA-24 fetchWeeklyChallenge
+- FA-25 api.ts organizer dashboard override
+- FA-26 api.ts organization details override
+- FA-27 api.ts organization events override
+- FA-28 api.ts event participants override
+- FA-29 api.ts stories override
+- FA-30 api.ts story detail override
+- FA-31 api.ts mode-selected bundle
+- FA-32 api.organizer fetchOrganizationDashboardStats
+- FA-33 api.organizer fetchOrganizationDetails
+- FA-34 api.organizer fetchOrganizationEvents
+- FA-35 api.organizer fetchEventParticipants
+- FA-36 auth.real login
+- FA-37 auth.real register
+- FA-38 auth.real logout
+
+## Route/Constant Cross-check
+- Route constants with matching useRoutes entries: 32/32.
+- useRoutes entries without ROUTES constants: `/app`, `/`, `/organization`, authenticated `*`, unauthenticated `*`, and relative tab child paths `home`, `training`, `organizations`, `stories`, `profile`; each is represented in frontend route rows FR-01, FR-02, FR-05 through FR-10, FR-36, FR-37.
+- ROUTES constants without matching useRoutes entries: none.
+
+## Backend/API Cross-check
+- Controller files discovered: 17. Controller endpoint rows: 47.
+- Backend modules discovered in AppModule imports: 21. Modules without controller endpoints in this surface are still represented as modules: ConfigModule, ScheduleModule, UsersModule, PrismaModule, SupabaseModule, TasksModule.
+- Frontend real API exports discovered in `api.real.ts`: 24. Public API wiring exceptions in `api.ts`/`api.organizer.ts`: 11. Real auth boundary exports: 3. Total API/auth/wiring rows: 38.
+
+## Classification Totals
+- dead/unreachable: 4
+- external-boundary: 12
+- implemented/broken: 6
+- implemented/testable: 122
+- partial/WIP: 10
+- unsupported/no counterpart: 21

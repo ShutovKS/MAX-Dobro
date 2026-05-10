@@ -4,4 +4,3 @@ all_sources.md
 
 */.env
 !.env.example
-.sisyphus/

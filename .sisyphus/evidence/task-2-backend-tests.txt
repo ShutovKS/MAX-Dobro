@@ -1,0 +1,95 @@
+Task 2 Backend Baseline Build and Automated Tests
+
+Environment/dependency setup
+
+Command: cd backend && npm ci
+Exit status: 1
+Excerpt:
+> backend@0.0.1 postinstall
+> prisma generate
+Failed to load config file "/Volumes/T7 Shield/Projects/MAX-Dobro/backend" as a TypeScript/JavaScript module. Error: PrismaConfigEnvError: Missing required environment variable: DATABASE_URL
+
+Command: cd backend && DATABASE_URL="postgresql://testuser:testpassword@localhost:5432/testdb?schema=public" DIRECT_URL="postgresql://testuser:testpassword@localhost:5432/testdb?schema=public" npm ci
+Exit status: 0
+Excerpt:
+Loaded Prisma config from prisma.config.ts.
+Prisma schema loaded from prisma/schema.prisma
+Generated Prisma Client (v6.19.0) to ./node_modules/@prisma/client
+added 808 packages, and audited 809 packages in 45s
+
+Baseline before fixes
+
+Command: cd backend && npm run build
+Exit status: 0
+Excerpt:
+> backend@0.0.1 build
+> nest build
+
+Command: cd backend && npm test -- --runInBand
+Exit status: 1
+Excerpt:
+FAIL src/organizations/organizations.controller.spec.ts
+Nest can't resolve dependencies of the OptionalAuthGuard (?, PrismaService, ConfigService). Please make sure that the argument SupabaseService at index [0] is available in the RootTestModule context.
+FAIL src/leaderboard/leaderboard.controller.spec.ts
+Nest can't resolve dependencies of the AuthGuard (?, PrismaService, ConfigService). Please make sure that the argument SupabaseService at index [0] is available in the RootTestModule context.
+FAIL src/event-chats/event-chats.controller.spec.ts
+Nest can't resolve dependencies of the AuthGuard (?, PrismaService, ConfigService). Please make sure that the argument SupabaseService at index [0] is available in the RootTestModule context.
+FAIL src/leaderboard/leaderboard.service.spec.ts
+Nest can't resolve dependencies of the LeaderboardService (?). Please make sure that the argument PrismaService at index [0] is available in the RootTestModule context.
+The same scaffold-test dependency omission affected challenges, friends, event-chats, and organizations service/controller defined-only specs.
+
+After minimal spec dependency fixes
+
+Command: cd backend && npm run build
+Exit status: 0
+Excerpt:
+> backend@0.0.1 build
+> nest build
+
+Command: cd backend && npm test -- --runInBand
+Exit status: 0
+Excerpt:
+PASS src/organizations/organizations.controller.spec.ts
+PASS src/leaderboard/leaderboard.controller.spec.ts
+PASS src/event-chats/event-chats.controller.spec.ts
+PASS src/leaderboard/leaderboard.service.spec.ts
+PASS src/challenges/challenges.controller.spec.ts
+PASS src/friends/friends.controller.spec.ts
+PASS src/organizations/organizations.service.spec.ts
+PASS src/event-chats/event-chats.service.spec.ts
+PASS src/challenges/challenges.service.spec.ts
+PASS src/friends/friends.service.spec.ts
+PASS src/prisma/prisma.service.spec.ts
+PASS src/achievements/achievements.service.spec.ts
+PASS src/app.controller.spec.ts
+Test Suites: 13 passed, 13 total
+Tests:       15 passed, 15 total
+
+Command: cd backend && npm run test:e2e
+Exit status: 1
+Excerpt:
+> backend@0.0.1 test:e2e
+> jest --config ./test/jest-e2e.json --runInBand
+Ensuring the test database container is down...
+Cannot connect to the Docker daemon at unix:///Users/Kirill/.docker/run/docker.sock. Is the docker daemon running?
+Error: Jest: Got error running globalSetup - /Volumes/T7 Shield/Projects/MAX-Dobro/backend/test/global-setup.ts, reason: Command failed: docker-compose -f test/docker-compose.yml down --volumes
+
+LSP diagnostics
+
+Command/tool: lsp_diagnostics on each changed backend TypeScript spec file
+Exit status: unavailable
+Excerpt:
+Error: LSP server 'typescript' is configured but NOT INSTALLED.
+Command not found: typescript-language-server
+
+Targeted checks
+
+Command/tool: ast-grep for PrismaService provider stubs in changed service specs
+Exit status: 0
+Excerpt:
+Found provider stubs in event-chats, challenges, organizations, friends, and leaderboard service specs.
+
+Command/tool: grep TODO|FIXME|HACK under backend/src
+Exit status: 0
+Excerpt:
+No matches found.
