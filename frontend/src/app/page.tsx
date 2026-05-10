@@ -43,7 +43,7 @@ import CreateEventPage from './organization/events/create/page';
 import EventParticipantsPage from './organization/events/participants/page';
 import OrganizationSettingsPage from './organization/settings/page';
 import type { Course, OrganizationEvent, RewardItem, User } from '../lib/types';
-import { fetchAllCourses, fetchRewards } from '../lib/api';
+import { fetchAllCourses, fetchRewards, purchaseReward } from '../lib/api';
 import {
   getCurrentSession,
   isOnboardingComplete,
@@ -203,7 +203,8 @@ const App: React.FC = () => {
   const RewardsDetailPageWrapper = () => {
     const { id } = useParams();
     const rewardId = parseInt(id || '0', 10);
-    return <RewardsDetailPage rewardId={rewardId} allRewards={allRewards} user={userData!} onPurchase={(rId) => {
+    return <RewardsDetailPage rewardId={rewardId} allRewards={allRewards} user={userData!} onPurchase={async (rId) => {
+      await purchaseReward(rId);
       setAllRewards(prev => prev.map(r => r.id === rId ? { ...r, isPurchased: true } : r));
       showToast(MESSAGES.TOASTS.REWARD_PURCHASED, 'success');
       navigate(ROUTES.PROFILE_REWARDS);

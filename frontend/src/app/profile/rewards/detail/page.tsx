@@ -8,7 +8,7 @@ interface RewardsDetailPageProps {
   rewardId: number;
   allRewards: RewardItem[];
   user: User;
-  onPurchase: (rewardId: number) => void;
+  onPurchase: (rewardId: number) => Promise<void>;
 }
 
 const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewards, user, onPurchase}) => {
@@ -36,8 +36,8 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
     }
   };
 
-  const handleConfirmPurchase = () => {
-    onPurchase(reward.id);
+  const handleConfirmPurchase = async () => {
+    await onPurchase(reward.id);
     setIsConfirmModalOpen(false);
   };
 

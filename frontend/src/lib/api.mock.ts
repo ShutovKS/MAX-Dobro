@@ -211,6 +211,27 @@ export const fetchRewards = (): Promise<RewardItem[]> => {
   return simulateRequest(allRewards);
 };
 
+export const purchaseReward = (rewardId: number): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const reward = allRewards.find((item) => item.id === rewardId);
+
+      if (!reward) {
+        reject(new Error('Reward not found'));
+        return;
+      }
+
+      if (reward.isPurchased) {
+        resolve();
+        return;
+      }
+
+      reward.isPurchased = true;
+      resolve();
+    }, SIMULATED_DELAY);
+  });
+};
+
 export const fetchMapMarkers = (): Promise<MapMarker[]> => {
   return simulateRequest(mockMapMarkers);
 };

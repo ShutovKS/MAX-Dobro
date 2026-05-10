@@ -289,6 +289,10 @@ export const fetchAllStories = (): Promise<Story[]> => apiFetch('/stories');
 export const fetchStoryById = (id: number): Promise<Story> =>
   apiFetch(`/stories/${id}`);
 export const fetchRewards = (): Promise<RewardItem[]> => apiFetch('/rewards');
+export const purchaseReward = (rewardId: number): Promise<void> =>
+  apiFetch(`/rewards/${rewardId}/purchase`, {
+    method: 'POST',
+  });
 export const fetchMapMarkers = (): Promise<MapMarker[]> =>
   apiFetch('/map-markers');
 export const fetchFriends = (): Promise<Friend[]> => apiFetch('/friends');

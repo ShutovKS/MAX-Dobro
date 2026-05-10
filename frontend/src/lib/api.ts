@@ -32,6 +32,7 @@ export const {
   fetchUserAchievements,
   fetchMyChats,
   fetchRewards,
+  purchaseReward,
   fetchMapMarkers,
   fetchFriends,
   fetchEventChatMessages,
