@@ -1,10 +1,10 @@
-// prisma/seed.ts
+/// <context:backend_seed> Seed data keeps local backend and frontend regression flows grounded. </context:backend_seed>
 
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// --- UUIDs для ключевых пользователей ---
+/// <context:backend_seed_ids> Stable user IDs keep seeded auth and test flows predictable. </context:backend_seed_ids>
 const volunteerId = '3eec394c-a786-44f6-b29d-3b201d540502';
 const friendId = '61df2213-3982-40dd-9fe4-27c1c89eed9b';
 const organizerId = 'a1b2c3d4-e5f6-7890-1234-567890abcdef';

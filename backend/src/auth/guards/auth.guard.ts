@@ -6,6 +6,7 @@ import { SupabaseService } from '../../supabase/supabase.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
+  /** <context:backend_auth_guard> Accepts internal JWT or Supabase session tokens for protected API routes. </context:backend_auth_guard> */
   private readonly jwtSecret: string;
 
   constructor(

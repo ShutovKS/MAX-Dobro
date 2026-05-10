@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  /** <context:backend_startup> Backend entrypoint for startup and API surface context. </context:backend_startup> */
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({

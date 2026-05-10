@@ -8,7 +8,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Модель пользователя
+/// <context:data_model_boundary> User and organization models define the shared backend data boundary. </context:data_model_boundary>
 model User {
   id                Int                  @id @default(autoincrement())
   email             String               @unique
@@ -44,7 +44,7 @@ model User {
   @@map("users")
 }
 
-// Модель организации
+/// <context:data_model_boundary> Related models below stay aligned with the backend feature surface. </context:data_model_boundary>
 model Organization {
   id            Int      @id @default(autoincrement())
   name          String

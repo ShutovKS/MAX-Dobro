@@ -24,6 +24,7 @@ import { MapModule } from './map/map.module';
 import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
+  /** <context:backend_module_wiring> Module wiring for the backend feature surface. </context:backend_module_wiring> */
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),

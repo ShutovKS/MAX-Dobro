@@ -33,6 +33,7 @@ import { EventsService } from './events.service';
 @ApiTags('Events')
 @Controller('events')
 export class EventsController {
+  /** <context:backend_events_controller> Events API boundary for route and permission context. </context:backend_events_controller> */
   constructor(private readonly eventsService: EventsService) {}
 
   @Post()

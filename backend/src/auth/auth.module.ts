@@ -6,6 +6,7 @@ import { AuthGuard } from './guards/auth.guard';
 import { ProfileController } from './profile.controller';
 
 @Module({
+  /** <context:backend_auth_module> Auth boundary for Supabase-backed and internal-token requests. </context:backend_auth_module> */
   imports: [SupabaseModule], // ConfigModule и JwtModule здесь больше не нужны
   controllers: [ProfileController, AuthController],
   providers: [AuthService, AuthGuard],
