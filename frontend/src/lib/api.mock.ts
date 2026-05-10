@@ -39,6 +39,7 @@ import type {
 import { CURRENT_USER_ID, COURSE_PASS_THRESHOLD } from './constants';
 
 const SIMULATED_DELAY = 500;
+const participatingEventIds = new Set<number>();
 
 const deepCopy = (inObject: any) => {
   let outObject: any, value: any, key: any;
@@ -78,6 +79,29 @@ export const fetchEventById = (
 ): Promise<AppEvent | HistoryEvent | undefined> => {
   const event = [...allEvents, ...activityHistoryEvents].find((e) => e.id === id);
   return simulateRequest(event);
+};
+
+export const participateInEvent = (eventId: number): Promise<void> => {
+  const eventExists = allEvents.some((event) => event.id === eventId);
+  if (!eventExists) {
+    return Promise.reject(new Error('Event not found'));
+  }
+
+  if (participatingEventIds.has(eventId)) {
+    return Promise.reject(new Error('You are already participating in this event'));
+  }
+
+  participatingEventIds.add(eventId);
+  return simulateRequest(undefined);
+};
+
+export const cancelEventParticipation = (eventId: number): Promise<void> => {
+  if (!participatingEventIds.has(eventId)) {
+    return Promise.reject(new Error('Participation record not found for this user and event'));
+  }
+
+  participatingEventIds.delete(eventId);
+  return simulateRequest(undefined);
 };
 
 export const fetchAllCourses = (): Promise<Course[]> => {

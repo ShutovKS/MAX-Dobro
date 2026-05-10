@@ -19,6 +19,8 @@ export const fetchStoryById = mockApi.fetchStoryById;
 export const {
   fetchAllEvents,
   fetchEventById,
+  participateInEvent,
+  cancelEventParticipation,
   fetchAllCourses,
   fetchCourseById,
   fetchAllOrganizations,

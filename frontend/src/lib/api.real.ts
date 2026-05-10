@@ -196,6 +196,16 @@ export const fetchEventById = async (
   return mapEventData(event);
 };
 
+export const participateInEvent = (eventId: number): Promise<void> =>
+  apiFetch(`/events/${eventId}/participate`, {
+    method: 'POST',
+  });
+
+export const cancelEventParticipation = (eventId: number): Promise<void> =>
+  apiFetch(`/events/${eventId}/participate`, {
+    method: 'DELETE',
+  });
+
 export const fetchAllCourses = async (): Promise<Course[]> => {
   const coursesData = await apiFetch<any[]>('/profile/me/courses');
   return coursesData.map(mapCourseData);
