@@ -47,9 +47,15 @@ const getIcon = (iconName: string): React.FC<any> => {
   return iconMap[iconName] || iconMap['default'];
 };
 
+const profileStatIdMap: Record<string, string> = {
+  '1': 'hours',
+  '2': 'karma',
+};
+
 const mapBackendProfileToAppUser = (backendProfile: any): User => {
   const stats = (backendProfile.stats || []).map((stat: any) => ({
     ...stat,
+    id: profileStatIdMap[stat.id] || stat.id,
     Icon: getIcon(stat.icon || 'default'),
   }));
 
