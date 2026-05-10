@@ -2,11 +2,13 @@ import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router';
 import type {Achievement, AppEvent, Friend, MapMarker, Organization, ProfileSubScreen} from '../../../lib/types';
 import {
+  cancelEventParticipation,
   fetchAllAchievements,
   fetchEventById,
   fetchFriends,
   fetchMapMarkers,
-  fetchOrganizationById
+  fetchOrganizationById,
+  participateInEvent,
 } from '../../../lib/api';
 import {ArrowLeft, Calendar, Check, Clock, List, MapPin, MessageSquare, Share2, Star, Trophy} from 'lucide-react';
 import InviteFriendModal from '../../../features/invites/components/InviteFriendModal';
@@ -180,10 +182,21 @@ export const EventDetailPage: React.FC = () => {
   const onOpenChat = (evt: AppEvent) => navigate(`/app/events/${evt.id}/chat`);
 
   const handleSignUpClick = () => setShowConfirmation(true);
-  const handleConfirmSignUp = () => {
+  const handleConfirmSignUp = async () => {
+    if (!event) return;
+
     setShowConfirmation(false);
-    setIsSignedUp(true);
-    setTimeout(() => setShowSuccess(true), MODAL_TRANSITION_DURATION);
+
+    try {
+      await participateInEvent(event.id);
+      setIsSignedUp(true);
+      setTimeout(() => setShowSuccess(true), MODAL_TRANSITION_DURATION);
+    } catch (error) {
+      setToast({
+        show: true,
+        message: error instanceof Error ? error.message : 'Не удалось записаться на событие.',
+      });
+    }
   };
   const handleCancelSignUp = () => setShowConfirmation(false);
   const handleCloseSuccessModal = () => {
@@ -196,10 +209,21 @@ export const EventDetailPage: React.FC = () => {
     onNavigateProfile('allAchievements');
   }
   const handleOpenCancelModal = () => setShowCancelConfirm(true);
-  const handleConfirmCancel = () => {
+  const handleConfirmCancel = async () => {
+    if (!event) return;
+
     setShowCancelConfirm(false);
-    setIsSignedUp(false);
-    setToast({show: true, message: MESSAGES.TOASTS.SIGNUP_CANCELLED, onUndo: () => setIsSignedUp(true)});
+
+    try {
+      await cancelEventParticipation(event.id);
+      setIsSignedUp(false);
+      setToast({show: true, message: MESSAGES.TOASTS.SIGNUP_CANCELLED});
+    } catch (error) {
+      setToast({
+        show: true,
+        message: error instanceof Error ? error.message : 'Не удалось отменить участие.',
+      });
+    }
   };
   const handleCloseCancelModal = () => setShowCancelConfirm(false);
   const handleInvite = () => {
