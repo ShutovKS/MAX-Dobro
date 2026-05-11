@@ -1,7 +1,0 @@
-Commit hygiene verification
-
-Commit made:
-- No commit made in this task.
-
-Future commit hygiene rule:
-- Keep commits small and clean, with no `Co-authored-by` lines, no AI trailers, and no `.sisyphus/` artifacts staged or committed.
