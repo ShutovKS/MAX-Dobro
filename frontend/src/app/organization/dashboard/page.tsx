@@ -77,7 +77,7 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
     loadData();
   }, []);
 
-  const isMockMode = true;
+  const isMockMode = import.meta.env.VITE_API_MODE !== 'real';
 
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">

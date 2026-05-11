@@ -1,7 +1,7 @@
 import * as realApi from './api.real';
 import * as mockApi from './api.mock';
 
-const isDemoMode = () => localStorage.getItem('isDemoOrganizer') === 'true';
+const isDemoMode = () => import.meta.env.VITE_API_MODE !== 'real';
 
 export const fetchOrganizationDashboardStats = () => {
   return isDemoMode()

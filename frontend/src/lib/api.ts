@@ -8,10 +8,10 @@ const api = isReal ? realApi : mockApi;
 
 /** <context:frontend_api_adapter> Keeps mock and real API surfaces aligned for the app shell. </context:frontend_api_adapter> */
 
-export const fetchOrganizationDashboardStats = mockApi.fetchOrganizationDashboardStats;
-export const fetchOrganizationDetails = mockApi.fetchOrganizationDetails;
-export const fetchOrganizationEvents = mockApi.fetchOrganizationEvents;
-export const fetchEventParticipants = mockApi.fetchEventParticipants;
+export const fetchOrganizationDashboardStats = organizerApi.fetchOrganizationDashboardStats;
+export const fetchOrganizationDetails = organizerApi.fetchOrganizationDetails;
+export const fetchOrganizationEvents = organizerApi.fetchOrganizationEvents;
+export const fetchEventParticipants = organizerApi.fetchEventParticipants;
 
 export const {
   fetchAllEvents,
