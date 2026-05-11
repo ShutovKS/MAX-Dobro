@@ -10,7 +10,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'https://max-dobro.vercel.app',
-      'http://localhost:3000',
+      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
       'https://mvqcvuhuhngolsewmlob.supabase.co',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
