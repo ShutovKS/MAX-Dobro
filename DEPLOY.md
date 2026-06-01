@@ -1,88 +1,74 @@
-# Деплой «Добро» (Telegram edition) на dobroclub.online
+# Деплой «Добро» (Telegram edition) — dobroclub.online
 
-Прод-сервер: `2.26.100.135` (Ubuntu 24.04), SSH `root`, ключ `~/.ssh/tgdeploy`.
-host-nginx уже обслуживает `buymytag.online` — мы добавляемся рядом, его не трогаем.
-БД — Supabase проект `dobro` (ref `pykfcxpfpdrtuxdnyjll`), схема уже применена.
+**Статус: РАЗВЁРНУТО и работает.** https://dobroclub.online (HTTPS), бот [@dobro_club_bot](https://t.me/dobro_club_bot).
 
-## Что нужно от тебя (секреты)
+## Инфраструктура
 
-1. **Пароль БД Supabase** — Supabase → проект `dobro` → Project Settings → Database → Database password.
-   Подставить вместо `[YOUR-DB-PASSWORD]` в `backend/.env` (две строки: `DATABASE_URL`, `DIRECT_URL`).
-2. **Токен Telegram-бота** — от [@BotFather](https://t.me/BotFather) (`/newbot`). Подставить в
-   `backend/.env` (`TELEGRAM_BOT_TOKEN`) и `bot-telegram/.env` (`TG_BOT_TOKEN`).
-3. **DNS** — `dobroclub.online` должен резолвиться в `2.26.100.135` (A-запись). Проверка: `nslookup dobroclub.online`.
+- Сервер: `2.26.100.135` (Ubuntu 24.04), SSH `root`, ключ `~/.ssh/tgdeploy`.
+- host-nginx обслуживает `dobroclub.online` рядом с чужим `buymytag.online` (не трогаем).
+- Наши контейнеры (docker compose, `/opt/dobroclub`): `dobro-backend` (NestJS, 127.0.0.1:3001), `dobro-bot` (Telegram).
+- Фронт — статика в `/var/www/dobroclub/dist`, отдаёт host-nginx. Маршрут `/api/` → бэкенд (срезает префикс).
+- БД — Supabase проект `dobro` (`pykfcxpfpdrtuxdnyjll`), eu-west-1. Схема применена + засеяна.
+- SSL — Let's Encrypt (certbot, авто-продление).
+- Бот: кнопка меню Mini App = `https://dobroclub.online`.
 
-## Разовая настройка сервера
+## Обновление (CI)
 
-```bash
-ssh -i ~/.ssh/tgdeploy root@2.26.100.135
+Авто-деплой `.github/workflows/deploy.yml` — на push в `dev`: фронт собирается на раннере GitHub,
+код+статика едут на сервер по SSH (rsync), на сервере `docker compose up --build` + `prisma db push` + reload nginx.
 
-# 1. Swap (для сборки на 2 ГБ RAM)
-git clone https://github.com/seaG7/MAX-Dobro.git /opt/dobroclub || (cd /opt/dobroclub && git fetch && git checkout dev)
-cd /opt/dobroclub && git checkout dev
-bash deploy/setup-swap.sh
-
-# 2. .env файлы на сервере (они в .gitignore, поэтому создаём вручную)
-#    Скопируй локальные .env на сервер ИЛИ создай заново:
-#    - /opt/dobroclub/backend/.env       (с реальным паролем БД и токеном бота)
-#    - /opt/dobroclub/frontend/.env       (VITE_API_BASE_URL=https://dobroclub.online/api, VITE_API_MODE=real, supabase)
-#    - /opt/dobroclub/bot-telegram/.env   (TG_BOT_TOKEN, MINI_APP_URL=https://dobroclub.online)
-#    Пример копирования с локальной машины:
-#      scp -i ~/.ssh/tgdeploy backend/.env      root@2.26.100.135:/opt/dobroclub/backend/.env
-#      scp -i ~/.ssh/tgdeploy frontend/.env     root@2.26.100.135:/opt/dobroclub/frontend/.env
-#      scp -i ~/.ssh/tgdeploy bot-telegram/.env root@2.26.100.135:/opt/dobroclub/bot-telegram/.env
-
-# 3. nginx server-блок
-cp deploy/nginx/dobroclub.online.conf /etc/nginx/sites-available/dobroclub.online
-ln -sf /etc/nginx/sites-available/dobroclub.online /etc/nginx/sites-enabled/dobroclub.online
-mkdir -p /var/www/dobroclub/dist
-nginx -t && systemctl reload nginx
-```
-
-## Деплой (и каждое обновление)
-
-```bash
-ssh -i ~/.ssh/tgdeploy root@2.26.100.135
-cd /opt/dobroclub
-bash deploy/deploy.sh
-```
-
-`deploy.sh`: git pull (dev) → сборка фронта в `/var/www/dobroclub/dist` → backend+bot в Docker → `prisma db push` (синхронизация схемы) → reload nginx.
-
-## SSL (после того как DNS зарезолвится)
-
-```bash
-certbot --nginx -d dobroclub.online
-```
-certbot сам добавит блок 443 и редирект с 80.
-
-## Сиды (демо-данные: организатор, события, курсы)
-
-После того как `backend/.env` с паролем БД готов:
-```bash
-cd /opt/dobroclub
-docker compose -f docker-compose.prod.yml exec -T backend npx prisma db seed
-```
-Либо локально: `cd backend && npm run seed` (с заполненным `DATABASE_URL`).
-
-## Telegram (@BotFather)
-
-1. `/newbot` → получить токен (см. секреты выше).
-2. `/setmenubutton` или Bot Settings → Menu Button → URL = `https://dobroclub.online`.
-3. (Опц.) `/setdomain` для Login Widget — не требуется для Mini App.
-4. Открыть бота → кнопка запускает Mini App → авто-логин по initData.
-
-## Авто-деплой (GitHub Actions)
-
-Workflow `.github/workflows/deploy.yml` деплоит на push в `dev`.
-Добавь секреты в GitHub (Settings → Secrets and variables → Actions):
+**Чтобы включить — добавь в GitHub секреты** (Settings → Secrets and variables → Actions):
 - `SSH_HOST` = `2.26.100.135`
 - `SSH_USER` = `root`
-- `SSH_KEY` = содержимое приватного ключа `~/.ssh/tgdeploy`
+- `SSH_KEY` = всё содержимое приватного ключа `~/.ssh/tgdeploy`
+- `SUPABASE_ANON_KEY` = anon key проекта Supabase
+
+`.env`-файлы на сервере rsync не трогает (`--exclude .env`).
+
+## Обновление (вручную по SSH)
+
+Код/статику доставить можно так же, как при первом деплое:
+```bash
+# код (только закоммиченное)
+git archive --format=tar dev | ssh -i ~/.ssh/tgdeploy root@2.26.100.135 "tar -x -C /opt/dobroclub"
+# фронт: собрать локально и отправить
+cd frontend && npm run build && tar -C dist -cf - . | \
+  ssh -i ~/.ssh/tgdeploy root@2.26.100.135 "rm -rf /var/www/dobroclub/dist && mkdir -p /var/www/dobroclub/dist && tar -C /var/www/dobroclub/dist -xf -"
+# пересборка/перезапуск на сервере
+ssh -i ~/.ssh/tgdeploy root@2.26.100.135 "bash /opt/dobroclub/deploy/deploy.sh"
+```
+
+## Секреты/конфиг на сервере
+
+- `/opt/dobroclub/backend/.env` — `TELEGRAM_BOT_TOKEN`, `DATABASE_URL`/`DIRECT_URL` (пароль БД), `JWT_INTERNAL_SECRET`, Supabase.
+- `/opt/dobroclub/bot-telegram/.env` — `TG_BOT_TOKEN`, `MINI_APP_URL`.
+- Пароль БД в connection string URL-кодирован (`$`→`%24`, `?`→`%3F`).
+
+## Полезные команды (сервер)
+
+```bash
+ssh -i ~/.ssh/tgdeploy root@2.26.100.135
+cd /opt/dobroclub
+docker compose -f docker-compose.prod.yml logs -f backend   # логи бэка
+docker compose -f docker-compose.prod.yml logs -f bot        # логи бота
+docker compose -f docker-compose.prod.yml restart backend
+```
+
+## Сиды (демо-данные)
+
+Уже залиты (6 пользователей вкл. демо-организатора, 5 организаций, 25 событий, 4 курса, 15 ачивок).
+Повторно при необходимости (локально с заполненным backend/.env):
+```bash
+cd backend && export DATABASE_URL=... DIRECT_URL=... && node_modules/.bin/ts-node prisma/seed.ts
+```
 
 ## Проверка работоспособности
 
-- `https://dobroclub.online` открывается (HTTPS, без ошибок сертификата).
-- `https://dobroclub.online/api/api/docs` — Swagger бэкенда.
-- Открыть бота в Telegram → Mini App грузится → автоматически логинит (в БД появляется `users` с `telegram_user_id`).
-- `docker compose -f docker-compose.prod.yml logs -f backend` — нет ошибок подключения к БД.
+- `https://dobroclub.online` — открывается (200, HTTPS).
+- `https://dobroclub.online/api/api/docs` — Swagger.
+- Бот → кнопка «Открыть Добро» → Mini App грузится → авто-логин по initData (в таблице `users` появляется `telegram_user_id`).
+
+## Заметка по безопасности
+
+На таблицах Supabase отключён RLS (доступ к данным идёт через backend/Prisma, не напрямую anon-ключом).
+Для «только для себя» это приемлемо. Включить deny-all RLS можно командой из advisor (см. Supabase → Advisors).

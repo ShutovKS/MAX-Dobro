@@ -1,10 +1,18 @@
 name: Deploy dobroclub.online
 
-# Авто-деплой: push в dev -> SSH на сервер -> deploy/deploy.sh
+# Авто-деплой при push в dev:
+#   1) собираем фронт на раннере GitHub (не грузим слабый сервер),
+#   2) доставляем код и статику на сервер по SSH (rsync),
+#   3) на сервере: docker compose up --build + prisma db push + reload nginx.
+#
 # Нужны GitHub secrets (Settings -> Secrets and variables -> Actions):
-#   SSH_HOST = 2.26.100.135
-#   SSH_USER = root
-#   SSH_KEY  = приватный ключ tgdeploy (содержимое ~/.ssh/tgdeploy)
+#   SSH_HOST            = 2.26.100.135
+#   SSH_USER            = root
+#   SSH_KEY             = приватный ключ tgdeploy (всё содержимое ~/.ssh/tgdeploy)
+#   SUPABASE_ANON_KEY   = anon key проекта Supabase (для сборки фронта)
+#
+# Серверу доступ к GitHub НЕ нужен. Файлы backend/.env, bot-telegram/.env
+# на сервере не трогаются (rsync --exclude .env).
 
 on:
   push:
@@ -15,13 +23,51 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.2.0
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
+          node-version: 20
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: https://dobroclub.online/api
+          VITE_API_MODE: real
+          VITE_SUPABASE_URL: https://pykfcxpfpdrtuxdnyjll.supabase.co
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          npm ci || npm install
+          npm run build
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Ship code + static
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/id_deploy" \
+            --exclude node_modules --exclude .git --exclude .env --exclude dist \
+            backend bot-telegram deploy docker-compose.prod.yml \
+            "$SSH_USER@$SSH_HOST:/opt/dobroclub/"
+          rsync -az --delete -e "ssh -i ~/.ssh/id_deploy" \
+            frontend/dist/ "$SSH_USER@$SSH_HOST:/var/www/dobroclub/dist/"
+
+      - name: Remote up + migrate + reload
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" '
             set -e
             cd /opt/dobroclub
-            bash deploy/deploy.sh
+            docker compose -f docker-compose.prod.yml up -d --build
+            docker compose -f docker-compose.prod.yml exec -T backend npx prisma db push --skip-generate || true
+            nginx -t && systemctl reload nginx
+            docker compose -f docker-compose.prod.yml ps'
