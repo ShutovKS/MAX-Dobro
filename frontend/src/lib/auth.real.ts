@@ -68,6 +68,7 @@ const mapBackendProfileToAppUser = (backendProfile: any): User => {
     }));
 
   return {
+    id: backendProfile.id,
     firstName: backendProfile.firstName || 'Пользователь',
     lastName: backendProfile.lastName || '',
     avatarUrl:

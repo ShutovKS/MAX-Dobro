@@ -10,6 +10,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { MaxAuthDto } from './dto/max-auth.dto';
 import { TelegramAuthDto } from './dto/telegram-auth.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 interface SupabaseUserPayload {
   id: string;
@@ -108,6 +109,18 @@ export class AuthService {
         'Could not create or update local user.',
       );
     }
+  }
+
+  async updateProfile(userId: number, dto: UpdateProfileDto) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.firstName !== undefined ? { firstName: dto.firstName } : {}),
+        ...(dto.lastName !== undefined ? { lastName: dto.lastName } : {}),
+        ...(dto.about !== undefined ? { about: dto.about } : {}),
+        ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl } : {}),
+      },
+    });
   }
 
   async getUserEvents(userId: number) {

@@ -43,7 +43,7 @@ import CreateEventPage from './organization/events/create/page';
 import EventParticipantsPage from './organization/events/participants/page';
 import OrganizationSettingsPage from './organization/settings/page';
 import type { Course, OrganizationEvent, RewardItem, User } from '../lib/types';
-import { fetchAllCourses, fetchRewards, purchaseReward } from '../lib/api';
+import { fetchAllCourses, fetchRewards, purchaseReward, updateProfile } from '../lib/api';
 import {
   getCurrentSession,
   isOnboardingComplete,
@@ -153,7 +153,17 @@ const App: React.FC = () => {
     navigate(ROUTES.AUTH);
   };
 
-  const handleSaveProfile = (updatedUser: User) => {
+  const handleSaveProfile = async (updatedUser: User) => {
+    try {
+      await updateProfile({
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        about: updatedUser.about,
+        avatarUrl: updatedUser.avatarUrl,
+      });
+    } catch (e) {
+      console.error('Failed to persist profile changes:', e);
+    }
     setUserData(updatedUser);
     navigate(ROUTES.PROFILE_SETTINGS);
   };

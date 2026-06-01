@@ -186,6 +186,15 @@ export const fetchLeaderboardData = (
   return simulateRequest({ topUsers: data, currentUser });
 };
 
+export const updateProfile = (_data: {
+  firstName?: string;
+  lastName?: string;
+  about?: string;
+  avatarUrl?: string;
+}): Promise<void> => {
+  return Promise.resolve();
+};
+
 export const fetchAllAchievements = (): Promise<Achievement[]> => {
   return simulateRequest(allAchievements);
 };

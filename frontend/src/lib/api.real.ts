@@ -286,6 +286,16 @@ export const fetchLeaderboardData = (
   period: 'week' | 'month' | 'allTime',
 ): Promise<{ topUsers: LeaderboardUser[]; currentUser: LeaderboardUser | null }> =>
   apiFetch(`/leaderboard?period=${period}`);
+export const updateProfile = (data: {
+  firstName?: string;
+  lastName?: string;
+  about?: string;
+  avatarUrl?: string;
+}): Promise<void> =>
+  apiFetch('/profile/me', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
 export const fetchAllAchievements = async (): Promise<Achievement[]> => {
   const achievements = await apiFetch<
     (Omit<Achievement, 'Icon'> & { icon?: string | null })[]
