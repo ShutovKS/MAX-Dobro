@@ -9,9 +9,10 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
+      'https://dobroclub.online',
       'https://max-dobro.vercel.app',
       /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
-      'https://mvqcvuhuhngolsewmlob.supabase.co',
+      'https://pykfcxpfpdrtuxdnyjll.supabase.co',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,

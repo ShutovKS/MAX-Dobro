@@ -51,6 +51,7 @@ import {
   setOnboardingComplete,
 } from '../lib/auth';
 import { MESSAGES, ROUTES } from '../lib/constants';
+import { initTelegram, isTelegramEnv, telegramLogin } from '../lib/telegram-sdk';
 
 const App: React.FC = () => {
   /** <context:frontend_app_shell> Route shell for auth, onboarding, and tab switching. </context:frontend_app_shell> */
@@ -80,9 +81,23 @@ const App: React.FC = () => {
 
   const initializeApp = async () => {
     setError(null);
+    initTelegram();
     let sessionFound = false;
     try {
-      const session = await getCurrentSession();
+      let session = await getCurrentSession();
+
+      // Авто-логин через Telegram: если активной сессии нет, но приложение
+      // открыто внутри Telegram — входим по initData без формы.
+      if (
+        !session &&
+        import.meta.env.VITE_API_MODE === 'real' &&
+        isTelegramEnv()
+      ) {
+        const ok = await telegramLogin();
+        if (ok) {
+          session = await getCurrentSession();
+        }
+      }
 
       if (session) {
         sessionFound = true;

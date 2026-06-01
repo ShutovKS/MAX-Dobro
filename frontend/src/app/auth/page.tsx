@@ -14,7 +14,7 @@ import { HeartHandIcon, MaxIcon } from '../../components/ui/icons';
 import { login, register, getCurrentSession, logout } from '../../lib/auth';
 import type { User } from '../../lib/types';
 import { MESSAGES, PASSWORD_MIN_LENGTH } from '../../lib/constants';
-import { getMaxInitData } from '../../lib/max-sdk';
+import { getTelegramInitData, telegramLogin } from '../../lib/telegram-sdk';
 
 const Spinner: React.FC = () => (
   <RefreshCw className="w-5 h-5 text-white animate-spin" />
@@ -34,37 +34,28 @@ const LoginView: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  const handleMaxLogin = async () => {
+  const handleTelegramLogin = async () => {
     setLoginError('');
     setIsLoading(true);
     try {
       await logout();
-      const initData = getMaxInitData();
+      const initData = getTelegramInitData();
       if (!initData) {
         if (import.meta.env.VITE_API_MODE === 'mock') {
-          console.warn('MAX initData not found. Using mock volunteer login.');
+          console.warn(
+            'Telegram initData not found. Using mock volunteer login.',
+          );
           const session = await login('volunteer@test.com', 'password');
           onAuthSuccess(session);
           return;
         }
-        throw new Error('Вход возможен только через приложение MAX');
+        throw new Error('Откройте приложение внутри Telegram');
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/max-login`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ initData }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error('Не удалось войти через MAX');
+      const ok = await telegramLogin();
+      if (!ok) {
+        throw new Error('Не удалось войти через Telegram');
       }
-
-      const { accessToken } = await response.json();
-      localStorage.setItem('internal_jwt', accessToken);
 
       const session = await getCurrentSession();
       if (session) {
@@ -175,12 +166,12 @@ const LoginView: React.FC<{
         )}
         <div className="w-full flex flex-col items-center space-y-3">
           <button
-            onClick={handleMaxLogin}
+            onClick={handleTelegramLogin}
             disabled={isLoading}
             className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50"
           >
             <MaxIcon className="w-6 h-6 mr-3" />
-            Войти через MAX
+            Войти через Telegram
           </button>
           <button
             onClick={handleOrganizerLogin}

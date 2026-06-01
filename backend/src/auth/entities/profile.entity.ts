@@ -5,7 +5,15 @@ import { User } from '@prisma/client';
 import { UserAchievementEntity } from './user-achievement.entity';
 
 export class ProfileEntity
-  implements Omit<User, 'supabaseUserId' | 'maxUserId' | 'firstName' | 'lastName'>
+  implements
+    Omit<
+      User,
+      | 'supabaseUserId'
+      | 'maxUserId'
+      | 'telegramUserId'
+      | 'firstName'
+      | 'lastName'
+    >
 {
   @ApiProperty()
   id: number;

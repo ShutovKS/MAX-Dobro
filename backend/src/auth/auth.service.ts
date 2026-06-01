@@ -9,6 +9,7 @@ import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { MaxAuthDto } from './dto/max-auth.dto';
+import { TelegramAuthDto } from './dto/telegram-auth.dto';
 
 interface SupabaseUserPayload {
   id: string;
@@ -310,7 +311,11 @@ export class AuthService {
     });
   }
 
-  private isValidMaxHash(initData: string): boolean {
+  /**
+   * Проверяет подпись `initData` от WebApp (Telegram/MAX используют один алгоритм:
+   * HMAC-SHA256 с секретным ключом, полученным из `WebAppData` и токена бота).
+   */
+  private verifyWebAppInitData(initData: string, botToken: string): boolean {
     const params = new URLSearchParams(initData);
     const hash = params.get('hash');
     if (!hash) {
@@ -324,17 +329,24 @@ export class AuthService {
     });
     dataToCheck.sort();
     const dataCheckString = dataToCheck.join('\n');
-    const botToken = this.configService.getOrThrow<string>('MAX_BOT_TOKEN');
     const secretKey = crypto
       .createHmac('sha256', 'WebAppData')
       .update(botToken)
       .digest();
     const hmac = crypto.createHmac('sha256', secretKey);
     const calculatedHash = hmac.update(dataCheckString).digest('hex');
+    if (calculatedHash.length !== hash.length) {
+      return false;
+    }
     return crypto.timingSafeEqual(
       Buffer.from(calculatedHash),
       Buffer.from(hash),
     );
+  }
+
+  private isValidMaxHash(initData: string): boolean {
+    const botToken = this.configService.getOrThrow<string>('MAX_BOT_TOKEN');
+    return this.verifyWebAppInitData(initData, botToken);
   }
 
   async loginWithMax(dto: MaxAuthDto) {
@@ -361,6 +373,40 @@ export class AuthService {
         firstName: maxUserData.first_name || null,
         lastName: maxUserData.last_name || null,
         avatarUrl: maxUserData.photo_url || null,
+        role: 'volunteer',
+      },
+    });
+    const payload = { sub: user.id, type: 'internal' };
+    const accessToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });
+    return { accessToken };
+  }
+
+  async loginWithTelegram(dto: TelegramAuthDto) {
+    const botToken =
+      this.configService.getOrThrow<string>('TELEGRAM_BOT_TOKEN');
+    if (!this.verifyWebAppInitData(dto.initData, botToken)) {
+      throw new UnauthorizedException('Invalid hash from Telegram');
+    }
+    const params = new URLSearchParams(dto.initData);
+    const userParam = params.get('user');
+    if (!userParam) {
+      throw new UnauthorizedException('User data is missing in initData');
+    }
+    const tgUserData = JSON.parse(userParam);
+    const telegramUserId = String(tgUserData.id);
+    const user = await this.prisma.user.upsert({
+      where: { telegramUserId },
+      update: {
+        firstName: tgUserData.first_name || null,
+        lastName: tgUserData.last_name || null,
+        avatarUrl: tgUserData.photo_url || null,
+      },
+      create: {
+        telegramUserId,
+        email: `${telegramUserId}@telegram.placeholder.com`,
+        firstName: tgUserData.first_name || null,
+        lastName: tgUserData.last_name || null,
+        avatarUrl: tgUserData.photo_url || null,
         role: 'volunteer',
       },
     });
