@@ -1,0 +1,27 @@
+name: Deploy dobroclub.online
+
+# Авто-деплой: push в dev -> SSH на сервер -> deploy/deploy.sh
+# Нужны GitHub secrets (Settings -> Secrets and variables -> Actions):
+#   SSH_HOST = 2.26.100.135
+#   SSH_USER = root
+#   SSH_KEY  = приватный ключ tgdeploy (содержимое ~/.ssh/tgdeploy)
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/dobroclub
+            bash deploy/deploy.sh
