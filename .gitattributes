@@ -1,0 +1,5 @@
+# Шелл-скрипты и серверные конфиги всегда с LF (иначе ломаются на Linux-сервере)
+*.sh text eol=lf
+deploy/nginx/* text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
