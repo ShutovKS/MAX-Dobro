@@ -1,5 +1,8 @@
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
+// Читаем напрямую из process.env, чтобы команды без подключения к БД
+// (например, `prisma generate` при сборке Docker-образа) не падали из-за
+// отсутствующей переменной. Реальные значения приходят из окружения в рантайме.
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
@@ -7,7 +10,7 @@ export default defineConfig({
   },
   engine: "classic",
   datasource: {
-    url: env("DATABASE_URL"),
-    directUrl: env('DIRECT_URL'),
+    url: process.env.DATABASE_URL ?? "",
+    directUrl: process.env.DIRECT_URL ?? "",
   },
 });
