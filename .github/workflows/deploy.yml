@@ -3,7 +3,8 @@ name: Deploy dobroclub.online
 # Авто-деплой при push в dev:
 #   1) собираем фронт на раннере GitHub (не грузим слабый сервер),
 #   2) доставляем код и статику на сервер по SSH (rsync),
-#   3) на сервере: docker compose up --build + prisma db push + reload nginx.
+#   3) на сервере сборка backend+bot идёт В ОТДЕЛЬНОЙ сессии (переживает обрыв SSH),
+#      CI опрашивает результат короткими keepalive-соединениями.
 #
 # Нужны GitHub secrets (Settings -> Secrets and variables -> Actions):
 #   SSH_HOST            = 2.26.100.135
@@ -40,34 +41,51 @@ jobs:
           npm ci || npm install
           npm run build
 
-      - name: Setup SSH
+      - name: Setup SSH (with keepalive)
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
         run: |
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.SSH_KEY }}" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+          {
+            echo "Host deploy"
+            echo "  HostName $SSH_HOST"
+            echo "  User $SSH_USER"
+            echo "  IdentityFile ~/.ssh/id_deploy"
+            echo "  StrictHostKeyChecking accept-new"
+            echo "  ServerAliveInterval 20"
+            echo "  ServerAliveCountMax 15"
+            echo "  TCPKeepAlive yes"
+          } > ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
       - name: Ship code + static
-        env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
-          rsync -az --delete -e "ssh -i ~/.ssh/id_deploy" \
+          rsync -az --delete \
             --exclude node_modules --exclude .git --exclude .env --exclude dist \
             backend bot-telegram deploy docker-compose.prod.yml \
-            "$SSH_USER@$SSH_HOST:/opt/dobroclub/"
-          rsync -az --delete -e "ssh -i ~/.ssh/id_deploy" \
-            frontend/dist/ "$SSH_USER@$SSH_HOST:/var/www/dobroclub/dist/"
+            deploy:/opt/dobroclub/
+          rsync -az --delete frontend/dist/ deploy:/var/www/dobroclub/dist/
 
-      - name: Remote up + migrate + reload
-        env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+      - name: Remote deploy (resilient to SSH drops)
         run: |
-          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" '
-            set -e
-            cd /opt/dobroclub
-            docker compose -f docker-compose.prod.yml up -d --build
-            docker compose -f docker-compose.prod.yml exec -T backend npx prisma db push --skip-generate || true
-            nginx -t && systemctl reload nginx
-            docker compose -f docker-compose.prod.yml ps'
+          set -e
+          # Запускаем сборку/перезапуск в отдельной сессии на сервере
+          ssh deploy 'bash /opt/dobroclub/deploy/ci-run.sh'
+          echo "Ожидаем завершения сборки на сервере..."
+          for i in $(seq 1 120); do
+            sleep 10
+            if ssh deploy 'test -f /tmp/dobro-deploy.done'; then
+              code=$(ssh deploy 'cat /tmp/dobro-deploy.done' || echo 1)
+              echo "=== remote deploy log (хвост) ==="
+              ssh deploy 'tail -n 60 /tmp/dobro-deploy.log' || true
+              echo "=== remote exit code: ${code} ==="
+              exit "${code:-1}"
+            fi
+            echo "...сборка идёт ($((i*10))s)"
+          done
+          echo "Тайм-аут ожидания деплоя"
+          ssh deploy 'tail -n 60 /tmp/dobro-deploy.log' || true
+          exit 1
