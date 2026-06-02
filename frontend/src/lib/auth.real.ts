@@ -184,20 +184,30 @@ export const getCurrentSession = async (): Promise<{
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (!profileResponse.ok) {
-      // Если токен невалидный (неважно, наш или Supabase), чистим все
+    if (profileResponse.ok) {
+      const backendProfile = await profileResponse.json();
+      return {
+        user: mapBackendProfileToAppUser(backendProfile),
+        token: token,
+      };
+    }
+
+    // Разлогиниваем ТОЛЬКО при реальной невалидности токена (401/403).
+    if (profileResponse.status === 401 || profileResponse.status === 403) {
       await logout();
       return null;
     }
 
-    const backendProfile = await profileResponse.json();
-
-    return {
-      user: mapBackendProfileToAppUser(backendProfile),
-      token: token,
-    };
+    // Прочие ошибки (5xx, бэкенд перезапускается при деплое, и т.п.) — НЕ
+    // сбрасываем токен: сессия восстановится, когда бэкенд снова поднимется.
+    console.warn(
+      'Session check failed transiently, keeping token:',
+      profileResponse.status,
+    );
+    return null;
   } catch (e) {
-    console.error('Error during session check:', e);
+    // Сетевые ошибки — тоже не разлогиниваем (токен сохраняем).
+    console.error('Error during session check (token kept):', e);
     return null;
   }
 };
