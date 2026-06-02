@@ -9,9 +9,10 @@ cd /opt/dobroclub
 echo "==> Backend + bot (docker compose)"
 docker compose -f docker-compose.prod.yml up -d --build
 
-echo "==> Синхронизация схемы БД (prisma db push)"
-docker compose -f docker-compose.prod.yml exec -T backend npx prisma db push --skip-generate || \
-  echo "ВНИМАНИЕ: db push не выполнен (проверь DATABASE_URL в backend/.env)"
+# Схема БД управляется отдельно (прод-образ backend не содержит prisma CLI/схему).
+# При изменении schema.prisma синхронизируй вручную с локали:
+#   cd backend && DATABASE_URL=... DIRECT_URL=... npx prisma db push
+# (или через Supabase). На обычный деплой схему не трогаем.
 
 echo "==> Перезагрузка nginx"
 nginx -t && systemctl reload nginx
