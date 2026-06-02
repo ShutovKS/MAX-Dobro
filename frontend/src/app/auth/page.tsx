@@ -7,13 +7,19 @@ import {
   Lock,
   Mail,
   RefreshCw,
+  Send,
   User as UserIcon,
 } from 'lucide-react';
-import { HeartHandIcon, MaxIcon } from '../../components/ui/icons';
+import { HeartHandIcon } from '../../components/ui/icons';
 import { login, register, getCurrentSession, logout } from '../../lib/auth';
 import type { User } from '../../lib/types';
 import { MESSAGES, PASSWORD_MIN_LENGTH, TELEGRAM_APP_LINK } from '../../lib/constants';
-import { getTelegramInitData, isTelegramClient, telegramLogin } from '../../lib/telegram-sdk';
+import {
+  getTelegramInitData,
+  isTelegramClient,
+  telegramLogin,
+  waitForTelegramInitData,
+} from '../../lib/telegram-sdk';
 
 const Spinner: React.FC = () => (
   <RefreshCw className="w-5 h-5 text-white animate-spin" />
@@ -33,8 +39,15 @@ const LoginView: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  const inTelegram = isTelegramClient();
   const isMock = import.meta.env.VITE_API_MODE === 'mock';
+  // Режим входа определяем по НАЛИЧИЮ initData, а не по объекту SDK:
+  // telegram-web-app.js создаёт window.Telegram.WebApp и в обычном браузере
+  // (с пустым initData). 'checking' — ждём initData, 'telegram' — реальный
+  // клиент, 'browser' — открыто вне Telegram (показываем deep-link).
+  type EntryMode = 'checking' | 'telegram' | 'browser' | 'demo';
+  const [entryMode, setEntryMode] = useState<EntryMode>(
+    isMock ? 'demo' : 'checking',
+  );
 
   const handleTelegramLogin = async () => {
     setLoginError('');
@@ -116,11 +129,26 @@ const LoginView: React.FC<{
     if (loginError) setLoginError('');
   };
 
-  // Внутри Telegram входим автоматически — без формы.
+  // Внутри Telegram входим автоматически — без формы. В браузере (SDK есть,
+  // но initData пустой) показываем кнопку «Открыть в Telegram».
   useEffect(() => {
-    if (inTelegram) {
-      handleTelegramLogin();
-    }
+    if (isMock) return;
+    let cancelled = false;
+    (async () => {
+      const initData = isTelegramClient()
+        ? await waitForTelegramInitData()
+        : null;
+      if (cancelled) return;
+      if (initData) {
+        setEntryMode('telegram');
+        handleTelegramLogin();
+      } else {
+        setEntryMode('browser');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -142,7 +170,15 @@ const LoginView: React.FC<{
           </p>
         )}
 
-        {inTelegram ? (
+        {entryMode === 'demo' ? (
+          <button
+            onClick={handleTelegramLogin}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-all duration-200 disabled:opacity-50"
+          >
+            {isLoading ? <Spinner /> : 'Войти (демо)'}
+          </button>
+        ) : entryMode === 'telegram' ? (
           <div className="w-full flex flex-col items-center space-y-4">
             <p className="text-[rgb(12,13,14,0.52)]">Входим…</p>
             <button
@@ -153,25 +189,27 @@ const LoginView: React.FC<{
               {isLoading ? <Spinner /> : 'Войти через Telegram'}
             </button>
           </div>
-        ) : isMock ? (
-          <button
-            onClick={handleTelegramLogin}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-all duration-200 disabled:opacity-50"
-          >
-            {isLoading ? <Spinner /> : 'Войти (демо)'}
-          </button>
-        ) : (
+        ) : entryMode === 'browser' ? (
           <div className="w-full flex flex-col items-center space-y-4">
             <p className="text-[rgb(12,13,14,0.52)]">
               Это приложение работает внутри Telegram.
             </p>
-            <a href={TELEGRAM_APP_LINK} className="w-full">
+            <a
+              href={TELEGRAM_APP_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full"
+            >
               <button className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-all duration-200">
-                <MaxIcon className="w-6 h-6 mr-3" />
+                <Send className="w-5 h-5 mr-3" />
                 Открыть в Telegram
               </button>
             </a>
+          </div>
+        ) : (
+          <div className="w-full flex flex-col items-center space-y-4">
+            <RefreshCw className="w-6 h-6 text-[#007AFF] animate-spin" />
+            <p className="text-[rgb(12,13,14,0.52)]">Проверяем вход…</p>
           </div>
         )}
       </div>
