@@ -1,6 +1,6 @@
 name: Deploy dobroclub.online
 
-# Авто-деплой при push в dev:
+# Авто-деплой при push в main:
 #   1) собираем фронт на раннере GitHub (не грузим слабый сервер),
 #   2) доставляем код и статику на сервер по SSH (rsync),
 #   3) на сервере сборка backend+bot идёт В ОТДЕЛЬНОЙ сессии (переживает обрыв SSH),
@@ -17,8 +17,14 @@ name: Deploy dobroclub.online
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
   workflow_dispatch:
+
+# Сериализуем деплои: одновременные пуши не запускают параллельную сборку
+# на сервере (иначе гонка за /tmp/dobro-deploy.done и docker compose).
+concurrency:
+  group: deploy-dobroclub
+  cancel-in-progress: false
 
 jobs:
   deploy:
