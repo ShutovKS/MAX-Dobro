@@ -336,7 +336,11 @@ export class AuthService {
     }
     const dataToCheck: string[] = [];
     params.forEach((value, key) => {
-      if (key !== 'hash') {
+      // Исключаем И `hash`, И `signature`. Современные Telegram-клиенты
+      // добавляют поле `signature` (Ed25519, для сторонней валидации) рядом
+      // с `hash`; в data-check-string для HMAC оно НЕ входит. Если его не
+      // исключить, подпись не сойдётся и вход вернёт 401 на новых клиентах.
+      if (key !== 'hash' && key !== 'signature') {
         dataToCheck.push(`${key}=${value}`);
       }
     });
