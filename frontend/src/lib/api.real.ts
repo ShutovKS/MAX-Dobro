@@ -33,6 +33,7 @@ import {
   Users,
 } from 'lucide-react';
 import React from 'react';
+import { formatEventDate, formatTimestamp } from './dateUtils';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -128,6 +129,7 @@ const mapEventData = (event: any): AppEvent => ({
   Icon: getIconForCategory(event.category),
   participantCount: event._count?.participants ?? 0,
   organizationName: event.organization?.name ?? 'Организация',
+  date: formatEventDate(event.date),
   imageUrl:
     event.imageUrl ?? `https://picsum.photos/seed/dobro-event-${event.id}/400/300`,
   pos: { top: '0', left: '0' },
@@ -189,14 +191,17 @@ const mapCourseData = (courseData: any): Course => {
 
 const mapStoryData = (story: any): Story => ({
   ...story,
-  timestamp: story.timestamp ?? story.createdAt,
+  timestamp: formatTimestamp(story.timestamp ?? story.createdAt),
   event: {
     id: story.event.id,
     name: story.event.name ?? story.event.title,
   },
   likes: story.likes ?? story.likesCount ?? 0,
   comments: story.comments ?? story.commentsCount ?? story.commentsData?.length ?? 0,
-  commentsData: story.commentsData ?? [],
+  commentsData: (story.commentsData ?? []).map((c: any) => ({
+    ...c,
+    timestamp: formatTimestamp(c.timestamp ?? c.createdAt),
+  })),
 });
 
 const mapAssistantMessage = (message: any): ChatMessage => ({
@@ -207,7 +212,7 @@ const mapAssistantMessage = (message: any): ChatMessage => ({
   event: message.event ? mapEventData(message.event) : undefined,
   course: message.course ? mapCourseData(message.course) : undefined,
   suggestions: message.suggestions,
-  timestamp: message.createdAt,
+  timestamp: formatTimestamp(message.createdAt),
 });
 
 export const fetchAllEvents = async (): Promise<AppEvent[]> => {
@@ -319,6 +324,7 @@ export const fetchMyChats = async (): Promise<MyChatItem[]> => {
   return chats.map((chat) => ({
     ...chat,
     icon: chat.icon ?? 'Users',
+    timestamp: formatTimestamp(chat.timestamp),
   }));
 };
 export const createEventReview = (
@@ -359,17 +365,25 @@ export const purchaseReward = (rewardId: number): Promise<void> =>
 export const fetchMapMarkers = (): Promise<MapMarker[]> =>
   apiFetch('/map-markers');
 export const fetchFriends = (): Promise<Friend[]> => apiFetch('/friends');
-export const fetchEventChatMessages = (
+export const fetchEventChatMessages = async (
   eventId: number,
-): Promise<EventChatMessage[]> => apiFetch(`/events/${eventId}/messages`);
-export const postEventChatMessage = (
+): Promise<EventChatMessage[]> => {
+  const messages = await apiFetch<any[]>(`/events/${eventId}/messages`);
+  return messages.map((m) => ({
+    ...m,
+    timestamp: formatTimestamp(m.timestamp ?? m.createdAt),
+  }));
+};
+export const postEventChatMessage = async (
   eventId: number,
   text: string,
-): Promise<EventChatMessage> =>
-  apiFetch(`/events/${eventId}/messages`, {
+): Promise<EventChatMessage> => {
+  const m = await apiFetch<any>(`/events/${eventId}/messages`, {
     method: 'POST',
     body: JSON.stringify({ text }),
   });
+  return { ...m, timestamp: formatTimestamp(m.timestamp ?? m.createdAt) };
+};
 export const fetchAssistantChatMessages = async (): Promise<ChatMessage[]> => {
   const messages = await apiFetch<any[]>('/assistant-chat/messages');
   return messages.map(mapAssistantMessage).reverse();
