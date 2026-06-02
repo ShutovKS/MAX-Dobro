@@ -124,7 +124,14 @@ const App: React.FC = () => {
     } finally {
       setIsInitialized(true);
       window.WebApp?.ready();
-      if (!sessionFound && ![ROUTES.AUTH, ROUTES.ONBOARDING].includes(location.pathname)) {
+      // На экран входа уводим ТОЛЬКО если входить реально нечем (нет токена).
+      // При наличии токена транзиентная ошибка покажет экран «повторить», а не вход.
+      const hasToken = !!localStorage.getItem('internal_jwt');
+      if (
+        !sessionFound &&
+        !hasToken &&
+        ![ROUTES.AUTH, ROUTES.ONBOARDING].includes(location.pathname)
+      ) {
         navigate(ROUTES.AUTH);
       }
     }
@@ -324,13 +331,15 @@ const App: React.FC = () => {
   if (!isInitialized) {
     return <SplashPage />;
   }
-  
-  if (isAuthenticated && (!userData || allCourses.length === 0)) {
-    return <SplashPage />;
-  }
 
+  // Ошибку показываем РАНЬШЕ сплэш-гварда по курсам — иначе при сбое загрузки
+  // курсов экран навсегда застревает на сплэше без возможности повторить.
   if (error) {
     return <ErrorPage type={error} onRetry={initializeApp} />;
+  }
+
+  if (isAuthenticated && (!userData || allCourses.length === 0)) {
+    return <SplashPage />;
   }
 
   return (

@@ -60,6 +60,7 @@ const LoginView: React.FC<{
 
       const session = await getCurrentSession();
       if (session) {
+        setIsLoading(false);
         onAuthSuccess(session);
       } else {
         throw new Error('Не удалось получить сессию после входа');

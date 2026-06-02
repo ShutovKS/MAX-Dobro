@@ -199,16 +199,13 @@ export const getCurrentSession = async (): Promise<{
     }
 
     // Прочие ошибки (5xx, бэкенд перезапускается при деплое, и т.п.) — НЕ
-    // сбрасываем токен: сессия восстановится, когда бэкенд снова поднимется.
-    console.warn(
-      'Session check failed transiently, keeping token:',
-      profileResponse.status,
-    );
-    return null;
+    // сбрасываем токен. Бросаем ошибку, чтобы показать экран «повторить»,
+    // а не окно входа; сессия восстановится после возврата бэкенда.
+    throw new Error(`Проверка сессии не удалась (${profileResponse.status})`);
   } catch (e) {
-    // Сетевые ошибки — тоже не разлогиниваем (токен сохраняем).
+    // Сетевые/транзиентные ошибки — токен сохраняем, пробрасываем выше.
     console.error('Error during session check (token kept):', e);
-    return null;
+    throw e;
   }
 };
 
