@@ -141,6 +141,15 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
           </div>
         </section>
 
+        <section>
+          <button
+            onClick={onSwitchToVolunteer}
+            className="w-full bg-white text-[#007AFF] font-semibold py-3 rounded-2xl shadow-sm hover:bg-gray-50 transition-colors"
+          >
+            Вернуться в волонтёрский режим
+          </button>
+        </section>
+
         {isMockMode && (
           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-center pointer-events-none">
             <p className="text-4xl font-bold text-red-500/30 transform -rotate-12">

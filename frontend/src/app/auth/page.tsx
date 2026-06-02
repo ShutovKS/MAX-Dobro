@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
   ArrowLeft,
-  Briefcase,
   CheckCircle,
   Eye,
   EyeOff,
@@ -65,44 +64,6 @@ const LoginView: React.FC<{
       }
     } catch (err: any) {
       setLoginError(err.message || MESSAGES.AUTH.LOGIN_ERROR);
-      setIsLoading(false);
-    }
-  };
-
-  const handleOrganizerLogin = async () => {
-    setLoginError('');
-    setIsLoading(true);
-    try {
-      await logout();
-      if (import.meta.env.VITE_API_MODE === 'mock') {
-        console.warn('Using mock organizer login.');
-        const session = await login('organizer@test.com', 'password');
-        localStorage.setItem('isDemoOrganizer', 'true');
-        onAuthSuccess(session);
-        return;
-      }
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/demo-organizer-login`,
-        { method: 'POST' },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Демо-пользователь организатора не найден. Убедитесь, что база данных наполнена (seeded).');
-      }
-
-      const { accessToken } = await response.json();
-      localStorage.setItem('internal_jwt', accessToken);
-
-      const session = await getCurrentSession();
-      if (session) {
-        onAuthSuccess(session);
-      } else {
-        throw new Error('Не удалось получить сессию после демо-входа');
-      }
-    } catch (err: any) {
-      setLoginError(err.message);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -172,14 +133,6 @@ const LoginView: React.FC<{
           >
             <MaxIcon className="w-6 h-6 mr-3" />
             Войти через Telegram
-          </button>
-          <button
-            onClick={handleOrganizerLogin}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center bg-gray-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 disabled:opacity-50"
-          >
-            <Briefcase className="w-5 h-5 mr-3" />
-            Войти как Организатор (демо)
           </button>
           <div className="flex items-center w-full py-2">
             <div className="flex-grow border-t border-gray-200"></div>

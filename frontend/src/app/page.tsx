@@ -153,6 +153,16 @@ const App: React.FC = () => {
     navigate(ROUTES.AUTH);
   };
 
+  // Возврат из кабинета организатора в волонтёрский режим.
+  // Сбрасываем токен и заново входим как обычный пользователь (Telegram-автологин).
+  // Это также восстанавливает вашу реальную личность, если ранее вошли через демо-организатора.
+  const handleSwitchToVolunteer = async () => {
+    localStorage.removeItem('internal_jwt');
+    setUserData(null);
+    await initializeApp();
+    navigate(ROUTES.HOME);
+  };
+
   const handleSaveProfile = async (updatedUser: User) => {
     try {
       await updateProfile({
@@ -291,7 +301,7 @@ const App: React.FC = () => {
         { path: ROUTES.PROFILE_CERTIFICATES, element: <MyCertificatesPageWrapper /> },
         { path: ROUTES.PROFILE_CHATS, element: <MyChatsPage /> },
         { path: ROUTES.PROFILE_REWARDS, element: <RewardsStorePageWrapper /> },
-        { path: ROUTES.ORGANIZATION_DASHBOARD, element: <OrganizationDashboardPage user={userData} onSwitchToVolunteer={() => navigate(ROUTES.HOME)} onManageEvents={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onCreateEvent={() => navigate(ROUTES.ORGANIZATION_EVENTS_CREATE)} onNavigateToSettings={() => navigate(ROUTES.ORGANIZATION_SETTINGS)} /> },
+        { path: ROUTES.ORGANIZATION_DASHBOARD, element: <OrganizationDashboardPage user={userData} onSwitchToVolunteer={handleSwitchToVolunteer} onManageEvents={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onCreateEvent={() => navigate(ROUTES.ORGANIZATION_EVENTS_CREATE)} onNavigateToSettings={() => navigate(ROUTES.ORGANIZATION_SETTINGS)} /> },
         { path: ROUTES.ORGANIZATION_EVENTS, element: <EventManagementPageWrapper /> },
         { path: ROUTES.ORGANIZATION_EVENTS_CREATE, element: <CreateEventPageWrapper /> },
         { path: ROUTES.ORGANIZATION_EVENTS_EDIT(':eventId'), element: <EditEventPageWrapper /> },

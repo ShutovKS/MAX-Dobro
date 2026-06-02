@@ -278,8 +278,18 @@ export const fetchEventParticipants = (
   eventId: number,
 ): Promise<EventParticipant[]> =>
   apiFetch(`/organization/events/${eventId}/participants`);
-export const fetchOrganizationDashboardStats = (): Promise<OrganizationStat[]> =>
-  apiFetch(`/organization/dashboard/stats`);
+export const fetchOrganizationDashboardStats = async (): Promise<
+  OrganizationStat[]
+> => {
+  const stats = await apiFetch<any[]>(`/organization/dashboard/stats`);
+  const iconByStatId: { [key: string]: React.FC<any> } = {
+    subscribers: Users,
+    events_total: List,
+    rating: Star,
+    reviews: Trophy,
+  };
+  return stats.map((s) => ({ ...s, Icon: iconByStatId[s.id] ?? Star }));
+};
 export const fetchOrganizationDetails = (): Promise<OrganizationDetails> =>
   apiFetch(`/organization/details`);
 export const fetchActivityHistoryEvents = async (): Promise<HistoryEvent[]> => {
