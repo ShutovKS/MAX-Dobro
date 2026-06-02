@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   CheckCircle,
@@ -12,8 +12,8 @@ import {
 import { HeartHandIcon, MaxIcon } from '../../components/ui/icons';
 import { login, register, getCurrentSession, logout } from '../../lib/auth';
 import type { User } from '../../lib/types';
-import { MESSAGES, PASSWORD_MIN_LENGTH } from '../../lib/constants';
-import { getTelegramInitData, telegramLogin } from '../../lib/telegram-sdk';
+import { MESSAGES, PASSWORD_MIN_LENGTH, TELEGRAM_APP_LINK } from '../../lib/constants';
+import { getTelegramInitData, isTelegramClient, telegramLogin } from '../../lib/telegram-sdk';
 
 const Spinner: React.FC = () => (
   <RefreshCw className="w-5 h-5 text-white animate-spin" />
@@ -33,14 +33,16 @@ const LoginView: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
 
+  const inTelegram = isTelegramClient();
+  const isMock = import.meta.env.VITE_API_MODE === 'mock';
+
   const handleTelegramLogin = async () => {
     setLoginError('');
     setIsLoading(true);
     try {
-      await logout();
       const initData = getTelegramInitData();
       if (!initData) {
-        if (import.meta.env.VITE_API_MODE === 'mock') {
+        if (isMock) {
           console.warn(
             'Telegram initData not found. Using mock volunteer login.',
           );
@@ -113,112 +115,64 @@ const LoginView: React.FC<{
     if (loginError) setLoginError('');
   };
 
+  // Внутри Telegram входим автоматически — без формы.
+  useEffect(() => {
+    if (inTelegram) {
+      handleTelegramLogin();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Подавляем неиспользуемые предупреждения для оставшегося email/демо-пути.
+  void email; void password; void showPassword; void emailError; void passwordError;
+  void handleFormSubmit; void handleEmailChange; void handlePasswordChange;
+  void onSwitchToRegister; void onSwitchToForgotPassword;
+
   return (
     <div className="bg-white w-full h-screen flex flex-col items-center justify-center p-6 font-sans antialiased">
-      <div className="w-full max-w-sm flex flex-col items-center">
+      <div className="w-full max-w-sm flex flex-col items-center text-center">
         <HeartHandIcon className="w-24 h-24 text-[#007AFF] mb-8" />
-        <h1 className="text-[28px] font-bold text-[#0C0D0E] mb-10 text-center">
-          Добро пожаловать!
+        <h1 className="text-[28px] font-bold text-[#0C0D0E] mb-6 text-center">
+          MAX<span className="text-[#007AFF]">Добро</span>
         </h1>
         {loginError && (
           <p className="text-red-600 text-sm text-center mb-4 bg-red-50 p-3 rounded-lg">
             {loginError}
           </p>
         )}
-        <div className="w-full flex flex-col items-center space-y-3">
+
+        {inTelegram ? (
+          <div className="w-full flex flex-col items-center space-y-4">
+            <p className="text-[rgb(12,13,14,0.52)]">Входим…</p>
+            <button
+              onClick={handleTelegramLogin}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-all duration-200 disabled:opacity-50"
+            >
+              {isLoading ? <Spinner /> : 'Войти через Telegram'}
+            </button>
+          </div>
+        ) : isMock ? (
           <button
             onClick={handleTelegramLogin}
             disabled={isLoading}
-            className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50"
+            className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-all duration-200 disabled:opacity-50"
           >
-            <MaxIcon className="w-6 h-6 mr-3" />
-            Войти через Telegram
+            {isLoading ? <Spinner /> : 'Войти (демо)'}
           </button>
-          <div className="flex items-center w-full py-2">
-            <div className="flex-grow border-t border-gray-200"></div>
-            <span className="flex-shrink mx-4 text-[rgb(12,13,14,0.52)] text-sm font-medium">
-              или
-            </span>
-            <div className="flex-grow border-t border-gray-200"></div>
-          </div>
-          <div className="w-full">
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Mail className="w-5 h-5 text-gray-400" />
-              </span>
-              <input
-                type="email"
-                value={email}
-                onChange={handleEmailChange}
-                placeholder="Ваш email"
-                className="w-full pl-10 pr-4 py-3 bg-gray-100 text-gray-900 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                aria-label="Email"
-                aria-invalid={!!emailError}
-                aria-describedby="email-error"
-              />
-            </div>
-            {emailError && (
-              <p id="email-error" className="text-red-600 text-xs mt-1 ml-1">
-                {emailError}
-              </p>
-            )}
-          </div>
-          <div className="w-full">
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Lock className="w-5 h-5 text-gray-400" />
-              </span>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={handlePasswordChange}
-                placeholder="Пароль"
-                className="w-full pl-10 pr-10 py-3 bg-gray-100 text-gray-900 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                aria-label="Password"
-                aria-invalid={!!passwordError}
-                aria-describedby="password-error"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-                aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-              >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
+        ) : (
+          <div className="w-full flex flex-col items-center space-y-4">
+            <p className="text-[rgb(12,13,14,0.52)]">
+              Это приложение работает внутри Telegram.
+            </p>
+            <a href={TELEGRAM_APP_LINK} className="w-full">
+              <button className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-all duration-200">
+                <MaxIcon className="w-6 h-6 mr-3" />
+                Открыть в Telegram
               </button>
-            </div>
-            {passwordError && (
-              <p id="password-error" className="text-red-600 text-xs mt-1 ml-1">
-                {passwordError}
-              </p>
-            )}
+            </a>
           </div>
-          <button
-            onClick={handleFormSubmit}
-            disabled={isLoading}
-            className="w-full bg-transparent border-2 border-[#007AFF] text-[#007AFF] font-semibold py-3 px-4 rounded-xl hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 mt-2 h-[50px] flex items-center justify-center disabled:opacity-50"
-          >
-            {isLoading ? <Spinner /> : 'Продолжить'}
-          </button>
-          <div className="w-full flex justify-between items-center pt-2">
-            <button
-              onClick={onSwitchToForgotPassword}
-              className="text-sm text-[#007AFF] hover:underline"
-            >
-              Забыли пароль?
-            </button>
-            <button
-              onClick={onSwitchToRegister}
-              className="text-sm text-[#007AFF] hover:underline font-semibold"
-            >
-              Зарегистрироваться
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

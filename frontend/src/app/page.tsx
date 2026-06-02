@@ -51,7 +51,7 @@ import {
   setOnboardingComplete,
 } from '../lib/auth';
 import { MESSAGES, ROUTES } from '../lib/constants';
-import { initTelegram, isTelegramEnv, telegramLogin } from '../lib/telegram-sdk';
+import { initTelegram, isTelegramClient, telegramLogin, waitForTelegramInitData } from '../lib/telegram-sdk';
 
 const App: React.FC = () => {
   /** <context:frontend_app_shell> Route shell for auth, onboarding, and tab switching. </context:frontend_app_shell> */
@@ -87,12 +87,13 @@ const App: React.FC = () => {
       let session = await getCurrentSession();
 
       // Авто-логин через Telegram: если активной сессии нет, но приложение
-      // открыто внутри Telegram — входим по initData без формы.
+      // открыто из Telegram-клиента — дожидаемся initData и входим без формы.
       if (
         !session &&
         import.meta.env.VITE_API_MODE === 'real' &&
-        isTelegramEnv()
+        isTelegramClient()
       ) {
+        await waitForTelegramInitData();
         const ok = await telegramLogin();
         if (ok) {
           session = await getCurrentSession();
@@ -157,8 +158,10 @@ const App: React.FC = () => {
   // Сбрасываем токен и заново входим как обычный пользователь (Telegram-автологин).
   // Это также восстанавливает вашу реальную личность, если ранее вошли через демо-организатора.
   const handleSwitchToVolunteer = async () => {
+    // Показываем сплэш на время перехода (не экран входа), сбрасываем токен
+    // и заново входим как волонтёр через Telegram-автологин.
+    setIsInitialized(false);
     localStorage.removeItem('internal_jwt');
-    setUserData(null);
     await initializeApp();
     navigate(ROUTES.HOME);
   };

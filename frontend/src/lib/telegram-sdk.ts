@@ -39,6 +39,32 @@ export function isTelegramEnv(): boolean {
   return getTelegramInitData() !== null;
 }
 
+/** Присутствует ли Telegram WebApp SDK (т.е. приложение открыто из Telegram-клиента). */
+export function isTelegramClient(): boolean {
+  return typeof window !== 'undefined' && !!window.Telegram?.WebApp;
+}
+
+/**
+ * Ждёт появления initData (SDK может инициализироваться чуть позже монтирования
+ * React). Возвращает initData или null. Вне Telegram-клиента не ждёт.
+ */
+export async function waitForTelegramInitData(
+  timeoutMs = 2500,
+): Promise<string | null> {
+  const existing = getTelegramInitData();
+  if (existing) return existing;
+  if (!isTelegramClient()) return null;
+  const step = 100;
+  let waited = 0;
+  while (waited < timeoutMs) {
+    await new Promise((r) => setTimeout(r, step));
+    waited += step;
+    const d = getTelegramInitData();
+    if (d) return d;
+  }
+  return getTelegramInitData();
+}
+
 /**
  * Авто-логин через Telegram: отправляет initData на бэкенд,
  * сохраняет внутренний JWT в localStorage. Возвращает true при успехе.

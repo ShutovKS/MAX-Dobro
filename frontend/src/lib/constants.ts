@@ -4,6 +4,10 @@ import type {FilterDate, FilterFormat, OrganizationFilters} from './types';
 // <context:frontend_constants> App-wide constants used by route and API markers. </context:frontend_constants>
 export const APP_VERSION = '1.0.0';
 export const CURRENT_USER_ID = 1;
+
+// Telegram-бот и прямая ссылка на запуск Mini App (для открытия из браузера)
+export const TELEGRAM_BOT_USERNAME = 'dobro_club_bot';
+export const TELEGRAM_APP_LINK = `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp`;
 export const TOAST_DURATION = 5000;
 export const MODAL_TRANSITION_DURATION = 300;
 
