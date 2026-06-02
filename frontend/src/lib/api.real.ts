@@ -128,6 +128,8 @@ const mapEventData = (event: any): AppEvent => ({
   Icon: getIconForCategory(event.category),
   participantCount: event._count?.participants ?? 0,
   organizationName: event.organization?.name ?? 'Организация',
+  imageUrl:
+    event.imageUrl ?? `https://picsum.photos/seed/dobro-event-${event.id}/400/300`,
   pos: { top: '0', left: '0' },
 });
 

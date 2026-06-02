@@ -20,6 +20,7 @@ export type AppEvent = {
   date: string;
   location: string;
   icon: string;
+  imageUrl?: string;
   pos: { top: string; left: string };
   requirements?: string[];
   participantCount?: number;

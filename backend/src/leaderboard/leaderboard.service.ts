@@ -76,8 +76,18 @@ export class LeaderboardService {
 
     let currentUserWithRank: LeaderboardUserEntity | null = null;
     if (currentUserData) {
+      // Ранг считаем тем же порядком, что и topUsers (karma desc, id asc),
+      // чтобы номер в списке и в футере совпадал.
       const rank = await this.prisma.user.count({
-        where: { karmaPoints: { gt: currentUserData.karmaPoints } },
+        where: {
+          OR: [
+            { karmaPoints: { gt: currentUserData.karmaPoints } },
+            {
+              karmaPoints: currentUserData.karmaPoints,
+              id: { lt: currentUserData.id },
+            },
+          ],
+        },
       });
       const { karmaPoints, firstName, lastName, ...rest } = currentUserData;
       currentUserWithRank = {
@@ -118,6 +128,7 @@ export class LeaderboardService {
         JOIN "users" u ON u.id = kl."userId"
         WHERE kl."createdAt" >= ${startDate}
         GROUP BY u.id
+        HAVING SUM(kl.points) > 0
       )
       SELECT * FROM ranked_users
       WHERE "rank" <= ${limit} OR id = ${currentUserId}

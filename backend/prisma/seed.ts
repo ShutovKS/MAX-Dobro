@@ -47,14 +47,16 @@ async function main() {
       firstName: 'Алексей',
       lastName: 'Дружбин',
       avatarUrl: 'https://i.pravatar.cc/150?u=friend',
+      totalHours: 64,
+      karmaPoints: 8400,
     },
   });
-  
+
   const otherUsers = await prisma.user.createManyAndReturn({
     data: [
-      { email: 'user2@test.com', supabaseUserId: 'user2-id', firstName: 'Мария', lastName: 'Петрова', avatarUrl: 'https://i.pravatar.cc/150?u=user2' },
-      { email: 'user3@test.com', supabaseUserId: 'user3-id', firstName: 'Алексей', lastName: 'Новиков', avatarUrl: 'https://i.pravatar.cc/150?u=user3' },
-      { email: 'user4@test.com', supabaseUserId: 'user4-id', firstName: 'Анна', lastName: 'Попова', avatarUrl: 'https://i.pravatar.cc/150?u=user4' },
+      { email: 'user2@test.com', supabaseUserId: 'user2-id', firstName: 'Мария', lastName: 'Петрова', avatarUrl: 'https://i.pravatar.cc/150?u=user2', totalHours: 51, karmaPoints: 6100 },
+      { email: 'user3@test.com', supabaseUserId: 'user3-id', firstName: 'Алексей', lastName: 'Новиков', avatarUrl: 'https://i.pravatar.cc/150?u=user3', totalHours: 38, karmaPoints: 4200 },
+      { email: 'user4@test.com', supabaseUserId: 'user4-id', firstName: 'Анна', lastName: 'Попова', avatarUrl: 'https://i.pravatar.cc/150?u=user4', totalHours: 25, karmaPoints: 2800 },
     ]
   });
 
@@ -66,6 +68,8 @@ async function main() {
       lastName: 'Организаторов',
       avatarUrl: 'https://i.pravatar.cc/150?u=organizer',
       role: 'organization',
+      totalHours: 14,
+      karmaPoints: 1500,
     },
   });
   console.log('✅ Users created.');
@@ -73,11 +77,11 @@ async function main() {
   // 3. Организации
   const [orgArt, orgEco, orgSeniors, orgAnimals, orgSport] = await prisma.organization.createManyAndReturn({
     data: [
-      { name: 'Фонд "Подари жизнь"', description: 'Помощь детям с онко-заболеваниями', category: 'Дети', isVerified: true, websiteUrl: '#', address: 'Москва, ул. Добрая, д. 1' },
-      { name: 'Гринпис России', description: 'Защита природы и экологии', category: 'Экология', isVerified: true, websiteUrl: '#', address: 'Москва, ул. Лесная, д. 5' },
-      { name: 'Фонд "Старость в радость"', description: 'Помощь пожилым людям', category: 'Помощь пожилым', isVerified: true, websiteUrl: '#', address: 'Москва, ул. Садовая, д. 10' },
-      { name: 'Приют "Верный друг"', description: 'Помощь бездомным животным', category: 'Животные', isVerified: false, websiteUrl: '#', address: 'МО, пос. Лесной, ул. Центральная, 1' },
-      { name: 'МосМарафон', description: 'Организация спортивных мероприятий.', category: 'Спорт', isVerified: true },
+      { name: 'Фонд "Подари жизнь"', description: 'Помощь детям с онко-заболеваниями', category: 'Дети', isVerified: true, websiteUrl: '#', address: 'Москва, ул. Добрая, д. 1', logoUrl: 'https://api.dicebear.com/9.x/shapes/svg?seed=podari-zhizn', coverImageUrl: 'https://picsum.photos/seed/dobro-org-podari/800/400' },
+      { name: 'Гринпис России', description: 'Защита природы и экологии', category: 'Экология', isVerified: true, websiteUrl: '#', address: 'Москва, ул. Лесная, д. 5', logoUrl: 'https://api.dicebear.com/9.x/shapes/svg?seed=greenpeace', coverImageUrl: 'https://picsum.photos/seed/dobro-org-greenpeace/800/400' },
+      { name: 'Фонд "Старость в радость"', description: 'Помощь пожилым людям', category: 'Помощь пожилым', isVerified: true, websiteUrl: '#', address: 'Москва, ул. Садовая, д. 10', logoUrl: 'https://api.dicebear.com/9.x/shapes/svg?seed=starost', coverImageUrl: 'https://picsum.photos/seed/dobro-org-starost/800/400' },
+      { name: 'Приют "Верный друг"', description: 'Помощь бездомным животным', category: 'Животные', isVerified: false, websiteUrl: '#', address: 'МО, пос. Лесной, ул. Центральная, 1', logoUrl: 'https://api.dicebear.com/9.x/shapes/svg?seed=vernyi-drug', coverImageUrl: 'https://picsum.photos/seed/dobro-org-vernyi/800/400' },
+      { name: 'МосМарафон', description: 'Организация спортивных мероприятий.', category: 'Спорт', isVerified: true, logoUrl: 'https://api.dicebear.com/9.x/shapes/svg?seed=mosmarathon', coverImageUrl: 'https://picsum.photos/seed/dobro-org-mosmarathon/800/400' },
     ]
   });
   console.log('✅ Organizations created.');
@@ -376,7 +380,16 @@ console.log('✅ Courses, lessons and certificates created.');
   const eventChat = await prisma.eventChat.create({ data: { eventId: eventFuture1.id } });
   await prisma.eventChatMessage.create({ data: { chatId: eventChat.id, authorId: mainUser.id, text: 'Всем привет! Кто идет на выставку?' } });
   await prisma.assistantChatMessage.create({ data: { authorId: mainUser.id, content: 'Привет, ассистент!', sender: 'USER' } });
-  await prisma.karmaLog.createMany({ data: [ { userId: mainUser.id, points: 50, description: `Участие: ${eventPast1.title}` }, { userId: mainUser.id, points: 75, description: `Участие: ${eventPast2.title}` }, { userId: mainUser.id, points: -500, description: `Покупка: ${rewards[0].name}` } ] });
+  await prisma.karmaLog.createMany({ data: [
+    { userId: mainUser.id, points: 50, description: `Участие: ${eventPast1.title}` },
+    { userId: mainUser.id, points: 75, description: `Участие: ${eventPast2.title}` },
+    { userId: mainUser.id, points: -500, description: `Покупка: ${rewards[0].name}` },
+    { userId: mainUser.id, points: 1800, description: 'Эко-марафон' },
+    { userId: friendUser.id, points: 1100, description: 'Забег добрых дел' },
+    { userId: otherUsers[0].id, points: 850, description: 'Помощь в приюте' },
+    { userId: otherUsers[1].id, points: 600, description: 'Эко-субботник' },
+    { userId: otherUsers[2].id, points: 400, description: 'Арт-волонтёрство' },
+  ] });
   console.log('✅ Stories, chats and logs created.');
 
   console.log('--- Seeding complete! ---');
