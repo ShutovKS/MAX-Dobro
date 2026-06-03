@@ -123,7 +123,6 @@ const App: React.FC = () => {
       setError('network');
     } finally {
       setIsInitialized(true);
-      window.WebApp?.ready();
       // На экран входа уводим ТОЛЬКО если входить реально нечем (нет токена).
       // При наличии токена транзиентная ошибка покажет экран «повторить», а не вход.
       const hasToken = !!localStorage.getItem('internal_jwt');
@@ -248,6 +247,13 @@ const App: React.FC = () => {
     return <RewardsDetailPage rewardId={rewardId} allRewards={allRewards} user={userData!} onPurchase={async (rId) => {
       await purchaseReward(rId);
       setAllRewards(prev => prev.map(r => r.id === rId ? { ...r, isPurchased: true } : r));
+      // Бэкенд списал карму — обновляем профиль, иначе баланс/карма устаревают до перезагрузки.
+      try {
+        const refreshed = await getCurrentSession();
+        if (refreshed) setUserData(refreshed.user);
+      } catch (e) {
+        console.error('Failed to refresh profile after purchase:', e);
+      }
       showToast(MESSAGES.TOASTS.REWARD_PURCHASED, 'success');
       navigate(ROUTES.PROFILE_REWARDS);
     }} />;
@@ -335,7 +341,9 @@ const App: React.FC = () => {
     return <ErrorPage type={error} onRetry={initializeApp} />;
   }
 
-  if (isAuthenticated && (!userData || allCourses.length === 0)) {
+  // Сплэш держим, пока нет userData. Пустой список курсов — валидное состояние
+  // (не зацикливаемся на сплэше, если курсов просто нет).
+  if (isAuthenticated && !userData) {
     return <SplashPage />;
   }
 

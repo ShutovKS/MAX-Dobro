@@ -2,7 +2,6 @@ import React, {useEffect, useRef, useState} from 'react';
 import type {AppEvent, EventChatMessage, User} from '../../../lib/types';
 import {fetchEventById, fetchEventChatMessages, postEventChatMessage} from '../../../lib/api';
 import {ArrowLeft, MoreHorizontal, Paperclip, Pin, Send, X} from 'lucide-react';
-import {CURRENT_USER_ID} from '../../../lib/constants';
 
 const MessageBubble: React.FC<{ message: EventChatMessage; isOutgoing: boolean; showAuthor: boolean }> = ({
                                                                                                             message,
@@ -81,7 +80,7 @@ const EventChatPage: React.FC<{
     } catch {
       const fallbackMessage: EventChatMessage = {
         id: Date.now(),
-        author: {id: CURRENT_USER_ID, name: `${user.firstName} ${user.lastName}`, avatarUrl: user.avatarUrl},
+        author: {id: user.id, name: `${user.firstName} ${user.lastName}`, avatarUrl: user.avatarUrl},
         text: textToSend,
         timestamp: new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}),
       };
@@ -126,7 +125,7 @@ const EventChatPage: React.FC<{
           const prevMessage = messages[index - 1];
           const showAuthor = !prevMessage || prevMessage.author.id !== msg.author.id;
           return (
-            <MessageBubble key={msg.id} message={msg} isOutgoing={msg.author.id === CURRENT_USER_ID}
+            <MessageBubble key={msg.id} message={msg} isOutgoing={msg.author.id === user.id}
                            showAuthor={showAuthor}/>
           );
         })}

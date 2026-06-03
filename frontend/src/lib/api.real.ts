@@ -367,7 +367,19 @@ export const likeStory = (storyId: number): Promise<void> =>
   apiFetch(`/stories/${storyId}/like`, { method: 'POST' });
 export const unlikeStory = (storyId: number): Promise<void> =>
   apiFetch(`/stories/${storyId}/like`, { method: 'DELETE' });
-export const fetchRewards = (): Promise<RewardItem[]> => apiFetch('/rewards');
+const REWARD_IMAGE_FALLBACK = (id: number | string) =>
+  `https://picsum.photos/seed/dobro-reward-${id}/300`;
+const mapRewardData = (r: any): RewardItem => ({
+  ...r,
+  // Сиды/БД могут не содержать imageUrl (колонка nullable) — подставляем
+  // плейсхолдер, иначе <img> с пустым src даёт битую картинку.
+  imageUrl: r.imageUrl || REWARD_IMAGE_FALLBACK(r.id),
+  isPurchased: r.isPurchased ?? false,
+});
+export const fetchRewards = async (): Promise<RewardItem[]> => {
+  const rewards = await apiFetch<any[]>('/rewards');
+  return rewards.map(mapRewardData);
+};
 export const purchaseReward = (rewardId: number): Promise<void> =>
   apiFetch(`/rewards/${rewardId}/purchase`, {
     method: 'POST',
@@ -379,10 +391,15 @@ export const fetchEventChatMessages = async (
   eventId: number,
 ): Promise<EventChatMessage[]> => {
   const messages = await apiFetch<any[]>(`/events/${eventId}/messages`);
-  return messages.map((m) => ({
-    ...m,
-    timestamp: formatTimestamp(m.timestamp ?? m.createdAt),
-  }));
+  // Бэкенд отдаёт сообщения в порядке createdAt desc (новые сверху) — для
+  // ленты чата разворачиваем в хронологический порядок (старые сверху),
+  // как и в ассистент-чате.
+  return messages
+    .map((m) => ({
+      ...m,
+      timestamp: formatTimestamp(m.timestamp ?? m.createdAt),
+    }))
+    .reverse();
 };
 export const postEventChatMessage = async (
   eventId: number,

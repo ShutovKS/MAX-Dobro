@@ -82,7 +82,8 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
 
         <main className="flex-grow overflow-y-auto px-6 pb-28">
           <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
-            <img src={reward.imageUrl} alt={reward.name} className="w-full aspect-square object-cover rounded-xl"/>
+            <img src={reward.imageUrl} alt={reward.name} className="w-full aspect-square object-cover rounded-xl"
+                 onError={(e) => { const t = e.currentTarget as HTMLImageElement; t.onerror = null; t.src = 'https://placehold.co/300?text=%F0%9F%8E%81'; }}/>
           </div>
 
           <div className="space-y-2">
