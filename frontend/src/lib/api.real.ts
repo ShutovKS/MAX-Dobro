@@ -223,7 +223,9 @@ const mapAssistantMessage = (message: any): ChatMessage => ({
 });
 
 export const fetchAllEvents = async (): Promise<AppEvent[]> => {
-  const events = await apiFetch<any[]>('/events');
+  // limit=100: бэкенд по умолчанию отдаёт 10 — лента/карта/поиск видели только
+  // первые 10 событий. Пагинация/бесконечная прокрутка — отдельной задачей.
+  const events = await apiFetch<any[]>('/events?limit=100');
   return events.map(mapEventData);
 };
 
@@ -296,7 +298,7 @@ export const markLessonComplete = async (
 };
 
 export const fetchAllOrganizations = (): Promise<Organization[]> =>
-  apiFetch('/organizations');
+  apiFetch('/organizations?limit=100');
 export const fetchOrganizationById = (id: number): Promise<Organization> =>
   apiFetch(`/organizations/${id}`);
 export const updateOrganizationSubscription = (

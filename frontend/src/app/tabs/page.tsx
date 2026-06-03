@@ -15,7 +15,7 @@ const defaultFilters: Filters = {
   format: 'Все',
   categories: [],
   date: 'Любая',
-  distance: 5,
+  distance: 50,
 };
 
 const getDistance = (from: [number, number], to: [number, number]): number => {
@@ -73,15 +73,16 @@ const applyAllFilters = (
     })();
     if (!dateMatch) return false;
 
-    // Distance match (only for offline events)
+    // Distance match (только для офлайн-событий, у которых есть координаты).
+    // События без координат НЕ скрываем (иначе лента/карта пустеют, если у
+    // события не проставлены lat/lng).
     if (format !== 'Онлайн') {
       const eventPosition = markersMap.get(event.id);
-      if (!eventPosition) {
-        return false;
-      }
-      const eventDistance = getDistance(userLocation, eventPosition);
-      if (eventDistance > distance) {
-        return false;
+      if (eventPosition) {
+        const eventDistance = getDistance(userLocation, eventPosition);
+        if (eventDistance > distance) {
+          return false;
+        }
       }
     }
 
