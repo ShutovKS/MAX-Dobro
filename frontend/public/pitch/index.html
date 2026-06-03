@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MAX Добро · Dobro Club — маркетинг и продвижение</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B1220; --ink2:#243044; --muted:#6B7785;
+    --blue:#007AFF; --blue2:#3E9BFF; --navy:#0B1C3F;
+    --coral:#FF6A3D; --amber:#FFB020; --green:#1ABE43;
+    --bg:#F4F7FC; --card:#FFFFFF; --line:#E7EDF6;
+    --disp:'Unbounded',sans-serif; --body:'Manrope',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#aeb6c4;font-family:var(--body);color:var(--ink);-webkit-font-smoothing:antialiased}
+  .deck{display:flex;flex-direction:column;align-items:center;gap:28px;padding:28px 0}
+
+  .slide{
+    position:relative;width:1280px;height:720px;flex:0 0 auto;overflow:hidden;
+    background:
+      radial-gradient(900px 520px at 88% -8%, rgba(0,122,255,.13), transparent 60%),
+      radial-gradient(700px 480px at -6% 108%, rgba(255,106,61,.10), transparent 55%),
+      var(--bg);
+    border-radius:22px;box-shadow:0 30px 70px -30px rgba(11,28,63,.45);
+  }
+  .pad{position:absolute;inset:0;padding:56px 64px;display:flex;flex-direction:column}
+
+  /* footer */
+  .foot{position:absolute;left:64px;right:64px;bottom:26px;display:flex;align-items:center;justify-content:space-between;
+    font-size:13px;color:var(--muted);font-weight:600}
+  .foot .brand{display:flex;align-items:center;gap:8px}
+  .foot .dot{width:7px;height:7px;border-radius:50%;background:var(--blue)}
+  .foot b{color:var(--ink)}
+
+  /* typography */
+  .kicker{font-family:var(--disp);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+  .kicker .num{color:var(--coral)}
+  h1.title{font-family:var(--disp);font-weight:800;font-size:46px;line-height:1.04;letter-spacing:-.01em;color:var(--ink)}
+  h1.big{font-size:84px;line-height:.96}
+  .sub{font-size:21px;color:var(--ink2);font-weight:500;line-height:1.4}
+  .muted{color:var(--muted)}
+  .accent{color:var(--blue)} .coral{color:var(--coral)} .green{color:var(--green)}
+
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:7px 15px;border-radius:999px;font-weight:700;font-size:14px}
+  .chip.blue{background:rgba(0,122,255,.10);color:var(--blue)}
+  .chip.coral{background:rgba(255,106,61,.12);color:#E0521F}
+  .chip.green{background:rgba(26,190,67,.12);color:#0E8F31}
+  .chip.ghost{background:#EEF3FB;color:var(--ink2)}
+  .badge-live{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:rgba(26,190,67,.12);
+    color:#0E8F31;font-weight:800;font-size:13px;border:1px solid rgba(26,190,67,.25)}
+  .badge-live .pulse{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(26,190,67,.18)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 30px -22px rgba(11,28,63,.35)}
+  .grid{display:grid;gap:18px}
+
+  /* phone mockup */
+  .phone{position:relative;border-radius:30px;background:#0B0F1A;padding:8px;box-shadow:0 30px 50px -24px rgba(11,28,63,.6);flex:0 0 auto}
+  .phone .screen{border-radius:23px;overflow:hidden;background:#000;width:100%;height:100%}
+  .phone img{width:100%;height:100%;object-fit:cover;display:block}
+  .phone .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:38%;height:18px;background:#0B0F1A;border-radius:0 0 12px 12px;z-index:2}
+
+  .stat .n{font-family:var(--disp);font-weight:800;line-height:1}
+  .check{color:var(--green);font-weight:900}
+  .x{color:#C3CCDA;font-weight:800}
+
+  /* present mode */
+  body.present{overflow:hidden;height:100vh}
+  body.present .deck{display:block;padding:0;height:100vh}
+  body.present .slide{display:none;position:absolute;top:50%;left:50%;transform-origin:center;box-shadow:0 40px 90px -30px rgba(11,28,63,.6)}
+  body.present .slide.active{display:block}
+  .hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(11,28,63,.85);color:#fff;
+    padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;z-index:99;font-family:var(--body)}
+  body:not(.present) .hint{display:none}
+
+  /* single-slide capture mode (?slide=N) — exact 1280x720, edge-to-edge */
+  body.shot{background:#fff}
+  body.shot .deck{display:block;padding:0;gap:0}
+  body.shot .slide{display:none}
+  body.shot .slide.show{display:block;border-radius:0;box-shadow:none}
+  body.shot .hint{display:none}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- ============ 1 · TITLE ============ -->
+  <section class="slide" id="s1">
+    <div class="pad" style="flex-direction:row;align-items:center;gap:48px">
+      <div style="flex:1.15">
+        <div class="chip blue" style="margin-bottom:26px">Маркетинг и продвижение продукта</div>
+        <h1 class="title big" style="font-size:92px">MAX <span class="accent">Добро</span></h1>
+        <p class="sub" style="margin-top:22px;font-size:25px;max-width:560px">Экосистема добрых дел внутри мессенджера — там, где аудитория уже проводит время.</p>
+        <div style="display:flex;gap:12px;margin-top:26px;flex-wrap:wrap">
+          <span class="badge-live"><span class="pulse"></span>MVP развёрнут в проде</span>
+          <span class="chip ghost">в Telegram — <b style="margin-left:5px">Dobro Club</b></span>
+        </div>
+        <div style="margin-top:42px;display:flex;align-items:center;gap:14px;color:var(--muted);font-weight:600;font-size:16px">
+          <span style="color:var(--ink);font-weight:800">Данилов Михаил</span><span>·</span>
+          <span style="color:var(--ink);font-weight:800">Корнилов Кирилл</span>
+          <span class="dotsep" style="width:5px;height:5px;border-radius:50%;background:#C3CCDA;display:inline-block"></span>
+          <span>РТУ МИРЭА · БСБО-09-23</span>
+        </div>
+      </div>
+      <div style="flex:.85;display:flex;justify-content:center;align-items:center">
+        <div class="phone" style="width:300px;height:610px">
+          <div class="notch"></div>
+          <div class="screen"><img src="assets/img_splash.png" alt=""></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>01</div></div>
+  </section>
+
+  <!-- ============ 2 · MARKET ============ -->
+  <section class="slide" id="s2">
+    <div class="pad">
+      <div class="kicker"><span class="num">02</span> &nbsp;Рынок и аудитория</div>
+      <h1 class="title" style="margin-top:14px;max-width:980px">Государство вкладывается в волонтёрство — <span class="accent">а удобного цифрового моста для молодёжи нет</span></h1>
+      <div style="display:flex;gap:24px;margin-top:30px;flex:1">
+        <div style="flex:.9;display:flex;flex-direction:column;gap:14px">
+          <div class="chip coral" style="align-self:flex-start">Ядро аудитории: 16–35 лет</div>
+          <div class="card" style="padding:22px 24px">
+            <div style="font-weight:800;font-size:18px;margin-bottom:6px">Почему именно сейчас</div>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:11px;color:var(--ink2);font-size:16px;font-weight:500">
+              <li>🏛️ Господдержка и нацпроекты: волонтёрство — приоритет, под него есть бюджеты и гранты.</li>
+              <li>💬 Мессенджеры — главный канал молодёжи. MAX — национальная платформа с дистрибуцией.</li>
+              <li>🎓 Вузам нужны «часы добра» и портфолио — спрос на учёт и сертификаты.</li>
+            </ul>
+          </div>
+        </div>
+        <div style="flex:1.1;display:flex;flex-direction:column;gap:14px">
+          <div class="muted" style="font-weight:700;font-size:14px;letter-spacing:.04em">ВЦИОМ, 2023 · «Волонтёрство в России»</div>
+          <div class="grid" style="grid-template-columns:1fr 1fr;gap:14px;flex:1">
+            <div class="card stat" style="padding:20px 22px;display:flex;flex-direction:column;justify-content:center">
+              <div class="n accent" style="font-size:58px">48%</div>
+              <div style="font-weight:700;font-size:15px;margin-top:6px">узнают о добрых делах из соцсетей</div>
+            </div>
+            <div class="card stat" style="padding:20px 22px;display:flex;flex-direction:column;justify-content:center">
+              <div class="n coral" style="font-size:58px">61%</div>
+              <div style="font-weight:700;font-size:15px;margin-top:6px">бросили волонтёрить из-за отсутствия наград</div>
+            </div>
+            <div class="card stat" style="padding:20px 22px;grid-column:span 2;display:flex;align-items:center;gap:26px">
+              <div style="display:flex;align-items:baseline;gap:10px"><span class="n green" style="font-size:46px">34%</span><span class="muted" style="font-weight:700">навыки</span></div>
+              <div style="width:1px;height:46px;background:var(--line)"></div>
+              <div style="display:flex;align-items:baseline;gap:10px"><span class="n green" style="font-size:46px">33%</span><span class="muted" style="font-weight:700">друзья</span></div>
+              <div style="font-weight:700;font-size:15px;color:var(--ink2)">— главные мотивы участия</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>02</div></div>
+  </section>
+
+  <!-- ============ 3 · PROBLEM ============ -->
+  <section class="slide" id="s3">
+    <div class="pad">
+      <div class="kicker"><span class="num">03</span> &nbsp;Проблема</div>
+      <h1 class="title" style="margin-top:14px">Почему молодёжь <span class="coral">не доходит</span> до волонтёрства</h1>
+      <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:28px;flex:1;align-content:center">
+        <div class="card" style="padding:24px 26px;display:flex;gap:18px;align-items:flex-start">
+          <div style="font-size:30px">🚪</div>
+          <div><div style="font-weight:800;font-size:20px;margin-bottom:5px">Высокий порог входа</div>
+          <div class="muted" style="font-size:16px;line-height:1.45">Сложные сайты, долгая регистрация, анкеты. Платформы оторваны от привычной цифровой среды.</div></div>
+        </div>
+        <div class="card" style="padding:24px 26px;display:flex;gap:18px;align-items:flex-start">
+          <div style="font-size:30px">📉</div>
+          <div><div style="font-weight:800;font-size:20px;margin-bottom:5px">Разрыв в вовлечённости</div>
+          <div class="muted" style="font-size:16px;line-height:1.45">Ядро волонтёров — люди 35+. Молодёжь хочет помогать, но не находит удобных форматов.</div></div>
+        </div>
+        <div class="card" style="padding:24px 26px;display:flex;gap:18px;align-items:flex-start">
+          <div style="font-size:30px">🏆</div>
+          <div><div style="font-weight:800;font-size:20px;margin-bottom:5px">Нет мотивации</div>
+          <div class="muted" style="font-size:16px;line-height:1.45">Отсутствие признания и видимого прогресса — 61% бросают именно поэтому.</div></div>
+        </div>
+        <div class="card" style="padding:24px 26px;display:flex;gap:18px;align-items:flex-start">
+          <div style="font-size:30px">🧍</div>
+          <div><div style="font-weight:800;font-size:20px;margin-bottom:5px">Социальный барьер</div>
+          <div class="muted" style="font-size:16px;line-height:1.45">«Боюсь идти один». Нет простого способа позвать друга за компанию.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>03</div></div>
+  </section>
+
+  <!-- ============ 4 · SOLUTION / POSITIONING ============ -->
+  <section class="slide" id="s4">
+    <div class="pad" style="flex-direction:row;gap:46px;align-items:center">
+      <div style="flex:1.25">
+        <div class="kicker"><span class="num">04</span> &nbsp;Решение и позиционирование</div>
+        <h1 class="title" style="margin-top:14px">Волонтёрство <span class="accent">в кармане</span></h1>
+        <div class="card" style="padding:18px 22px;margin-top:18px;border-left:5px solid var(--blue);max-width:620px">
+          <div style="font-weight:700;font-size:18px;line-height:1.45;color:var(--ink2)">Первый волонтёрский сервис, встроенный <b style="color:var(--ink)">прямо в мессенджер</b> — без отдельного приложения, паролей и анкет.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:24px">
+          <div style="display:flex;gap:14px;align-items:flex-start"><div style="font-size:24px">📲</div><div><b style="font-size:18px">Снижаем порог</b><div class="muted" style="font-size:15px">Вход через MAX / Telegram. «Увидел — нажал — помог».</div></div></div>
+          <div style="display:flex;gap:14px;align-items:flex-start"><div style="font-size:24px">🤝</div><div><b style="font-size:18px">Создаём среду</b><div class="muted" style="font-size:15px">Позвать друга, чаты участников, истории — живое комьюнити.</div></div></div>
+          <div style="display:flex;gap:14px;align-items:flex-start"><div style="font-size:24px">⚡</div><div><b style="font-size:18px">Даём мотивацию</b><div class="muted" style="font-size:15px">Карма, уровни, достижения и сертификаты — видимый прогресс.</div></div></div>
+        </div>
+      </div>
+      <div style="flex:.75;display:flex;justify-content:center">
+        <div class="phone" style="width:262px;height:560px"><div class="notch"></div><div class="screen"><img src="assets/img_map.png" alt=""></div></div>
+      </div>
+    </div>
+    <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>04</div></div>
+  </section>
+
+  <!-- ============ 5 · PRODUCT (volunteer) ============ -->
+  <section class="slide" id="s5">
+    <div class="pad">
+      <div class="kicker"><span class="num">05</span> &nbsp;Продукт для волонтёра</div>
+      <h1 class="title" style="margin-top:12px">Это не макеты — продукт <span class="green">уже работает</span></h1>
+      <div style="display:flex;gap:18px;justify-content:space-between;align-items:flex-end;margin-top:24px;flex:1">
+        <div style="text-align:center"><div class="phone" style="width:188px;height:400px"><div class="notch"></div><div class="screen"><img src="assets/img_map.png"></div></div><div style="font-weight:700;font-size:14px;margin-top:12px">Карта и события</div></div>
+        <div style="text-align:center"><div class="phone" style="width:188px;height:400px"><div class="notch"></div><div class="screen"><img src="assets/img_gamification.png"></div></div><div style="font-weight:700;font-size:14px;margin-top:12px">Карма и уровни</div></div>
+        <div style="text-align:center"><div class="phone" style="width:188px;height:400px"><div class="notch"></div><div class="screen"><img src="assets/img_education.png"></div></div><div style="font-weight:700;font-size:14px;margin-top:12px">Обучение + сертификат</div></div>
+        <div style="text-align:center"><div class="phone" style="width:188px;height:400px"><div class="notch"></div><div class="screen"><img src="assets/img_ai_chat.png"></div></div><div style="font-weight:700;font-size:14px;margin-top:12px">AI-поиск дел</div></div>
+        <div style="text-align:center"><div class="phone" style="width:188px;height:400px"><div class="notch"></div><div class="screen"><img src="assets/img_social_story.png"></div></div><div style="font-weight:700;font-size:14px;margin-top:12px">Истории и чаты</div></div>
+      </div>
+    </div>
+    <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>05</div></div>
+  </section>
+
+  <!-- ============ 6 · PRODUCT (organizer / B2B) ============ -->
+  <section class="slide" id="s6">
+    <div class="pad" style="flex-direction:row;gap:46px;align-items:center">
+      <div style="flex:1.2">
+        <div class="kicker"><span class="num">06</span> &nbsp;Продукт для организатора · B2B</div>
+        <h1 class="title" style="margin-top:14px">И для тех, кто <span class="coral">создаёт</span> добрые дела</h1>
+        <p class="sub" style="margin-top:14px;max-width:560px">Экосистема не живёт без фондов и организаций. Им — мобильный кабинет. Это же наш платящий контур.</p>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:22px">
+          <div style="display:flex;gap:14px;align-items:flex-start"><div style="font-size:24px">🗓️</div><div><b style="font-size:18px">Управление событиями</b><div class="muted" style="font-size:15px">Создание и редактирование мероприятий в пару кликов с телефона.</div></div></div>
+          <div style="display:flex;gap:14px;align-items:flex-start"><div style="font-size:24px">✅</div><div><b style="font-size:18px">Валидация участников</b><div class="muted" style="font-size:15px">Mobile-CRM: одобрение заявок, отметка присутствия, начисление часов.</div></div></div>
+          <div style="display:flex;gap:14px;align-items:flex-start"><div style="font-size:24px">📊</div><div><b style="font-size:18px">Прозрачная аналитика</b><div class="muted" style="font-size:15px">Охваты, заявки, вовлечённость — отчётность для региона и грантодателя.</div></div></div>
+        </div>
+      </div>
+      <div style="flex:.8;display:flex;justify-content:center;gap:14px;align-items:center">
+        <div class="phone" style="width:212px;height:452px"><div class="notch"></div><div class="screen"><img src="assets/img_organizer_dashboard.png"></div></div>
+        <div class="phone" style="width:196px;height:420px;margin-top:34px"><div class="notch"></div><div class="screen"><img src="assets/img_event_management.png"></div></div>
+      </div>
+    </div>
+    <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>06</div></div>
+  </section>
+
+  <!-- ============ 7 · COMPETITORS ============ -->
+  <section class="slide" id="s7">
+    <div class="pad">
+      <div class="kicker"><span class="num">07</span> &nbsp;Конкуренты</div>
+      <h1 class="title" style="margin-top:12px">Почему <span class="accent">мы</span>, а не существующие решения</h1>
+      <div class="card" style="margin-top:22px;flex:1;padding:0;overflow:hidden;display:flex;flex-direction:column">
+        <table style="width:100%;border-collapse:collapse;font-size:14.5px;height:100%">
+          <thead>
+            <tr style="background:#F0F5FC;color:var(--ink2)">
+              <th style="text-align:left;padding:14px 18px;font-weight:800;width:24%">Решение</th>
+              <th style="padding:10px 6px;font-weight:700">В мессен-<br>джере</th>
+              <th style="padding:10px 6px;font-weight:700">Вход без<br>барьера</th>
+              <th style="padding:10px 6px;font-weight:700">Гейми-<br>фикация</th>
+              <th style="padding:10px 6px;font-weight:700">Обучение +<br>сертификаты</th>
+              <th style="padding:10px 6px;font-weight:700">Кабинет +<br>аналитика</th>
+              <th style="padding:10px 6px;font-weight:700">AI-<br>поиск</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-top:1px solid var(--line)"><td style="padding:13px 18px"><b>DOBRO.RU</b> <span class="muted">(Добро.рф)</span></td><td align="center" class="x">—</td><td align="center" class="x">—</td><td align="center" class="x">±</td><td align="center" class="check">✓</td><td align="center" class="check">✓</td><td align="center" class="x">—</td></tr>
+            <tr style="border-top:1px solid var(--line)"><td style="padding:13px 18px"><b>Госуслуги</b> <span class="muted">/ рег. порталы</span></td><td align="center" class="x">—</td><td align="center" class="x">±</td><td align="center" class="x">—</td><td align="center" class="x">—</td><td align="center" class="x">±</td><td align="center" class="x">—</td></tr>
+            <tr style="border-top:1px solid var(--line)"><td style="padding:13px 18px"><b>Чаты в Telegram / VK</b></td><td align="center" class="check">✓</td><td align="center" class="check">✓</td><td align="center" class="x">—</td><td align="center" class="x">—</td><td align="center" class="x">—</td><td align="center" class="x">—</td></tr>
+            <tr style="border-top:1px solid var(--line)"><td style="padding:13px 18px"><b>Офлайн-фонды</b></td><td align="center" class="x">—</td><td align="center" class="x">—</td><td align="center" class="x">—</td><td align="center" class="x">±</td><td align="center" class="x">—</td><td align="center" class="x">—</td></tr>
+            <tr style="border-top:2px solid var(--blue);background:rgba(0,122,255,.06)">
+              <td style="padding:15px 18px"><b style="color:var(--blue);font-size:16px">MAX Добро</b></td>
+              <td align="center" class="check" style="font-size:18px">✓</td><td align="center" class="check" style="font-size:18px">✓</td><td align="center" class="check" style="font-size:18px">✓</td><td align="center" class="check" style="font-size:18px">✓</td><td align="center" class="check" style="font-size:18px">✓</td><td align="center" class="check" style="font-size:18px">✓</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="muted" style="font-size:14px;margin-top:14px;font-weight:600">Наш клин — единственные, кто соединяет <b style="color:var(--ink)">ноль-барьерный вход в мессенджере</b> с геймификацией, обучением и кабинетом организатора.</div>
+    </div>
+    <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>07</div></div>
+  </section>
+
+  <!-- ============ 8 · MAX INTEGRATION / MOAT ============ -->
+  <section class="slide" id="s8">
+    <div class="pad">
+      <div class="kicker"><span class="num">08</span> &nbsp;Ключевое преимущество</div>
+      <h1 class="title" style="margin-top:12px">Наш ров — <span class="accent">дистрибуция внутри MAX</span></h1>
+      <p class="sub" style="margin-top:12px;max-width:900px">Мы не строим ещё один сайт, который надо рекламировать. Мы живём там, где аудитория уже есть — это даёт почти нулевую стоимость привлечения.</p>
+      <div style="display:flex;gap:18px;margin-top:26px;flex:1;align-items:stretch">
+        <div class="card" style="flex:1;padding:24px"><div style="font-size:28px">🤖</div><div style="font-weight:800;font-size:18px;margin:10px 0 6px">Бот — точка входа</div><div class="muted" style="font-size:15px">Встречает, проводит онбординг и бесшовно открывает Mini App.</div></div>
+        <div class="card" style="flex:1;padding:24px"><div style="font-size:28px">🔑</div><div style="font-weight:800;font-size:18px;margin:10px 0 6px">Вход по MAX ID</div><div class="muted" style="font-size:15px">Без паролей и форм — авторизация одним тапом из мессенджера.</div></div>
+        <div class="card" style="flex:1;padding:24px"><div style="font-size:28px">🔗</div><div style="font-weight:800;font-size:18px;margin:10px 0 6px">Deep-link + пуши</div><div class="muted" style="font-size:15px">Ссылка ведёт прямо на событие; бот возвращает напоминаниями.</div></div>
+        <div class="card" style="flex:1;padding:24px"><div style="font-size:28px">🌱</div><div style="font-weight:800;font-size:18px;margin:10px 0 6px">Вирусный рост</div><div class="muted" style="font-size:15px">«Позвать друга» репостом в чат — органическое распространение.</div></div>
+      </div>
+      <div class="card" style="margin-top:18px;padding:16px 22px;display:flex;align-items:center;gap:16px;border-left:5px solid var(--coral)">
+        <div style="font-weight:800;font-size:16px;color:#E0521F">MAX Добро</div>
+        <div class="muted" style="font-size:15px;font-weight:600">— основная платформа. В <b style="color:var(--ink)">Telegram — Dobro Club</b>: тот же продукт, второй мессенджер и кратно шире охват. Один код — две площадки.</div>
+      </div>
+    </div>
+    <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>08</div></div>
+  </section>
+
+  <!-- ============ 9 · GTM ============ -->
+  <section class="slide" id="s9">
+    <div class="pad">
+      <div class="kicker"><span class="num">09</span> &nbsp;Как продвигаем · GTM</div>
+      <h1 class="title" style="margin-top:12px">Как мы это <span class="accent">растим</span> и <span class="coral">продаём</span></h1>
+      <!-- funnel -->
+      <div style="display:flex;align-items:center;gap:10px;margin-top:22px">
+        <span class="chip blue">Бот в MAX</span><span class="muted">→</span>
+        <span class="chip blue">Mini App</span><span class="muted">→</span>
+        <span class="chip green">Первое событие</span><span class="muted">→</span>
+        <span class="chip coral">Карма / возврат</span><span class="muted">→</span>
+        <span class="chip ghost">Позвал друга 🔁</span>
+      </div>
+      <div style="display:flex;gap:18px;margin-top:24px;flex:1">
+        <div class="card" style="flex:1;padding:24px">
+          <div class="chip blue" style="margin-bottom:12px">Рост аудитории (B2C)</div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:11px;color:var(--ink2);font-size:16px;font-weight:500">
+            <li>📣 Дистрибуция внутри MAX/Telegram: пуши бота, deep-links — <b>CAC ≈ 0</b>.</li>
+            <li>🎓 Партнёрства с вузами: «часы добра» и баллы к поступлению.</li>
+            <li>🔁 Вирусная механика «позвать друга».</li>
+            <li>📱 SMM и контент: истории волонтёров как соц. доказательство.</li>
+          </ul>
+        </div>
+        <div class="card" style="flex:1;padding:24px">
+          <div class="chip coral" style="margin-bottom:12px">Деньги (B2G / B2B)</div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:11px;color:var(--ink2);font-size:16px;font-weight:500">
+            <li>🏛️ Регионы: контракты на подключение и сопровождение (нацпроект).</li>
+            <li>🏢 Организации: расширенный кабинет + модуль аналитики.</li>
+            <li>💰 Гранты для социально значимого ИТ-решения.</li>
+            <li>🤝 Спецразмещения для фондов и городских инициатив.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>09</div></div>
+  </section>
+
+  <!-- ============ 10 · ECONOMICS ============ -->
+  <section class="slide" id="s10">
+    <div class="pad">
+      <div class="kicker"><span class="num">10</span> &nbsp;Бизнес-модель и экономика</div>
+      <h1 class="title" style="margin-top:12px">Бесплатно для людей — <span class="accent">платят институты</span></h1>
+      <div style="display:flex;gap:18px;margin-top:24px;flex:1">
+        <div style="flex:1.05;display:flex;flex-direction:column;gap:14px">
+          <div style="font-weight:800;font-size:16px;color:var(--ink2)">4 источника дохода (B2G / B2B2G)</div>
+          <div class="card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600">🏛️ Региональные контракты</span><b class="accent">17,2 млн</b></div>
+          <div class="card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600">🏢 Расширенные кабинеты</span><b class="accent">7,9 млн</b></div>
+          <div class="card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600">📊 Аналитические пакеты</span><b class="accent">4,9 млн</b></div>
+          <div class="card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600">💰 Грант (Развитие-ЦТ)</span><b class="accent">20,0 млн</b></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+          <div class="card" style="padding:22px;background:linear-gradient(135deg,#0B1C3F,#0E2A5E);color:#fff;border:none">
+            <div style="opacity:.75;font-weight:700;font-size:14px">Реалистичный сценарий · горизонт 9 мес</div>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-top:8px"><span style="font-family:var(--disp);font-weight:800;font-size:54px;line-height:1">~50</span><span style="font-weight:700;opacity:.85">млн ₽ валовый доход</span></div>
+          </div>
+          <div class="grid" style="grid-template-columns:1fr 1fr;gap:14px">
+            <div class="card" style="padding:18px"><div class="muted" style="font-weight:700;font-size:13px">Бюджет проекта</div><div style="font-family:var(--disp);font-weight:800;font-size:30px;margin-top:4px">32,7 млн</div></div>
+            <div class="card" style="padding:18px"><div class="muted" style="font-weight:700;font-size:13px">Чистая прибыль</div><div style="font-family:var(--disp);font-weight:800;font-size:30px;margin-top:4px;color:var(--green)">+1,9 млн</div></div>
+            <div class="card" style="padding:18px;grid-column:span 2"><div class="muted" style="font-weight:700;font-size:13px">Точка безубыточности</div><div style="font-weight:700;font-size:16px;margin-top:4px">≈ 46,7 млн ₽ валовый доход (комиссия 30%)</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="muted" style="font-size:13.5px;margin-top:14px;font-weight:600">Цены за единицу — публичные ориентиры (amoCRM, Битрикс24, госконтракт Оренбургской обл., грант Фонда содействия инновациям). Объёмы — сценарные допущения финмодели.</div>
+    </div>
+    <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>10</div></div>
+  </section>
+
+  <!-- ============ 11 · READINESS + ROADMAP ============ -->
+  <section class="slide" id="s11">
+    <div class="pad">
+      <div class="kicker"><span class="num">11</span> &nbsp;Готовность и план</div>
+      <h1 class="title" style="margin-top:12px">Это не идея — это <span class="green">работает</span></h1>
+      <div style="display:flex;gap:18px;margin-top:22px;flex:1">
+        <div class="card" style="flex:1;padding:24px">
+          <span class="badge-live"><span class="pulse"></span>MVP развёрнут в проде</span>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:16px;color:var(--ink2);font-size:16px;font-weight:600">
+            <li><span class="check">✓</span> Telegram Mini App + бот — <b>live</b> (dobroclub.online)</li>
+            <li><span class="check">✓</span> Карта, события, запись, чаты мероприятий</li>
+            <li><span class="check">✓</span> Обучение, тесты, авто-сертификаты</li>
+            <li><span class="check">✓</span> Карма, уровни, лидерборд, магазин наград</li>
+            <li><span class="check">✓</span> Кабинет организатора + аналитика</li>
+            <li><span class="check">✓</span> MAX-контур заложен в архитектуре</li>
+          </ul>
+        </div>
+        <div class="card" style="flex:1;padding:24px">
+          <div style="font-weight:800;font-size:16px;color:var(--ink2);margin-bottom:16px">Дорожная карта</div>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:13px;height:13px;border-radius:50%;background:var(--green)"></div><div style="width:2px;flex:1;background:var(--line)"></div></div><div style="padding-bottom:14px"><b>Май 2026 — бюджет</b><div class="muted" style="font-size:14px">питч, смета, финмодель согласованы</div></div></div>
+            <div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:13px;height:13px;border-radius:50%;background:var(--blue)"></div><div style="width:2px;flex:1;background:var(--line)"></div></div><div style="padding-bottom:14px"><b>Лето 2026 — прототип → vertical slice</b><div class="muted" style="font-size:14px">сквозной путь пользователя</div></div></div>
+            <div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:13px;height:13px;border-radius:50%;background:var(--blue)"></div><div style="width:2px;flex:1;background:var(--line)"></div></div><div style="padding-bottom:14px"><b>Осень–зима 2026 — альфа → бета</b><div class="muted" style="font-size:14px">пилот, телеметрия, retention</div></div></div>
+            <div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:13px;height:13px;border-radius:50%;background:var(--coral)"></div></div><div><b>Март 2027 — релиз</b><div class="muted" style="font-size:14px">soft launch и публичный запуск</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>11</div></div>
+  </section>
+
+  <!-- ============ 12 · TEAM + CTA + QR ============ -->
+  <section class="slide" id="s12">
+    <div class="pad" style="flex-direction:row;gap:46px;align-items:center">
+      <div style="flex:1.1">
+        <div class="kicker"><span class="num">12</span> &nbsp;Команда и призыв</div>
+        <h1 class="title" style="margin-top:14px">Делать добро — <span class="accent">это просто</span></h1>
+        <p class="sub" style="margin-top:12px;max-width:520px">Студенты РТУ МИРЭА, группа БСБО-09-23. Уже собрали и развернули рабочий продукт.</p>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:24px">
+          <div style="display:flex;align-items:center;gap:14px"><img src="assets/img_DM.jpg" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 6px 16px -8px rgba(11,28,63,.5)"><div><b style="font-size:18px">Данилов Михаил</b><div class="muted" style="font-size:14px;font-weight:600">Backend · Chat-bot · Интеграции</div></div></div>
+          <div style="display:flex;align-items:center;gap:14px"><img src="assets/img_KK.jpg" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 6px 16px -8px rgba(11,28,63,.5)"><div><b style="font-size:18px">Корнилов Кирилл</b><div class="muted" style="font-size:14px;font-weight:600">Backend · Team Lead</div></div></div>
+          <div style="display:flex;align-items:center;gap:14px"><img src="assets/img_SK.jpg" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 6px 16px -8px rgba(11,28,63,.5)"><div><b style="font-size:18px">Шутов Кирилл</b><div class="muted" style="font-size:14px;font-weight:600">Frontend · Design</div></div></div>
+        </div>
+      </div>
+      <div style="flex:.9;display:flex;justify-content:center">
+        <div class="card" style="padding:30px;display:flex;flex-direction:column;align-items:center;text-align:center;border:1px solid var(--line)">
+          <div style="font-weight:800;font-size:20px;margin-bottom:4px">Откройте прямо сейчас</div>
+          <div class="muted" style="font-size:14px;font-weight:600;margin-bottom:16px">Наведите камеру — откроется в Telegram</div>
+          <img src="assets/qr.png" style="width:232px;height:232px;border-radius:16px;border:1px solid var(--line)">
+          <div style="margin-top:16px;font-weight:800;color:var(--blue);font-size:18px">t.me/dobro_club_bot</div>
+          <div class="muted" style="font-size:13px;font-weight:600;margin-top:4px">MAX Добро · Dobro Club</div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>12</div></div>
+  </section>
+
+</div>
+<div class="hint">← / → — листать слайды · Esc — обзор</div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const slides = [...document.querySelectorAll('.slide')];
+  if(params.has('slide')){
+    document.body.classList.add('shot');
+    const n=Math.max(1,Math.min(slides.length,parseInt(params.get('slide'),10)||1));
+    slides[n-1].classList.add('show');
+  } else if(!params.has('shots')){
+    document.body.classList.add('present');
+    let i=0;
+    function fit(){
+      const s=slides[i]; const sc=Math.min(window.innerWidth/1280, window.innerHeight/720);
+      slides.forEach(x=>x.classList.remove('active'));
+      s.classList.add('active');
+      s.style.transform=`translate(-50%,-50%) scale(${sc})`;
+    }
+    function go(d){ i=Math.max(0,Math.min(slides.length-1,i+d)); fit(); }
+    window.addEventListener('keydown',e=>{
+      if(['ArrowRight',' ','Enter','PageDown'].includes(e.key)){e.preventDefault();go(1);}
+      else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(-1);}
+      else if(e.key==='Escape'){document.body.classList.toggle('present');if(document.body.classList.contains('present'))fit();else slides.forEach(x=>x.style.transform='');}
+    });
+    window.addEventListener('resize',()=>{if(document.body.classList.contains('present'))fit();});
+    fit();
+  }
+</script>
+</body>
+</html>
