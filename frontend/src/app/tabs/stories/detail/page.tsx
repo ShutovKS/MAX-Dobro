@@ -3,6 +3,7 @@ import {useNavigate} from 'react-router';
 import {fetchStoryById, likeStory, unlikeStory} from '../../../../lib/api';
 import type {Comment, Story} from '../../../../lib/types';
 import {ArrowLeft, Heart, MessageSquare, MoreHorizontal, Upload} from 'lucide-react';
+import {buildDeepLink, tgShareUrl} from '../../../../lib/telegram-sdk';
 
 
 const CommentView: React.FC<{ comment: Comment }> = ({comment}) => (
@@ -133,7 +134,8 @@ const StoryDetailPage: React.FC<{
               <span className="font-semibold text-sm">{comments.length}</span>
             </div>
           </div>
-          <button className="hover:text-[#007AFF]">
+          <button onClick={() => tgShareUrl(buildDeepLink('story', id), 'История из Добро Club')}
+                  className="hover:text-[#007AFF]">
             <Upload className="w-6 h-6"/>
           </button>
         </div>

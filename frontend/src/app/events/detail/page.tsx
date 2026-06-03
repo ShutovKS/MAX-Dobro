@@ -18,7 +18,7 @@ import CancelModal from '../../../components/ui/CancelModal';
 import InteractiveMap from '../../../components/ui/InteractiveMap';
 import {FIRST_STEP_ACHIEVEMENT_ID, MESSAGES, MODAL_TRANSITION_DURATION} from '../../../lib/constants';
 import {iconMap} from '../../../lib/iconMap';
-import {buildDeepLink, tgShareUrl} from '../../../lib/telegram-sdk';
+import {buildDeepLink, tgHaptic, tgShareUrl} from '../../../lib/telegram-sdk';
 
 const ConfirmationModal: React.FC<{
   isOpen: boolean;
@@ -193,6 +193,7 @@ export const EventDetailPage: React.FC = () => {
     try {
       await participateInEvent(event.id);
       setIsSignedUp(true);
+      tgHaptic.notification('success');
       setTimeout(() => setShowSuccess(true), MODAL_TRANSITION_DURATION);
     } catch (error) {
       setToast({
