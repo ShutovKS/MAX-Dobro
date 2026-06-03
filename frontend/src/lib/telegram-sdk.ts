@@ -170,7 +170,23 @@ export function tgGetUser(): TelegramUser | null {
 
 /** start_param из deep-link `t.me/<bot>?startapp=<param>` (или null). */
 export function tgGetStartParam(): string | null {
-  return getWebApp()?.initDataUnsafe?.start_param ?? null;
+  const wa = getWebApp();
+  const fromUnsafe = wa?.initDataUnsafe?.start_param;
+  if (fromUnsafe) return fromUnsafe;
+  // Фолбэк: некоторые версии/платформы не кладут start_param в initDataUnsafe —
+  // парсим из самой строки initData.
+  if (wa?.initData) {
+    const sp = new URLSearchParams(wa.initData).get('start_param');
+    if (sp) return sp;
+  }
+  // Фолбэк для веба: tgWebAppStartParam в hash страницы.
+  if (typeof window !== 'undefined' && window.location.hash) {
+    const sp = new URLSearchParams(
+      window.location.hash.replace(/^#/, ''),
+    ).get('tgWebAppStartParam');
+    if (sp) return sp;
+  }
+  return null;
 }
 
 /**

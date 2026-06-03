@@ -53,6 +53,25 @@ import {
 import { MESSAGES, ROUTES } from '../lib/constants';
 import { initTelegram, isTelegramClient, telegramLogin, tgGetStartParam, waitForTelegramInitData } from '../lib/telegram-sdk';
 
+// Telegram deep-link `?startapp=kind_id` -> маршрут сущности (или null).
+const routeFromStartParam = (): string | null => {
+  const param = tgGetStartParam();
+  if (!param) return null;
+  const sep = param.indexOf('_');
+  if (sep < 0) return null;
+  const kind = param.slice(0, sep);
+  const id = parseInt(param.slice(sep + 1), 10);
+  if (!Number.isFinite(id)) return null;
+  const map: Record<string, string> = {
+    event: ROUTES.EVENT_DETAIL(id),
+    course: ROUTES.COURSE_DETAIL(id),
+    org: ROUTES.ORGANIZATION_DETAIL(id),
+    story: ROUTES.STORY_DETAIL(id),
+    reward: ROUTES.REWARD_DETAIL(id),
+  };
+  return map[kind] ?? null;
+};
+
 const App: React.FC = () => {
   /** <context:frontend_app_shell> Route shell for auth, onboarding, and tab switching. </context:frontend_app_shell> */
   const [isInitialized, setIsInitialized] = useState(false);
@@ -72,6 +91,7 @@ const App: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAuthenticated = !!userData;
+  const deepLinkConsumed = useRef(false);
 
   const getRedirectPath = (user: User) => {
     return user.role === 'organization'
@@ -112,8 +132,14 @@ const App: React.FC = () => {
         setAllCourses(courses);
 
         const onboardingComplete = isOnboardingComplete();
+        // Deep-link (?startapp=kind_id) имеет приоритет над редиректом на
+        // главную — иначе navigate сюда перетирал переход на сущность.
+        const deepRoute = deepLinkConsumed.current ? null : routeFromStartParam();
         if (!onboardingComplete) {
           navigate(ROUTES.ONBOARDING);
+        } else if (deepRoute) {
+          deepLinkConsumed.current = true;
+          navigate(deepRoute);
         } else if (['', '/', '#/', ROUTES.AUTH].includes(location.pathname)) {
           navigate(getRedirectPath(session.user));
         }
@@ -140,30 +166,6 @@ const App: React.FC = () => {
     initializeApp();
   }, []);
 
-  // Deep-link из Telegram (t.me/<bot>?startapp=kind_id): после авторизации
-  // открываем нужную сущность вместо главной. Срабатывает один раз.
-  const deepLinkConsumed = useRef(false);
-  useEffect(() => {
-    if (!isAuthenticated || deepLinkConsumed.current) return;
-    const param = tgGetStartParam();
-    if (!param) return;
-    deepLinkConsumed.current = true;
-    const sep = param.indexOf('_');
-    if (sep < 0) return;
-    const kind = param.slice(0, sep);
-    const id = parseInt(param.slice(sep + 1), 10);
-    if (!Number.isFinite(id)) return;
-    const routeMap: Record<string, string> = {
-      event: ROUTES.EVENT_DETAIL(id),
-      course: ROUTES.COURSE_DETAIL(id),
-      org: ROUTES.ORGANIZATION_DETAIL(id),
-      story: ROUTES.STORY_DETAIL(id),
-      reward: ROUTES.REWARD_DETAIL(id),
-    };
-    if (routeMap[kind]) navigate(routeMap[kind]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
-  
   const handleAuthSuccess = (session: { user: User; token: string }) => {
     setUserData(session.user);
     initializeApp(); // Переинициализируем приложение, чтобы загрузить все данные
