@@ -45,7 +45,9 @@ export interface Filters {
 export type QuizAnswer = {
   id: number;
   answer: string;
-  isCorrect: boolean;
+  // Сервер не отдаёт isCorrect до отправки теста (правильность приходит в
+  // ответе completeCourse). В мок-данных поле присутствует.
+  isCorrect?: boolean;
 };
 
 export type QuizQuestion = {
@@ -77,6 +79,20 @@ export type Course = {
   progress: number;
   level: 'Для новичков' | 'Средний' | 'Продвинутый';
   program?: CourseLesson[];
+  completedLessonIds?: number[];
+};
+
+export type CourseCompletionResult = {
+  isPassed: boolean;
+  score: number;
+  totalQuestions: number;
+  correctAnswers: Record<string, number[]>;
+};
+
+export type LessonCompletionResult = {
+  completedLessonIds: number[];
+  totalLessons: number;
+  courseCompleted: boolean;
 };
 
 export type Tab = 'home' | 'training' | 'organizations' | 'stories' | 'profile';

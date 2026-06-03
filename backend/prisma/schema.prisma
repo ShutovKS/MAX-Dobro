@@ -36,6 +36,7 @@ model User {
   friendOf  Friendship[] @relation("FriendOf")
   challenges UserChallenge[]
   reviews    Review[]
+  courseProgress UserCourseProgress[]
 
   supabaseUserId String? @unique @map("supabase_user_id")
   maxUserId      String?   @unique @map("max_user_id")
@@ -162,8 +163,23 @@ model Course {
   lessons      Lesson[]
   certificates UserCertificate[]
   events       Event[]           @relation("RecommendedCourseForEvent")
+  progress     UserCourseProgress[]
 
   @@map("courses")
+}
+
+// Прогресс пользователя по курсу (какие уроки завершены). Серверный источник
+// истины вместо localStorage — статус/прогресс/сертификат больше не «сбрасываются».
+model UserCourseProgress {
+  userId           Int
+  user             User     @relation(fields: [userId], references: [id])
+  courseId         Int
+  course           Course   @relation(fields: [courseId], references: [id])
+  completedLessons Int[]    @default([])
+  updatedAt        DateTime @updatedAt
+
+  @@id([userId, courseId])
+  @@map("user_course_progress")
 }
 
 // Модель урока

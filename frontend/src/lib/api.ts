@@ -44,5 +44,6 @@ export const {
   postEventChatMessage,
   fetchWeeklyChallenge,
   completeCourse,
+  markLessonComplete,
   updateProfile,
 } = api;

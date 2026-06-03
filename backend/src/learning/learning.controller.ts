@@ -54,4 +54,17 @@ export class LearningController {
   ) {
     return this.learningService.completeCourse(user.id, id, completionDto);
   }
+
+  @Post(':id/lessons/:lessonId/complete')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mark a lesson complete; issues certificate when all lessons done' })
+  @ApiResponse({ status: 201, description: 'Lesson marked complete' })
+  markLessonComplete(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('lessonId', ParseIntPipe) lessonId: number,
+    @CurrentUser() user: User,
+  ) {
+    return this.learningService.markLessonComplete(user.id, id, lessonId);
+  }
 }

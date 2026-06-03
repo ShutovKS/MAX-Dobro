@@ -178,16 +178,16 @@ export class AuthService {
   }
 
   async getUserCourses(userId: number) {
-    const [allCourses, userCertificates] = await Promise.all([
+    const [allCourses, userCertificates, progressRows] = await Promise.all([
       this.prisma.course.findMany({
         include: {
           lessons: {
             include: {
               questions: {
                 include: {
-                  answers: {
-                    select: { id: true, answer: true },
-                  },
+                  // isCorrect нужен серверу для вычисления isMultiple, но
+                  // клиенту не отдаётся (вырезаем ниже).
+                  answers: { select: { id: true, answer: true, isCorrect: true } },
                 },
               },
             },
@@ -198,29 +198,52 @@ export class AuthService {
         where: { userId },
         select: { courseId: true },
       }),
+      this.prisma.userCourseProgress.findMany({
+        where: { userId },
+        select: { courseId: true, completedLessons: true },
+      }),
     ]);
 
     const completedCourseIds = new Set(
       userCertificates.map((cert) => cert.courseId),
     );
+    const progressByCourse = new Map(
+      progressRows.map((p) => [p.courseId, p.completedLessons]),
+    );
 
     return allCourses.map((course) => {
-      const isCompleted = completedCourseIds.has(course.id);
-      const status = isCompleted ? 'completed' : 'not-started';
-      const progress = isCompleted ? 1 : 0;
+      const completedLessonIds = progressByCourse.get(course.id) ?? [];
+      const totalLessons = course.lessons.length;
+      const isCompleted =
+        completedCourseIds.has(course.id) ||
+        (totalLessons > 0 && completedLessonIds.length >= totalLessons);
+      const status = isCompleted
+        ? 'completed'
+        : completedLessonIds.length > 0
+          ? 'in-progress'
+          : 'not-started';
+      const progress = totalLessons
+        ? Math.min(1, completedLessonIds.length / totalLessons)
+        : isCompleted
+          ? 1
+          : 0;
       const { lessons, ...courseData } = course;
-      lessons.forEach((lesson) => {
-        lesson.questions.forEach((question) => {
-          // @ts-expect-error
-          question.id = question.id.toString();
-        });
-      });
+      const program = lessons.map((lesson) => ({
+        ...lesson,
+        questions: lesson.questions.map((q) => ({
+          id: q.id.toString(),
+          question: q.question,
+          isMultiple: q.answers.filter((a) => a.isCorrect).length > 1,
+          answers: q.answers.map((a) => ({ id: a.id, answer: a.answer })),
+        })),
+      }));
       return {
         ...courseData,
         hasCertificate: true,
         status,
         progress,
-        program: lessons,
+        completedLessonIds,
+        program,
       };
     });
   }

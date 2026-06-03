@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import type { Course } from '../../../lib/types';
 import { Check, Puzzle, Trophy, X } from 'lucide-react';
 import CourseCompleteModal from '../../../components/ui/CourseCompleteModal';
-import { fetchCourseById, completeCourse } from '../../../lib/api';
+import { fetchCourseById, completeCourse, markLessonComplete } from '../../../lib/api';
 
 const TestResultModal: React.FC<{
   isOpen: boolean;
   result: 'passed' | 'failed' | null;
   score: number;
   totalQuestions: number;
+  isCourseComplete: boolean;
   onTryAgain: () => void;
   onViewCertificate: () => void;
   onBackToLesson: () => void;
@@ -17,6 +18,7 @@ const TestResultModal: React.FC<{
   result,
   score,
   totalQuestions,
+  isCourseComplete,
   onTryAgain,
   onViewCertificate,
   onBackToLesson,
@@ -42,7 +44,7 @@ const TestResultModal: React.FC<{
               Вы набрали {score}/{totalQuestions} баллов. Теперь вы готовы
               помогать еще эффективнее!
             </p>
-            {isSuccess && totalQuestions > 0 && (
+            {isSuccess && isCourseComplete && (
               <button
                 onClick={onViewCertificate}
                 className="w-full bg-[linear-gradient(158deg,#14E1D5_6.15%,#03C722_85.68%)] text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:opacity-90 transition-opacity"
@@ -85,17 +87,6 @@ const TestResultModal: React.FC<{
   );
 };
 
-const saveLessonProgress = (courseId: number, lessonId: number) => {
-  const storageKey = `course_progress_${courseId}`;
-  const completedLessons: number[] = JSON.parse(
-    localStorage.getItem(storageKey) || '[]',
-  );
-  if (!completedLessons.includes(lessonId)) {
-    completedLessons.push(lessonId);
-    localStorage.setItem(storageKey, JSON.stringify(completedLessons));
-  }
-};
-
 const renderMarkdown = (text: string | undefined) => {
   if (!text) return null;
 
@@ -131,6 +122,9 @@ const LessonPage: React.FC<{
   );
   const [score, setScore] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
+  // Правильные ответы приходят с сервера в ответе на отправку (а не в данных
+  // вопроса) — по ним подсвечиваем верные/неверные варианты после отправки.
+  const [correctAnswers, setCorrectAnswers] = useState<Record<string, number[]>>({});
   const [showResultModal, setShowResultModal] = useState(false);
   const [showCourseCompleteModal, setShowCourseCompleteModal] = useState(false);
   const [isFinalTest, setIsFinalTest] = useState(false);
@@ -187,17 +181,10 @@ const LessonPage: React.FC<{
   const handleSubmitTest = async () => {
     if (!lesson?.quiz || !course?.program) return;
 
-    const storageKey = `course_${courseId}_answers`;
-    const allAnswers = JSON.parse(localStorage.getItem(storageKey) || '{}');
-    Object.assign(allAnswers, answers);
-    localStorage.setItem(storageKey, JSON.stringify(allAnswers));
-
     setIsSubmitted(true);
 
-    const isThisTheFinalTest = lessonIndex === course.program.length - 1;
-    setIsFinalTest(isThisTheFinalTest);
-
-    let answersToSubmit = Object.entries(answers).flatMap(
+    // Отправляем ТОЛЬКО ответы текущего урока (без накопления в localStorage).
+    const answersToSubmit = Object.entries(answers).flatMap(
       ([questionId, answerIds]: [string, number[]]) =>
         answerIds.map((answerId) => ({
           questionId: parseInt(questionId, 10),
@@ -205,33 +192,29 @@ const LessonPage: React.FC<{
         })),
     );
 
-    if (isThisTheFinalTest) {
-      answersToSubmit = Object.entries(allAnswers).flatMap(
-        ([questionId, answerIds]: [string, number[]]) =>
-          answerIds.map((answerId) => ({
-            questionId: parseInt(questionId, 10),
-            answerId,
-          })),
-      );
-    }
-
     try {
       const result = await completeCourse(course.id, answersToSubmit);
 
       setScore(result.score);
       setTotalQuestions(result.totalQuestions);
+      setCorrectAnswers(result.correctAnswers || {});
       setTestResult(result.isPassed ? 'passed' : 'failed');
       setShowResultModal(true);
 
       if (result.isPassed) {
-        saveLessonProgress(courseId, lessonId);
-        if (isThisTheFinalTest) {
-          course.program.forEach(l => saveLessonProgress(courseId, l.id));
-          localStorage.removeItem(storageKey);
-          setTimeout(() => {
-            setShowResultModal(false);
-            setShowCourseCompleteModal(true);
-          }, 1500);
+        // Серверный прогресс: отмечаем урок завершённым; сертификат сервер
+        // выдаёт сам, когда пройдены все уроки.
+        try {
+          const progress = await markLessonComplete(course.id, lessonId);
+          setIsFinalTest(progress.courseCompleted);
+          if (progress.courseCompleted) {
+            setTimeout(() => {
+              setShowResultModal(false);
+              setShowCourseCompleteModal(true);
+            }, 1500);
+          }
+        } catch (e) {
+          console.error('Failed to mark lesson complete:', e);
         }
       }
     } catch (error) {
@@ -251,9 +234,17 @@ const LessonPage: React.FC<{
     setShowResultModal(false);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (lesson?.type === 'lesson') {
-      saveLessonProgress(courseId, lessonId);
+      try {
+        const progress = await markLessonComplete(courseId, lessonId);
+        if (progress.courseCompleted) {
+          setShowCourseCompleteModal(true);
+          return;
+        }
+      } catch (e) {
+        console.error('Failed to mark lesson complete:', e);
+      }
     }
     onClose();
   };
@@ -332,7 +323,7 @@ const LessonPage: React.FC<{
                   <div className="mt-2 space-y-2">
                     {q.answers.map((answer) => {
                       const isChecked = answers[q.id]?.includes(answer.id);
-                      const isCorrect = answer.isCorrect;
+                      const isCorrect = (correctAnswers[q.id] || []).includes(answer.id);
 
                       return (
                         <label
@@ -389,6 +380,7 @@ const LessonPage: React.FC<{
         result={testResult}
         score={score}
         totalQuestions={totalQuestions}
+        isCourseComplete={isFinalTest}
         onTryAgain={handleTryAgain}
         onBackToLesson={() => {
           setShowResultModal(false);

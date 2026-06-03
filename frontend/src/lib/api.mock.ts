@@ -21,6 +21,8 @@ import type {
   Achievement,
   AppEvent,
   Course,
+  CourseCompletionResult,
+  LessonCompletionResult,
   EventChatMessage,
   EventParticipant,
   Friend,
@@ -347,7 +349,7 @@ export const fetchWeeklyChallenge = (): Promise<WeeklyChallenge> => {
 export const completeCourse = (
   courseId: number,
   answers: { questionId: number; answerId: number }[],
-): Promise<{ isPassed: boolean; score: number; totalQuestions: number }> => {
+): Promise<CourseCompletionResult> => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       const course = allCourses.find((c) => c.id === courseId);
@@ -363,9 +365,15 @@ export const completeCourse = (
         .filter((q) => submittedQuestionIds.includes(q.id));
 
       const totalQuestions = questionsInSubmission.length;
+      const correctAnswers: Record<string, number[]> = {};
+      questionsInSubmission.forEach((q) => {
+        correctAnswers[q.id] = q.answers
+          .filter((a) => a.isCorrect)
+          .map((a) => a.id);
+      });
 
       if (totalQuestions === 0) {
-        return resolve({ isPassed: true, score: 0, totalQuestions: 0 });
+        return resolve({ isPassed: true, score: 0, totalQuestions: 0, correctAnswers });
       }
 
       const userAnswersMap = new Map<string, Set<number>>();
@@ -379,27 +387,35 @@ export const completeCourse = (
 
       let score = 0;
       for (const question of questionsInSubmission) {
-        const correctAnswers = new Set<number>();
-        question.answers.forEach((ans) => {
-          if (ans.isCorrect) {
-            correctAnswers.add(ans.id);
-          }
-        });
-
+        const correct = new Set<number>(correctAnswers[question.id]);
         const userAnswers = userAnswersMap.get(question.id) || new Set();
-
         if (
-          correctAnswers.size > 0 &&
-          correctAnswers.size === userAnswers.size &&
-          [...correctAnswers].every((id) => userAnswers.has(id))
+          correct.size > 0 &&
+          correct.size === userAnswers.size &&
+          [...correct].every((id) => userAnswers.has(id))
         ) {
           score++;
         }
       }
 
-      const isPassed = score >= totalQuestions;
+      const isPassed = score / totalQuestions >= 0.7;
 
-      resolve({ isPassed, score, totalQuestions });
+      resolve({ isPassed, score, totalQuestions, correctAnswers });
     }, SIMULATED_DELAY);
   });
+};
+
+export const markLessonComplete = (
+  courseId: number,
+  lessonId: number,
+): Promise<LessonCompletionResult> => {
+  const course = allCourses.find((c) => c.id === courseId);
+  const totalLessons = course?.program?.length ?? 0;
+  const lessonIndex =
+    course?.program?.findIndex((l) => l.id === lessonId) ?? -1;
+  const courseCompleted = totalLessons > 0 && lessonIndex === totalLessons - 1;
+  const completedLessonIds = course?.program
+    ? course.program.slice(0, lessonIndex + 1).map((l) => l.id)
+    : [lessonId];
+  return simulateRequest({ completedLessonIds, totalLessons, courseCompleted });
 };

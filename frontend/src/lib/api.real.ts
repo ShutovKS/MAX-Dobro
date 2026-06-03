@@ -4,6 +4,8 @@ import type {
   AppEvent,
   ChatMessage,
   Course,
+  CourseCompletionResult,
+  LessonCompletionResult,
   EventChatMessage,
   EventParticipant,
   Friend,
@@ -146,32 +148,35 @@ const mapCourseData = (courseData: any): Course => {
       status: 'locked',
       contentTitle: lesson.title,
       content: lesson.content,
-      quiz: (lesson.questions || []).map((q: any) => {
-        const correctAnswersCount = q.answers.filter(
-          (a: any) => a.isCorrect,
-        ).length;
-        return {
-          id: q.id.toString(),
-          question: q.question,
-          type: correctAnswersCount > 1 ? 'multiple' : 'single',
-          answers: q.answers,
-        };
-      }),
+      quiz: (lesson.questions || []).map((q: any) => ({
+        id: q.id.toString(),
+        question: q.question,
+        // Тип вопроса приходит готовым с сервера (isMultiple); раньше выводился
+        // из isCorrect, который API не отдаёт → все вопросы были single.
+        type: q.isMultiple ? 'multiple' : 'single',
+        answers: q.answers,
+      })),
     };
   });
 
-  let isCurrentSet = false;
-  if (courseStatus === 'completed') {
-    mappedProgram.forEach((l) => (l.status = 'completed'));
-  } else {
+  // Статусы уроков: пройденные — из серверного completedLessonIds; первый
+  // непройденный — текущий; остальные — заблокированы. Фолбэк на статус курса,
+  // если прогресс по урокам не пришёл.
+  const completedLessonIds: number[] = courseData.completedLessonIds || [];
+  if (completedLessonIds.length > 0 || courseStatus !== 'completed') {
+    let currentSet = false;
     mappedProgram.forEach((l) => {
-      if (!isCurrentSet) {
+      if (completedLessonIds.includes(l.id)) {
+        l.status = 'completed';
+      } else if (!currentSet) {
         l.status = 'current';
-        isCurrentSet = true;
+        currentSet = true;
       } else {
         l.status = 'locked';
       }
     });
+  } else {
+    mappedProgram.forEach((l) => (l.status = 'completed'));
   }
 
   return {
@@ -186,6 +191,7 @@ const mapCourseData = (courseData: any): Course => {
     progress: courseData.progress || 0,
     level: courseData.level || 'Для новичков',
     program: mappedProgram,
+    completedLessonIds,
   };
 };
 
@@ -252,10 +258,18 @@ export const fetchCourseById = async (
 export const completeCourse = async (
   courseId: number,
   answers: { questionId: number; answerId: number }[],
-): Promise<{ isPassed: boolean; score: number; totalQuestions: number }> => {
+): Promise<CourseCompletionResult> => {
   return await apiFetch(`/courses/${courseId}/complete`, {
     method: 'POST',
     body: JSON.stringify({ answers }),
+  });
+};
+export const markLessonComplete = async (
+  courseId: number,
+  lessonId: number,
+): Promise<LessonCompletionResult> => {
+  return await apiFetch(`/courses/${courseId}/lessons/${lessonId}/complete`, {
+    method: 'POST',
   });
 };
 
