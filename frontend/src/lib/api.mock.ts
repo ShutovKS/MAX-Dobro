@@ -20,6 +20,7 @@ import {
 import type {
   Achievement,
   AppEvent,
+  Comment,
   Course,
   CourseCompletionResult,
   LessonCompletionResult,
@@ -122,6 +123,17 @@ export const updateEvent = (
 ): Promise<AppEvent> => {
   return simulateRequest({ id, ...payload } as unknown as AppEvent);
 };
+
+export const createStoryComment = (
+  _storyId: number,
+  text: string,
+): Promise<Comment> =>
+  simulateRequest({
+    id: Math.floor(Math.random() * 100000) + 1000,
+    text,
+    timestamp: 'только что',
+    author: { name: 'Вы', avatarUrl: 'https://i.pravatar.cc/150?u=me' },
+  });
 
 export const fetchAllCourses = (): Promise<Course[]> => {
   return simulateRequest(allCourses);

@@ -103,6 +103,29 @@ export class StoriesService {
     return mappedStory;
   }
 
+  async addComment(storyId: number, authorId: number, text: string) {
+    const story = await this.prisma.story.findUnique({ where: { id: storyId } });
+    if (!story) {
+      throw new NotFoundException(`Story with ID ${storyId} not found`);
+    }
+    const comment = await this.prisma.comment.create({
+      data: { storyId, authorId, text },
+      include: {
+        author: { select: { firstName: true, lastName: true, avatarUrl: true } },
+      },
+    });
+    const { firstName, lastName, avatarUrl } = comment.author;
+    return {
+      id: comment.id,
+      text: comment.text,
+      timestamp: comment.createdAt.toISOString(),
+      author: {
+        name: `${firstName || ''} ${lastName || ''}`.trim(),
+        avatarUrl,
+      },
+    };
+  }
+
   async create(
     authorId: number,
     dto: { eventId: number; text: string; imageUrl: string },

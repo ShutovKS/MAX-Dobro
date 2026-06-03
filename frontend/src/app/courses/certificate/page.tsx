@@ -5,6 +5,7 @@ import {ArrowLeft, Download, Share2} from 'lucide-react';
 import {HeartHandIcon} from '../../../components/ui/icons';
 import {CERTIFICATE_DEFAULTS} from '../../../lib/constants';
 import {buildDeepLink, tgDownloadFile, tgHaptic, tgShareUrl} from '../../../lib/telegram-sdk';
+import {useTelegramBackButton} from '../../../lib/useTelegramUI';
 
 const CertificatePage: React.FC<{
   courseId: number;
@@ -13,6 +14,7 @@ const CertificatePage: React.FC<{
   onBack: () => void;
 }> = ({courseId, allCourses, user, onBack}) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  useTelegramBackButton(onBack);
 
   const course = allCourses.find(c => c.id === courseId);
 

@@ -3,6 +3,7 @@ import type {
   Achievement,
   AppEvent,
   ChatMessage,
+  Comment,
   Course,
   CourseCompletionResult,
   LessonCompletionResult,
@@ -37,27 +38,13 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import { formatEventDate, formatTimestamp } from './dateUtils';
+import { getIconComponent } from './iconMap';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const iconMap: { [key: string]: React.FC<any> } = {
-  'hand-heart': HandHeart,
-  dog: Dog,
-  leaf: Leaf,
-  users: Users,
-  palette: Palette,
-  trophy: Trophy,
-  clock: Clock,
-  star: Star,
-  'graduation-cap': GraduationCap,
-  list: List,
-  default: Star,
-};
-
-const getIcon = (iconName?: string | null): React.FC<any> => {
-  if (!iconName) return iconMap['default'];
-  return iconMap[iconName] || iconMap['default'];
-};
+// Единый резолвер иконок (тот же, что используют компоненты через iconMap).
+const getIcon = (iconName?: string | null): React.FC<any> =>
+  getIconComponent(iconName);
 
 const categoryIconMap: { [key: string]: React.FC<any> } = {
   Экология: Leaf,
@@ -120,11 +107,16 @@ async function apiFetch<T>(
   return undefined as T;
 }
 
+// Сохраняем строку icon (компоненты читают iconMap[item.icon]) И добавляем
+// готовый компонент Icon. Раньше icon вырезался → иконки падали в заглушку.
 const mapIcon = <T extends { icon?: string | null }>(
   item: T,
-): Omit<T, 'icon'> & { Icon: React.FC<any> } => {
-  const { icon, ...rest } = item;
-  return { ...rest, Icon: getIcon(icon) };
+): T & { Icon: React.FC<any> } => {
+  return {
+    ...item,
+    icon: item.icon ?? 'default',
+    Icon: getIcon(item.icon),
+  } as T & { Icon: React.FC<any> };
 };
 
 const mapEventData = (event: any): AppEvent => ({
@@ -359,13 +351,11 @@ export const fetchAllAchievements = async (): Promise<Achievement[]> => {
 };
 export const fetchUserAchievements = async (): Promise<Achievement[]> => {
   const achievements = await apiFetch<any[]>('/profile/me/achievements');
-  return achievements.map((ach) => {
-    const { icon, ...baseAchievement } = ach;
-    return {
-      ...baseAchievement,
-      Icon: getIcon(icon),
-    };
-  });
+  return achievements.map((ach) => ({
+    ...ach,
+    icon: ach.icon ?? 'Award',
+    Icon: getIcon(ach.icon ?? 'Award'),
+  }));
 };
 export const fetchMyChats = async (): Promise<MyChatItem[]> => {
   const chats = await apiFetch<any[]>('/profile/chats');
@@ -401,6 +391,16 @@ export const createStory = (
     method: 'POST',
     body: JSON.stringify({ eventId, text, imageUrl }),
   });
+export const createStoryComment = async (
+  storyId: number,
+  text: string,
+): Promise<Comment> => {
+  const c = await apiFetch<any>(`/stories/${storyId}/comments`, {
+    method: 'POST',
+    body: JSON.stringify({ text }),
+  });
+  return { ...c, timestamp: formatTimestamp(c.timestamp ?? c.createdAt) };
+};
 export const likeStory = (storyId: number): Promise<void> =>
   apiFetch(`/stories/${storyId}/like`, { method: 'POST' });
 export const unlikeStory = (storyId: number): Promise<void> =>
@@ -460,9 +460,11 @@ export const postAssistantMessage = async (text: string): Promise<ChatMessage> =
   });
   return mapAssistantMessage(message);
 };
-export const fetchWeeklyChallenge = async (): Promise<WeeklyChallenge> => {
+export const fetchWeeklyChallenge = async (): Promise<WeeklyChallenge | null> => {
   const challenge = await apiFetch<
-    Omit<WeeklyChallenge, 'Icon'> & { icon?: string | null }
+    (Omit<WeeklyChallenge, 'Icon'> & { icon?: string | null }) | null
   >('/challenge/weekly');
-  return mapIcon(challenge);
+  // Нет активного челленджа — возвращаем null (раньше mapIcon(null) падал).
+  if (!challenge) return null;
+  return mapIcon({ ...challenge, icon: challenge.icon ?? 'Target' });
 };

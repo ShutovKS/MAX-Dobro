@@ -3,6 +3,7 @@ import type { Course } from '../../../lib/types';
 import { Check, Puzzle, Trophy, X } from 'lucide-react';
 import CourseCompleteModal from '../../../components/ui/CourseCompleteModal';
 import { fetchCourseById, completeCourse, markLessonComplete } from '../../../lib/api';
+import { telegramUiActive, useTelegramBackButton, useTelegramMainButton } from '../../../lib/useTelegramUI';
 
 const TestResultModal: React.FC<{
   isOpen: boolean;
@@ -249,6 +250,24 @@ const LessonPage: React.FC<{
     onClose();
   };
 
+  // Хуки нативных кнопок — до ранних return (правило порядка хуков).
+  const isTest = lesson?.type === 'test';
+  const allQuestionsAnswered = !!(
+    isTest && lesson?.quiz?.every((q) => answers[q.id]?.length > 0)
+  );
+  useTelegramBackButton(onClose);
+  useTelegramMainButton({
+    text: isTest ? 'Проверить ответы' : 'Завершить урок',
+    onClick: isTest ? handleSubmitTest : handleContinue,
+    visible:
+      telegramUiActive() &&
+      !loading &&
+      !!lesson &&
+      !showResultModal &&
+      !showCourseCompleteModal,
+    disabled: isTest && !allQuestionsAnswered,
+  });
+
   if (loading) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
@@ -264,10 +283,6 @@ const LessonPage: React.FC<{
       </div>
     );
   }
-
-  const isTest = lesson.type === 'test';
-  const allQuestionsAnswered =
-    isTest && lesson.quiz?.every((q) => answers[q.id]?.length > 0);
 
   return (
     <>
@@ -365,15 +380,17 @@ const LessonPage: React.FC<{
           )}
         </main>
 
-        <footer className="flex-shrink-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100">
-          <button
-            onClick={isTest ? handleSubmitTest : handleContinue}
-            disabled={isTest && !allQuestionsAnswered}
-            className="w-full text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            {isTest ? 'Проверить ответы' : 'Завершить урок'}
-          </button>
-        </footer>
+        {!telegramUiActive() && (
+          <footer className="flex-shrink-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100">
+            <button
+              onClick={isTest ? handleSubmitTest : handleContinue}
+              disabled={isTest && !allQuestionsAnswered}
+              className="w-full text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {isTest ? 'Проверить ответы' : 'Завершить урок'}
+            </button>
+          </footer>
+        )}
       </div>
       <TestResultModal
         isOpen={showResultModal}

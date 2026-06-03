@@ -75,6 +75,9 @@ export function initTelegram(): void {
   try {
     webApp.ready();
     webApp.expand();
+    // Светлая тема приложения: белая шапка/фон под наши экраны.
+    webApp.setHeaderColor?.('#ffffff');
+    webApp.setBackgroundColor?.('#ffffff');
   } catch (e) {
     console.warn('Telegram WebApp init failed:', e);
   }

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { iconMap } from '../../../lib/iconMap';
 import { buildDeepLink, tgShareUrl } from '../../../lib/telegram-sdk';
+import { useTelegramBackButton } from '../../../lib/useTelegramUI';
 
 const LessonRow: React.FC<{
   lesson: CourseLesson;
@@ -111,6 +112,7 @@ const CourseDetailPage: React.FC<{
   }, [id]);
 
   const onBack = () => navigate('/app/training');
+  useTelegramBackButton(onBack);
   const onSelectLesson = (courseId: number, lessonId: number) =>
     navigate(`/app/courses/${courseId}/lesson/${lessonId}`);
   const onViewCertificate = (courseId: number) =>

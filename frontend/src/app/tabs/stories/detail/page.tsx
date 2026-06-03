@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router';
-import {fetchStoryById, likeStory, unlikeStory} from '../../../../lib/api';
+import {createStoryComment, fetchStoryById, likeStory, unlikeStory} from '../../../../lib/api';
 import type {Comment, Story} from '../../../../lib/types';
 import {ArrowLeft, Heart, MessageSquare, MoreHorizontal, Upload} from 'lucide-react';
 import {buildDeepLink, tgShareUrl} from '../../../../lib/telegram-sdk';
@@ -68,16 +68,26 @@ const StoryDetailPage: React.FC<{
     }
   };
 
-  const handlePostComment = () => {
-    if (!newComment.trim()) return;
-    const newCommentObj: Comment = {
+  const handlePostComment = async () => {
+    if (!newComment.trim() || !story) return;
+    const text = newComment.trim();
+    setNewComment('');
+    // Оптимистично показываем, затем заменяем на серверный коммент (с реальным id).
+    const optimistic: Comment = {
       id: Date.now(),
       author: {name: 'Вы', avatarUrl: currentUserAvatar},
       timestamp: 'только что',
-      text: newComment,
+      text,
     };
-    setComments(prev => [...prev, newCommentObj]);
-    setNewComment('');
+    setComments(prev => [...prev, optimistic]);
+    try {
+      const saved = await createStoryComment(story.id, text);
+      setComments(prev => prev.map(c => (c.id === optimistic.id ? saved : c)));
+    } catch (e) {
+      console.error('Failed to post comment:', e);
+      setComments(prev => prev.filter(c => c.id !== optimistic.id));
+      setNewComment(text);
+    }
   };
 
   if (loading || !story) {

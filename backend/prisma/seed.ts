@@ -335,21 +335,21 @@ console.log('✅ Courses, lessons and certificates created.');
   // 8. Достижения
   const achievements = await prisma.achievement.createManyAndReturn({
     data: [
-      { id: 1, name: 'Первый шаг', description: 'Завершить свое первое волонтерское событие.', criteriaType: 'EVENT_COUNT', criteriaValue: 1 },
-      { id: 2, name: 'Новичок в деле', description: 'Накопить 10 часов волонтерства.', criteriaType: 'TOTAL_HOURS', criteriaValue: 10 },
-      { id: 3, name: 'Первые знания', description: 'Пройти свой первый обучающий курс.', criteriaType: 'COURSES_COUNT', criteriaValue: 1 },
-      { id: 4, name: 'Друг животных', description: 'Принять участие в 3 событиях по помощи животным.', criteriaType: 'EVENT_CATEGORY', criteriaValue: 3 },
-      { id: 5, name: 'Эко-воин', description: 'Принять участие в 5 экологических акциях.', criteriaType: 'EVENT_CATEGORY', criteriaValue: 5 },
-      { id: 6, name: 'Мастер помощи', description: 'Помочь пожилым людям 3 раза.', criteriaType: 'EVENT_CATEGORY', criteriaValue: 3 },
-      { id: 7, name: 'Душа спорта', description: 'Принять участие в 3 спортивных мероприятиях.', criteriaType: 'EVENT_CATEGORY', criteriaValue: 3 },
-      { id: 8, name: 'Марафонец Добра', description: 'Накопить 50 часов волонтерства.', criteriaType: 'TOTAL_HOURS', criteriaValue: 50 },
-      { id: 9, name: 'Активист', description: 'Набрать 1000 очков кармы.', criteriaType: 'KARMA_POINTS', criteriaValue: 1000 },
-      { id: 10, name: 'Ветеран', description: 'Принять участие в 10 событиях.', criteriaType: 'EVENT_COUNT', criteriaValue: 10 },
-      { id: 11, name: 'Душа компании', description: 'Подписаться на 5 организаций.', criteriaType: 'SUBSCRIPTION_COUNT', criteriaValue: 5 },
-      { id: 12, name: 'Всезнайка', description: 'Пройти 5 обучающих курсов.', criteriaType: 'COURSES_COUNT', criteriaValue: 5 },
-      { id: 13, name: 'Лидер мнений', description: 'Написать свою первую историю.', criteriaType: 'STORY_COUNT', criteriaValue: 1 },
-      { id: 14, name: 'Надежный друг', description: 'Пригласить друга на событие.', criteriaType: 'FRIEND_INVITE_COUNT', criteriaValue: 1 },
-      { id: 15, name: 'Коллекционер', description: 'Купить первую награду в магазине.', criteriaType: 'REWARD_PURCHASE_COUNT', criteriaValue: 1 },
+      { id: 1, name: 'Первый шаг', description: 'Завершить свое первое волонтерское событие.', criteriaType: 'EVENT_COUNT', criteriaValue: 1, icon: 'Footprints' },
+      { id: 2, name: 'Новичок в деле', description: 'Накопить 10 часов волонтерства.', criteriaType: 'TOTAL_HOURS', criteriaValue: 10, icon: 'Clock' },
+      { id: 3, name: 'Первые знания', description: 'Пройти свой первый обучающий курс.', criteriaType: 'COURSES_COUNT', criteriaValue: 1, icon: 'GraduationCap' },
+      { id: 4, name: 'Друг животных', description: 'Принять участие в 3 событиях по помощи животным.', criteriaType: 'EVENT_CATEGORY', criteriaValue: 3, icon: 'Dog' },
+      { id: 5, name: 'Эко-воин', description: 'Принять участие в 5 экологических акциях.', criteriaType: 'EVENT_CATEGORY', criteriaValue: 5, icon: 'Leaf' },
+      { id: 6, name: 'Мастер помощи', description: 'Помочь пожилым людям 3 раза.', criteriaType: 'EVENT_CATEGORY', criteriaValue: 3, icon: 'HandHeart' },
+      { id: 7, name: 'Душа спорта', description: 'Принять участие в 3 спортивных мероприятиях.', criteriaType: 'EVENT_CATEGORY', criteriaValue: 3, icon: 'Trophy' },
+      { id: 8, name: 'Марафонец Добра', description: 'Накопить 50 часов волонтерства.', criteriaType: 'TOTAL_HOURS', criteriaValue: 50, icon: 'Medal' },
+      { id: 9, name: 'Активист', description: 'Набрать 1000 очков кармы.', criteriaType: 'KARMA_POINTS', criteriaValue: 1000, icon: 'Sparkles' },
+      { id: 10, name: 'Ветеран', description: 'Принять участие в 10 событиях.', criteriaType: 'EVENT_COUNT', criteriaValue: 10, icon: 'Award' },
+      { id: 11, name: 'Душа компании', description: 'Подписаться на 5 организаций.', criteriaType: 'SUBSCRIPTION_COUNT', criteriaValue: 5, icon: 'Users' },
+      { id: 12, name: 'Всезнайка', description: 'Пройти 5 обучающих курсов.', criteriaType: 'COURSES_COUNT', criteriaValue: 5, icon: 'BookOpen' },
+      { id: 13, name: 'Лидер мнений', description: 'Написать свою первую историю.', criteriaType: 'STORY_COUNT', criteriaValue: 1, icon: 'Eye' },
+      { id: 14, name: 'Надежный друг', description: 'Пригласить друга на событие.', criteriaType: 'FRIEND_INVITE_COUNT', criteriaValue: 1, icon: 'Heart' },
+      { id: 15, name: 'Коллекционер', description: 'Купить первую награду в магазине.', criteriaType: 'REWARD_PURCHASE_COUNT', criteriaValue: 1, icon: 'Star' },
     ]
   });
 

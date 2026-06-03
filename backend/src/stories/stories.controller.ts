@@ -59,6 +59,20 @@ export class StoriesController {
     return this.storiesService.create(user.id, dto);
   }
 
+  @Post(':id/comments')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Add a comment to a story' })
+  @ApiResponse({ status: 201, description: 'Comment created.' })
+  @ApiResponse({ status: 404, description: 'Story not found.' })
+  addComment(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: User,
+    @Body() dto: { text: string },
+  ) {
+    return this.storiesService.addComment(id, user.id, dto.text);
+  }
+
   @Post(':id/like')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()

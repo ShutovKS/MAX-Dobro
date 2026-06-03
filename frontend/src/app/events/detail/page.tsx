@@ -19,6 +19,7 @@ import InteractiveMap from '../../../components/ui/InteractiveMap';
 import {FIRST_STEP_ACHIEVEMENT_ID, MESSAGES, MODAL_TRANSITION_DURATION} from '../../../lib/constants';
 import {iconMap} from '../../../lib/iconMap';
 import {buildDeepLink, tgHaptic, tgShareUrl} from '../../../lib/telegram-sdk';
+import {telegramUiActive, useTelegramBackButton, useTelegramMainButton} from '../../../lib/useTelegramUI';
 
 const ConfirmationModal: React.FC<{
   isOpen: boolean;
@@ -250,6 +251,22 @@ export const EventDetailPage: React.FC = () => {
 
   const mainButtonAction = isSignedUp ? handleOpenCancelModal : handleSignUpClick;
 
+  // Нативные кнопки Telegram (до ранних return — порядок хуков).
+  useTelegramBackButton(onBack);
+  useTelegramMainButton({
+    text: isSignedUp ? 'Вы участвуете' : 'Я помогу!',
+    onClick: mainButtonAction,
+    visible:
+      telegramUiActive() &&
+      !loading &&
+      !!event &&
+      !showConfirmation &&
+      !showSuccess &&
+      !showCancelConfirm &&
+      !showInviteModal &&
+      !unlockedAchievement,
+  });
+
   if (loading) {
     return <div className="w-full h-screen flex items-center justify-center">Загрузка события...</div>;
   }
@@ -391,12 +408,14 @@ export const EventDetailPage: React.FC = () => {
           </section>
         </div>
         <div className="h-28"></div>
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100 z-30">
-          <button onClick={mainButtonAction}
-                  className={`w-full py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg ${isSignedUp ? 'bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300' : 'bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] text-white font-bold hover:opacity-90'}`}>
-            {isSignedUp ? (<><Check className="w-5 h-5 mr-2"/>Вы участвуете</>) : ('Я помогу!')}
-          </button>
-        </div>
+        {!telegramUiActive() && (
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100 z-30">
+            <button onClick={mainButtonAction}
+                    className={`w-full py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg ${isSignedUp ? 'bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300' : 'bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] text-white font-bold hover:opacity-90'}`}>
+              {isSignedUp ? (<><Check className="w-5 h-5 mr-2"/>Вы участвуете</>) : ('Я помогу!')}
+            </button>
+          </div>
+        )}
       </div>
       <ConfirmationModal isOpen={showConfirmation} event={event} onConfirm={handleConfirmSignUp}
                          onCancel={handleCancelSignUp}/>

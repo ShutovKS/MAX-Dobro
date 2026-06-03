@@ -33,6 +33,7 @@ export const {
   fetchAllStories,
   fetchStoryById,
   createStory,
+  createStoryComment,
   likeStory,
   unlikeStory,
   fetchAssistantChatMessages,
