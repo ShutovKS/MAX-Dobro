@@ -4,6 +4,7 @@ import { Check, Puzzle, Trophy, X } from 'lucide-react';
 import CourseCompleteModal from '../../../components/ui/CourseCompleteModal';
 import { fetchCourseById, completeCourse, markLessonComplete } from '../../../lib/api';
 import { telegramUiActive, useTelegramBackButton, useTelegramMainButton } from '../../../lib/useTelegramUI';
+import { LessonSkeleton } from '../../../components/ui/Skeletons';
 
 const TestResultModal: React.FC<{
   isOpen: boolean;
@@ -269,11 +270,7 @@ const LessonPage: React.FC<{
   });
 
   if (loading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        Загрузка...
-      </div>
-    );
+    return <LessonSkeleton />;
   }
 
   if (!course || !lesson) {

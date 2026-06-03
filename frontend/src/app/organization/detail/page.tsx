@@ -10,6 +10,7 @@ import EventCard from '../../../components/ui/EventCard';
 import EmptyState from '../../../components/ui/EmptyState';
 import {MESSAGES} from '../../../lib/constants';
 import {buildDeepLink, tgShareUrl} from '../../../lib/telegram-sdk';
+import {HeroDetailSkeleton} from '../../../components/ui/Skeletons';
 
 const OrganizationProfilePage: React.FC<{
   id: number;
@@ -84,8 +85,11 @@ const OrganizationProfilePage: React.FC<{
     });
   };
 
-  if (loading || !organization) {
-    return <div className="w-full h-screen flex items-center justify-center">Загрузка организации...</div>;
+  if (loading) {
+    return <HeroDetailSkeleton />;
+  }
+  if (!organization) {
+    return <div className="w-full h-screen flex items-center justify-center text-gray-500">Организация не найдена.</div>;
   }
 
   return (

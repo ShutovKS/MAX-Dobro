@@ -166,6 +166,19 @@ const App: React.FC = () => {
     initializeApp();
   }, []);
 
+  // Подстраховка для deep-link: срабатывает ПОСЛЕ полной инициализации
+  // (isInitialized=true ставится в finally, уже после возможного navigate на
+  // главную) — поэтому переход на сущность не перетирается.
+  useEffect(() => {
+    if (!isInitialized || !isAuthenticated || deepLinkConsumed.current) return;
+    const route = routeFromStartParam();
+    if (route) {
+      deepLinkConsumed.current = true;
+      navigate(route);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, isAuthenticated]);
+
   const handleAuthSuccess = (session: { user: User; token: string }) => {
     setUserData(session.user);
     initializeApp(); // Переинициализируем приложение, чтобы загрузить все данные

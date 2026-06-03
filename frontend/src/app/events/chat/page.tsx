@@ -2,6 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import type {AppEvent, EventChatMessage, User} from '../../../lib/types';
 import {fetchEventById, fetchEventChatMessages, postEventChatMessage} from '../../../lib/api';
 import {ArrowLeft, MoreHorizontal, Paperclip, Pin, Send, X} from 'lucide-react';
+import {ChatSkeleton} from '../../../components/ui/Skeletons';
 
 const MessageBubble: React.FC<{ message: EventChatMessage; isOutgoing: boolean; showAuthor: boolean }> = ({
                                                                                                             message,
@@ -94,7 +95,7 @@ const EventChatPage: React.FC<{
   };
 
   if (loading || !event) {
-    return <div className="w-full h-screen flex items-center justify-center">Загрузка чата...</div>
+    return <ChatSkeleton />;
   }
 
   return (

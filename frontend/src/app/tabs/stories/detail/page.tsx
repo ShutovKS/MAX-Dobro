@@ -4,6 +4,7 @@ import {createStoryComment, fetchStoryById, likeStory, unlikeStory} from '../../
 import type {Comment, Story} from '../../../../lib/types';
 import {ArrowLeft, Heart, MessageSquare, MoreHorizontal, Upload} from 'lucide-react';
 import {buildDeepLink, tgShareUrl} from '../../../../lib/telegram-sdk';
+import {ArticleSkeleton} from '../../../../components/ui/Skeletons';
 
 
 const CommentView: React.FC<{ comment: Comment }> = ({comment}) => (
@@ -91,7 +92,7 @@ const StoryDetailPage: React.FC<{
   };
 
   if (loading || !story) {
-    return <div className="w-full h-screen flex items-center justify-center">Загрузка истории...</div>;
+    return <ArticleSkeleton />;
   }
 
   return (

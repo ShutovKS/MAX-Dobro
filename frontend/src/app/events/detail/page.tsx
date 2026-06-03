@@ -11,7 +11,6 @@ import {
   participateInEvent,
 } from '../../../lib/api';
 import {ArrowLeft, Calendar, Check, Clock, List, MapPin, MessageSquare, Share2, Star, Trophy} from 'lucide-react';
-import InviteFriendModal from '../../../features/invites/components/InviteFriendModal';
 import Toast from '../../../components/ui/Toast';
 import NewAchievementModal from '../../../components/ui/NewAchievementModal';
 import CancelModal from '../../../components/ui/CancelModal';
@@ -128,6 +127,26 @@ const SuccessModal: React.FC<{
   );
 };
 
+const EventDetailSkeleton: React.FC = () => (
+  <div className="w-full h-screen bg-white overflow-hidden animate-pulse">
+    <div className="h-[40vh] w-full bg-gray-200" />
+    <div className="relative bg-white rounded-t-2xl -mt-6 p-6 space-y-5">
+      <div className="h-6 w-24 bg-gray-200 rounded-full" />
+      <div className="space-y-2">
+        <div className="h-7 w-3/4 bg-gray-200 rounded" />
+        <div className="h-7 w-1/2 bg-gray-200 rounded" />
+      </div>
+      <div className="space-y-2 pt-2">
+        <div className="h-4 w-1/2 bg-gray-100 rounded" />
+        <div className="h-4 w-2/3 bg-gray-100 rounded" />
+      </div>
+      <div className="h-14 w-full bg-gray-100 rounded-2xl" />
+      <div className="h-16 w-full bg-gray-100 rounded-2xl" />
+      <div className="h-24 w-full bg-gray-100 rounded-2xl" />
+    </div>
+  </div>
+);
+
 export const EventDetailPage: React.FC = () => {
   const {id} = useParams();
   const navigate = useNavigate();
@@ -141,7 +160,6 @@ export const EventDetailPage: React.FC = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [showInviteModal, setShowInviteModal] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; message: string; onUndo?: () => void }>({
     show: false,
     message: ''
@@ -240,11 +258,8 @@ export const EventDetailPage: React.FC = () => {
   };
   const handleInvite = () => {
     setShowSuccess(false);
-    setShowInviteModal(true);
-  };
-  const handleSendInvites = () => {
-    setShowInviteModal(false);
-    // Нативный шеринг ссылки на событие через Telegram (выбор чата).
+    // Нативное приглашение Telegram: открывается выбор чата для отправки ссылки
+    // на событие (вместо старого MAX-окна с поиском друзей по имени).
     shareEvent();
     setToast({show: true, message: MESSAGES.TOASTS.INVITES_SENT});
   };
@@ -263,12 +278,11 @@ export const EventDetailPage: React.FC = () => {
       !showConfirmation &&
       !showSuccess &&
       !showCancelConfirm &&
-      !showInviteModal &&
       !unlockedAchievement,
   });
 
   if (loading) {
-    return <div className="w-full h-screen flex items-center justify-center">Загрузка события...</div>;
+    return <EventDetailSkeleton />;
   }
 
   if (!event) {
@@ -409,7 +423,7 @@ export const EventDetailPage: React.FC = () => {
         </div>
         <div className="h-28"></div>
         {!telegramUiActive() && (
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100 z-30">
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-30">
             <button onClick={mainButtonAction}
                     className={`w-full py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg ${isSignedUp ? 'bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300' : 'bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] text-white font-bold hover:opacity-90'}`}>
               {isSignedUp ? (<><Check className="w-5 h-5 mr-2"/>Вы участвуете</>) : ('Я помогу!')}
@@ -421,8 +435,6 @@ export const EventDetailPage: React.FC = () => {
                          onCancel={handleCancelSignUp}/>
       <SuccessModal isOpen={showSuccess} event={event} onClose={handleCloseSuccessModal} onInvite={handleInvite}/>
       <CancelModal isOpen={showCancelConfirm} onConfirm={handleConfirmCancel} onCancel={handleCloseCancelModal}/>
-      <InviteFriendModal isOpen={showInviteModal} event={event} onClose={() => setShowInviteModal(false)}
-                         onSend={handleSendInvites}/>
       <NewAchievementModal achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)}
                            onNavigateToAchievements={handleNavigateToAchievements}/>
     </>

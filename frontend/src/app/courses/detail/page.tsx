@@ -15,6 +15,7 @@ import {
 import { iconMap } from '../../../lib/iconMap';
 import { buildDeepLink, tgShareUrl } from '../../../lib/telegram-sdk';
 import { useTelegramBackButton } from '../../../lib/useTelegramUI';
+import { HeroDetailSkeleton } from '../../../components/ui/Skeletons';
 
 const LessonRow: React.FC<{
   lesson: CourseLesson;
@@ -144,10 +145,14 @@ const CourseDetailPage: React.FC<{
     }
   };
 
-  if (loading || !course) {
+  if (loading) {
+    return <HeroDetailSkeleton />;
+  }
+
+  if (!course) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
-        Загрузка курса...
+      <div className="w-full h-screen flex items-center justify-center text-gray-500">
+        Курс не найден.
       </div>
     );
   }
