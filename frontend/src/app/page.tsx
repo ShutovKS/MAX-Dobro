@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Navigate,
   useLocation,
@@ -51,7 +51,7 @@ import {
   setOnboardingComplete,
 } from '../lib/auth';
 import { MESSAGES, ROUTES } from '../lib/constants';
-import { initTelegram, isTelegramClient, telegramLogin, waitForTelegramInitData } from '../lib/telegram-sdk';
+import { initTelegram, isTelegramClient, telegramLogin, tgGetStartParam, waitForTelegramInitData } from '../lib/telegram-sdk';
 
 const App: React.FC = () => {
   /** <context:frontend_app_shell> Route shell for auth, onboarding, and tab switching. </context:frontend_app_shell> */
@@ -139,6 +139,30 @@ const App: React.FC = () => {
   useEffect(() => {
     initializeApp();
   }, []);
+
+  // Deep-link из Telegram (t.me/<bot>?startapp=kind_id): после авторизации
+  // открываем нужную сущность вместо главной. Срабатывает один раз.
+  const deepLinkConsumed = useRef(false);
+  useEffect(() => {
+    if (!isAuthenticated || deepLinkConsumed.current) return;
+    const param = tgGetStartParam();
+    if (!param) return;
+    deepLinkConsumed.current = true;
+    const sep = param.indexOf('_');
+    if (sep < 0) return;
+    const kind = param.slice(0, sep);
+    const id = parseInt(param.slice(sep + 1), 10);
+    if (!Number.isFinite(id)) return;
+    const routeMap: Record<string, string> = {
+      event: ROUTES.EVENT_DETAIL(id),
+      course: ROUTES.COURSE_DETAIL(id),
+      org: ROUTES.ORGANIZATION_DETAIL(id),
+      story: ROUTES.STORY_DETAIL(id),
+      reward: ROUTES.REWARD_DETAIL(id),
+    };
+    if (routeMap[kind]) navigate(routeMap[kind]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
   
   const handleAuthSuccess = (session: { user: User; token: string }) => {
     setUserData(session.user);

@@ -13,11 +13,7 @@ import {
   User,
 } from 'lucide-react';
 import { iconMap } from '../../../lib/iconMap';
-
-const getLessonProgress = (courseId: number): number[] => {
-  const storageKey = `course_progress_${courseId}`;
-  return JSON.parse(localStorage.getItem(storageKey) || '[]');
-};
+import { buildDeepLink, tgShareUrl } from '../../../lib/telegram-sdk';
 
 const LessonRow: React.FC<{
   lesson: CourseLesson;
@@ -73,7 +69,7 @@ const CourseDetailPage: React.FC<{
       setLoading(true);
       const data = await fetchCourseById(id);
       if (data && data.program) {
-        const completedIds = getLessonProgress(id);
+        const completedIds = data.completedLessonIds || [];
         let isCurrentSet = false;
         const programWithStatus = data.program.map((lesson) => {
           if (completedIds.includes(lesson.id)) {
@@ -165,6 +161,7 @@ const CourseDetailPage: React.FC<{
           <ArrowLeft className="w-6 h-6 text-white" />
         </button>
         <button
+          onClick={() => course && tgShareUrl(buildDeepLink('course', course.id), `Курс «${course.title}» в Добро Club`)}
           className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
           aria-label="Поделиться"
         >

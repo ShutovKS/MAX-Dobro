@@ -18,6 +18,7 @@ import CancelModal from '../../../components/ui/CancelModal';
 import InteractiveMap from '../../../components/ui/InteractiveMap';
 import {FIRST_STEP_ACHIEVEMENT_ID, MESSAGES, MODAL_TRANSITION_DURATION} from '../../../lib/constants';
 import {iconMap} from '../../../lib/iconMap';
+import {buildDeepLink, tgShareUrl} from '../../../lib/telegram-sdk';
 
 const ConfirmationModal: React.FC<{
   isOpen: boolean;
@@ -228,12 +229,21 @@ export const EventDetailPage: React.FC = () => {
     }
   };
   const handleCloseCancelModal = () => setShowCancelConfirm(false);
+  const shareEvent = () => {
+    if (!event) return;
+    tgShareUrl(
+      buildDeepLink('event', event.id),
+      `Присоединяйся к «${event.title}» в Добро Club!`,
+    );
+  };
   const handleInvite = () => {
     setShowSuccess(false);
     setShowInviteModal(true);
   };
   const handleSendInvites = () => {
     setShowInviteModal(false);
+    // Нативный шеринг ссылки на событие через Telegram (выбор чата).
+    shareEvent();
     setToast({show: true, message: MESSAGES.TOASTS.INVITES_SENT});
   };
 
@@ -258,7 +268,7 @@ export const EventDetailPage: React.FC = () => {
         <header className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4">
           <button onClick={onBack} className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
                   aria-label="Назад"><ArrowLeft className="w-6 h-6 text-white"/></button>
-          <button className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
+          <button onClick={shareEvent} className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
                   aria-label="Поделиться"><Share2 className="w-5 h-5 text-white"/></button>
         </header>
         <div
