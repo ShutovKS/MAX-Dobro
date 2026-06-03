@@ -15,6 +15,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"/>
     <style>
+        /* Форсируем белый фон: иначе в тёмной теме Telegram фон страницы тёмный
+           и просвечивает сквозь полупрозрачные панели (bg-white/80), нижнюю
+           safe-area и т.п. Совместно с WebApp.setBackgroundColor('#fff'). */
+        html, body, #root {
+            background-color: #ffffff;
+        }
+
         @keyframes fade-in {
             0% {
                 opacity: 0;
