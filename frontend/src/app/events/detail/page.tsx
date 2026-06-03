@@ -162,6 +162,8 @@ export const EventDetailPage: React.FC = () => {
         if (eventData) {
           const typedEventData = eventData as AppEvent;
           setEvent(typedEventData);
+          // Участие берём с сервера — не сбрасывается при возврате из чата.
+          setIsSignedUp(!!typedEventData.isParticipating);
           const orgData = await fetchOrganizationById(typedEventData.organizationId);
           if (orgData) setOrganization(orgData);
 

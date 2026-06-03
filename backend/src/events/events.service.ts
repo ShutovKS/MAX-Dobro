@@ -67,7 +67,7 @@ export class EventsService {
       return mappedEvent;
     }
 
-    const [friends, participants] = await Promise.all([
+    const [friends, participants, myParticipation] = await Promise.all([
       this.prisma.friendship.findMany({
         where: { userId: currentUserId },
         select: { friendId: true },
@@ -85,10 +85,13 @@ export class EventsService {
           },
         },
       }),
+      this.prisma.eventParticipant.findUnique({
+        where: { userId_eventId: { userId: currentUserId, eventId: id } },
+      }),
     ]);
 
     const friendIds = new Set(friends.map((f) => f.friendId));
-    
+
     const friendsParticipating = participants
       .filter((p) => friendIds.has(p.userId))
       .map((p) => {
@@ -100,7 +103,14 @@ export class EventsService {
         };
       });
 
-    return { ...mappedEvent, friendsParticipating };
+    // Гидратация участия: фронт берёт isSignedUp с сервера, а не из локального
+    // состояния (раньше при возврате из чата флаг сбрасывался — «вылет» из события).
+    return {
+      ...mappedEvent,
+      friendsParticipating,
+      isParticipating: !!myParticipation,
+      participationStatus: myParticipation?.status ?? null,
+    };
   }
   
   async create(createEventDto: CreateEventDto, organizationId: number) {
@@ -206,10 +216,13 @@ export class EventsService {
         );
       }
 
+      // Самозапись = сразу подтверждённое участие (решение: instant approved):
+      // чат и список участников доступны немедленно, без модерации.
       return tx.eventParticipant.create({
         data: {
           eventId,
           userId,
+          status: 'approved',
         },
       });
     });

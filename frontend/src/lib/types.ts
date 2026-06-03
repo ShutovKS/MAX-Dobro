@@ -25,6 +25,10 @@ export type AppEvent = {
   requirements?: string[];
   participantCount?: number;
   rewards?: { hours: number; karma: number };
+  isParticipating?: boolean;
+  participationStatus?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 export type HistoryEvent = AppEvent & {

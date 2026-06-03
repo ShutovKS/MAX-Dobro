@@ -41,9 +41,14 @@ export class EventChatsController {
   @ApiResponse({ status: 200, type: [EventChatMessageEntity] })
   getChatMessages(
     @Param('eventId', ParseIntPipe) eventId: number,
+    @CurrentUser() user: User,
     @Query() pagination: PaginationQueryDto,
   ) {
-    return this.eventChatsService.findChatMessagesByEventId(eventId, pagination);
+    return this.eventChatsService.findChatMessagesByEventId(
+      eventId,
+      user.id,
+      pagination,
+    );
   }
 
   @Post('events/:eventId/messages')

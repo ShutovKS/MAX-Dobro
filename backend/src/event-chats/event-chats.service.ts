@@ -1,10 +1,27 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class EventChatsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  // Доступ к чату события — только участникам (читать и писать). Раньше любой
+  // авторизованный мог читать/писать в любой чат (инверсия UI-гейта).
+  private async assertParticipant(eventId: number, userId: number) {
+    const participation = await this.prisma.eventParticipant.findUnique({
+      where: { userId_eventId: { userId, eventId } },
+    });
+    if (!participation) {
+      throw new ForbiddenException(
+        'You must join the event to access its chat',
+      );
+    }
+  }
 
   private mapMessage(message: any) {
     const { firstName, lastName, ...authorRest } = message.author;
@@ -83,13 +100,19 @@ export class EventChatsService {
     return messages.map((message) => this.mapMessage(message));
   }
 
-  async findChatMessagesByEventId(eventId: number, pagination: PaginationQueryDto) {
+  async findChatMessagesByEventId(
+    eventId: number,
+    userId: number,
+    pagination: PaginationQueryDto,
+  ) {
+    await this.assertParticipant(eventId, userId);
     const chat = await this.prisma.eventChat.findUnique({
       where: { eventId },
     });
 
     if (!chat) {
-      throw new NotFoundException(`Chat for event with ID ${eventId} not found.`);
+      // Чат ещё не создан (нет сообщений) — для участника это пустой чат.
+      return [];
     }
     return this.findChatMessages(chat.id, pagination);
   }
@@ -99,6 +122,7 @@ export class EventChatsService {
     if (!eventExists) {
       throw new NotFoundException(`Event with ID ${eventId} not found.`);
     }
+    await this.assertParticipant(eventId, authorId);
 
     const chat = await this.prisma.eventChat.upsert({
       where: { eventId },
