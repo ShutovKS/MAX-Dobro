@@ -347,9 +347,36 @@ export class AuthService {
     });
   }
 
+  /** data-check-string: key=value по всем полям кроме `exclude`, отсортировано. */
+  private buildDataCheckString(
+    params: URLSearchParams,
+    exclude: string[],
+  ): string {
+    const arr: string[] = [];
+    params.forEach((value, key) => {
+      if (!exclude.includes(key)) arr.push(`${key}=${value}`);
+    });
+    arr.sort();
+    return arr.join('\n');
+  }
+
+  private hmacHex(dataCheckString: string, botToken: string): string {
+    const secretKey = crypto
+      .createHmac('sha256', 'WebAppData')
+      .update(botToken)
+      .digest();
+    return crypto
+      .createHmac('sha256', secretKey)
+      .update(dataCheckString)
+      .digest('hex');
+  }
+
   /**
-   * Проверяет подпись `initData` от WebApp (Telegram/MAX используют один алгоритм:
-   * HMAC-SHA256 с секретным ключом, полученным из `WebAppData` и токена бота).
+   * Проверяет подпись `initData` от WebApp (HMAC-SHA256 с ключом из `WebAppData`+токен).
+   * Существует неоднозначность: должна ли `signature` (Ed25519, добавлена в новых
+   * клиентах) входить в data-check-string при проверке HMAC. Проверяем ОБА варианта
+   * (исключая hash+signature и исключая только hash) и принимаем, если совпал любой —
+   * оба требуют секрет бота, подделать нельзя. Логируем, какой совпал (диагностика).
    */
   private verifyWebAppInitData(initData: string, botToken: string): boolean {
     const params = new URLSearchParams(initData);
@@ -357,31 +384,33 @@ export class AuthService {
     if (!hash) {
       return false;
     }
-    const dataToCheck: string[] = [];
-    params.forEach((value, key) => {
-      // Исключаем И `hash`, И `signature`. Современные Telegram-клиенты
-      // добавляют поле `signature` (Ed25519, для сторонней валидации) рядом
-      // с `hash`; в data-check-string для HMAC оно НЕ входит. Если его не
-      // исключить, подпись не сойдётся и вход вернёт 401 на новых клиентах.
-      if (key !== 'hash' && key !== 'signature') {
-        dataToCheck.push(`${key}=${value}`);
-      }
-    });
-    dataToCheck.sort();
-    const dataCheckString = dataToCheck.join('\n');
-    const secretKey = crypto
-      .createHmac('sha256', 'WebAppData')
-      .update(botToken)
-      .digest();
-    const hmac = crypto.createHmac('sha256', secretKey);
-    const calculatedHash = hmac.update(dataCheckString).digest('hex');
-    if (calculatedHash.length !== hash.length) {
-      return false;
-    }
-    return crypto.timingSafeEqual(
-      Buffer.from(calculatedHash),
-      Buffer.from(hash),
+
+    const dcsExclBoth = this.buildDataCheckString(params, ['hash', 'signature']);
+    const dcsExclHashOnly = this.buildDataCheckString(params, ['hash']);
+    const hExclBoth = this.hmacHex(dcsExclBoth, botToken);
+    const hExclHashOnly = this.hmacHex(dcsExclHashOnly, botToken);
+
+    const safeEq = (a: string, b: string) =>
+      a.length === b.length &&
+      crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+
+    const matchExclBoth = safeEq(hExclBoth, hash);
+    const matchExclHashOnly = safeEq(hExclHashOnly, hash);
+
+    // ВРЕМЕННАЯ ДИАГНОСТИКА (убрать после): какой вариант совпал с реальным клиентом.
+    console.log(
+      `[initData-verify] keys=[${[...params.keys()].sort().join(',')}] ` +
+        `sig=${params.has('signature')} recv=${hash.slice(0, 10)} ` +
+        `exclBoth=${hExclBoth.slice(0, 10)}(${matchExclBoth}) ` +
+        `exclHashOnly=${hExclHashOnly.slice(0, 10)}(${matchExclHashOnly})`,
     );
+    if (!matchExclBoth && !matchExclHashOnly) {
+      console.log(
+        `[initData-verify] NO MATCH. dcsBoth=<<${dcsExclBoth}>> dcsHashOnly=<<${dcsExclHashOnly}>>`,
+      );
+    }
+
+    return matchExclBoth || matchExclHashOnly;
   }
 
   private isValidMaxHash(initData: string): boolean {
