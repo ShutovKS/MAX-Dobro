@@ -394,22 +394,12 @@ export class AuthService {
       a.length === b.length &&
       crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
+    // Реальные Telegram-клиенты (проверено на iOS) подписывают строку,
+    // ВКЛЮЧАЯ signature (исключается только hash). Старые клиенты без signature
+    // совпадают с обоими вариантами. Принимаем любой из них — оба требуют секрет
+    // бота, подделать нельзя; это надёжно и снимает неоднозначность доки.
     const matchExclBoth = safeEq(hExclBoth, hash);
     const matchExclHashOnly = safeEq(hExclHashOnly, hash);
-
-    // ВРЕМЕННАЯ ДИАГНОСТИКА (убрать после): какой вариант совпал с реальным клиентом.
-    console.log(
-      `[initData-verify] keys=[${[...params.keys()].sort().join(',')}] ` +
-        `sig=${params.has('signature')} recv=${hash.slice(0, 10)} ` +
-        `exclBoth=${hExclBoth.slice(0, 10)}(${matchExclBoth}) ` +
-        `exclHashOnly=${hExclHashOnly.slice(0, 10)}(${matchExclHashOnly})`,
-    );
-    if (!matchExclBoth && !matchExclHashOnly) {
-      console.log(
-        `[initData-verify] NO MATCH. dcsBoth=<<${dcsExclBoth}>> dcsHashOnly=<<${dcsExclHashOnly}>>`,
-      );
-    }
-
     return matchExclBoth || matchExclHashOnly;
   }
 

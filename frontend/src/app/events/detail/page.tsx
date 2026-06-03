@@ -18,7 +18,7 @@ import InteractiveMap from '../../../components/ui/InteractiveMap';
 import {FIRST_STEP_ACHIEVEMENT_ID, MESSAGES, MODAL_TRANSITION_DURATION} from '../../../lib/constants';
 import {iconMap} from '../../../lib/iconMap';
 import {buildDeepLink, tgHaptic, tgShareUrl} from '../../../lib/telegram-sdk';
-import {telegramUiActive, useTelegramBackButton, useTelegramMainButton} from '../../../lib/useTelegramUI';
+import {useTelegramBackButton} from '../../../lib/useTelegramUI';
 
 const ConfirmationModal: React.FC<{
   isOpen: boolean;
@@ -258,28 +258,17 @@ export const EventDetailPage: React.FC = () => {
   };
   const handleInvite = () => {
     setShowSuccess(false);
-    // Нативное приглашение Telegram: открывается выбор чата для отправки ссылки
-    // на событие (вместо старого MAX-окна с поиском друзей по имени).
+    // Открываем нативный выбор чата Telegram. НЕ показываем «приглашения
+    // отправлены» — мы лишь открыли окно, факт отправки нам неизвестен.
     shareEvent();
-    setToast({show: true, message: MESSAGES.TOASTS.INVITES_SENT});
   };
 
   const mainButtonAction = isSignedUp ? handleOpenCancelModal : handleSignUpClick;
 
-  // Нативные кнопки Telegram (до ранних return — порядок хуков).
+  // Нативная кнопка «Назад» Telegram. CTA оставляем внутренней кнопкой (белый
+  // футер) — нативная MainButton рисуется в сером системном баре и не совпадает
+  // с белым оформлением приложения.
   useTelegramBackButton(onBack);
-  useTelegramMainButton({
-    text: isSignedUp ? 'Вы участвуете' : 'Я помогу!',
-    onClick: mainButtonAction,
-    visible:
-      telegramUiActive() &&
-      !loading &&
-      !!event &&
-      !showConfirmation &&
-      !showSuccess &&
-      !showCancelConfirm &&
-      !unlockedAchievement,
-  });
 
   if (loading) {
     return <EventDetailSkeleton />;
@@ -329,8 +318,6 @@ export const EventDetailPage: React.FC = () => {
                       className="w-full flex items-center justify-center space-x-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors relative">
                 <MessageSquare className="w-6 h-6 text-[#007AFF]"/>
                 <span className="font-semibold text-lg text-[#0C0D0E]">Чат мероприятия</span>
-                <span
-                  className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">3</span>
               </button>
             ) : (
               <div
@@ -422,14 +409,12 @@ export const EventDetailPage: React.FC = () => {
           </section>
         </div>
         <div className="h-28"></div>
-        {!telegramUiActive() && (
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-30">
-            <button onClick={mainButtonAction}
-                    className={`w-full py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg ${isSignedUp ? 'bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300' : 'bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] text-white font-bold hover:opacity-90'}`}>
-              {isSignedUp ? (<><Check className="w-5 h-5 mr-2"/>Вы участвуете</>) : ('Я помогу!')}
-            </button>
-          </div>
-        )}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-30">
+          <button onClick={mainButtonAction}
+                  className={`w-full py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg ${isSignedUp ? 'bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300' : 'bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] text-white font-bold hover:opacity-90'}`}>
+            {isSignedUp ? (<><Check className="w-5 h-5 mr-2"/>Вы участвуете</>) : ('Я помогу!')}
+          </button>
+        </div>
       </div>
       <ConfirmationModal isOpen={showConfirmation} event={event} onConfirm={handleConfirmSignUp}
                          onCancel={handleCancelSignUp}/>
