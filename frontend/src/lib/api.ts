@@ -16,6 +16,8 @@ export const fetchEventParticipants = organizerApi.fetchEventParticipants;
 export const {
   fetchAllEvents,
   fetchEventById,
+  createEvent,
+  updateEvent,
   participateInEvent,
   cancelEventParticipation,
   fetchAllCourses,

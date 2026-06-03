@@ -103,10 +103,16 @@ export class EventsService {
     return { ...mappedEvent, friendsParticipating };
   }
   
-  async create(createEventDto: CreateEventDto) {
+  async create(createEventDto: CreateEventDto, organizationId: number) {
+    if (!organizationId) {
+      throw new ForbiddenException(
+        'Organizer is not linked to an organization',
+      );
+    }
     const newEvent = await this.prisma.event.create({
       data: {
         ...createEventDto,
+        organizationId,
         date: new Date(createEventDto.date),
         status: 'PLANNED',
       },

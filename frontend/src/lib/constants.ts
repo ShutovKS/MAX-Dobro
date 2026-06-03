@@ -31,6 +31,14 @@ export const CERTIFICATE_DEFAULTS = {
 // Logic
 export const COURSE_PASS_THRESHOLD = 0.7;
 
+// Пресеты бонусов волонтёрам при создании события (кнопками, не текстом).
+export const EVENT_REWARD_PRESETS = {
+  karma: [10, 25, 50, 100],
+  hours: [1, 2, 3, 5, 8],
+};
+// Центр карты по умолчанию (Москва) для выбора точки события.
+export const DEFAULT_MAP_CENTER: [number, number] = [55.751244, 37.618423];
+
 // Calendar
 export const MONTH_NAMES = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 export const DAY_NAMES = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];

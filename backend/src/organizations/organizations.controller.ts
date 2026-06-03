@@ -91,7 +91,7 @@ export class OrganizationsController {
   @ApiOperation({ summary: 'Get dashboard statistics for an organization' })
   @ApiResponse({ type: [OrganizationStatEntity] })
   getDashboardStats(@CurrentUser() user: User) {
-    const organizationId = 1;
+    const organizationId = user.organizationId ?? 1;
     return this.organizationsService.getDashboardStats(organizationId);
   }
 
@@ -100,7 +100,7 @@ export class OrganizationsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get organization's events (for organizer)" })
   findOrganizationEvents(@CurrentUser() user: User) {
-    const organizationId = 1;
+    const organizationId = user.organizationId ?? 1;
     return this.organizationsService.findEventsForOrganizer(organizationId);
   }
 
@@ -117,7 +117,7 @@ export class OrganizationsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get organization's details (for organizer)" })
   getOrganizationDetails(@CurrentUser() user: User) {
-    const organizationId = 1;
+    const organizationId = user.organizationId ?? 1;
     return this.organizationsService.findOne(organizationId, user.id);
   }
 }

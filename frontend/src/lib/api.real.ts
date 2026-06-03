@@ -6,6 +6,7 @@ import type {
   Course,
   CourseCompletionResult,
   LessonCompletionResult,
+  EventCreatePayload,
   EventChatMessage,
   EventParticipant,
   Friend,
@@ -230,6 +231,27 @@ export const fetchEventById = async (
   id: number,
 ): Promise<AppEvent | HistoryEvent> => {
   const event = await apiFetch<any>(`/events/${id}`);
+  return mapEventData(event);
+};
+
+export const createEvent = async (
+  payload: EventCreatePayload,
+): Promise<AppEvent> => {
+  const event = await apiFetch<any>('/events', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return mapEventData(event);
+};
+
+export const updateEvent = async (
+  id: number,
+  payload: Partial<EventCreatePayload>,
+): Promise<AppEvent> => {
+  const event = await apiFetch<any>(`/events/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
   return mapEventData(event);
 };
 

@@ -38,6 +38,10 @@ model User {
   reviews    Review[]
   courseProgress UserCourseProgress[]
 
+  // Организация, к которой относится пользователь-организатор (NULL у волонтёров).
+  organizationId Int?          @map("organization_id")
+  organization   Organization? @relation("OrgMembers", fields: [organizationId], references: [id])
+
   supabaseUserId String? @unique @map("supabase_user_id")
   maxUserId      String?   @unique @map("max_user_id")
   telegramUserId String?   @unique @map("telegram_user_id")
@@ -65,6 +69,7 @@ model Organization {
   events        Event[]
   subscribers   UserOrganizationSubscription[]
   reviews       Review[]
+  members       User[]   @relation("OrgMembers")
 
   @@map("organizations")
 }

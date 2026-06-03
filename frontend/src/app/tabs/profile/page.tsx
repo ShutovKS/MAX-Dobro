@@ -191,23 +191,25 @@ const ProfilePage: React.FC = () => {
         </div>
       </section>
 
-      <section className="px-6 mt-6">
-        <button
-          onClick={onSwitchToOrganizationMode}
-          className="w-full flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border-2 border-[#007AFF]/30 hover:bg-blue-50 transition-colors active:scale-[0.99]"
-        >
-          <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <Briefcase className="w-6 h-6 text-[#007AFF]"/>
+      {user.role === 'organization' && (
+        <section className="px-6 mt-6">
+          <button
+            onClick={onSwitchToOrganizationMode}
+            className="w-full flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border-2 border-[#007AFF]/30 hover:bg-blue-50 transition-colors active:scale-[0.99]"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <Briefcase className="w-6 h-6 text-[#007AFF]"/>
+              </div>
+              <div className="text-left">
+                <span className="block font-semibold text-[#0C0D0E]">Кабинет организатора</span>
+                <span className="text-xs text-[rgb(12,13,14,0.52)]">Управление событиями и организацией</span>
+              </div>
             </div>
-            <div className="text-left">
-              <span className="block font-semibold text-[#0C0D0E]">Кабинет организатора</span>
-              <span className="text-xs text-[rgb(12,13,14,0.52)]">Управление событиями и организацией</span>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400"/>
-        </button>
-      </section>
+            <ChevronRight className="w-5 h-5 text-gray-400"/>
+          </button>
+        </section>
+      )}
     </div>
   );
 };

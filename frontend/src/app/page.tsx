@@ -43,7 +43,7 @@ import CreateEventPage from './organization/events/create/page';
 import EventParticipantsPage from './organization/events/participants/page';
 import OrganizationSettingsPage from './organization/settings/page';
 import type { Course, OrganizationEvent, RewardItem, User } from '../lib/types';
-import { fetchAllCourses, fetchRewards, purchaseReward, updateProfile } from '../lib/api';
+import { createEvent, fetchAllCourses, fetchRewards, purchaseReward, updateEvent, updateProfile } from '../lib/api';
 import {
   getCurrentSession,
   isOnboardingComplete,
@@ -266,15 +266,28 @@ const App: React.FC = () => {
   const RewardsStorePageWrapper = () => <RewardsStorePage user={userData!} rewards={allRewards} onBack={() => navigate(ROUTES.PROFILE)} />;
 
   const EventManagementPageWrapper = () => <EventManagementPage user={userData!} onBack={() => navigate(ROUTES.ORGANIZATION_DASHBOARD)} onCreateEvent={() => navigate(ROUTES.ORGANIZATION_EVENTS_CREATE)} onEditEvent={(e) => navigate(ROUTES.ORGANIZATION_EVENTS_EDIT(e.id))} onManageParticipants={(e) => navigate(ROUTES.ORGANIZATION_EVENTS_PARTICIPANTS(e.id))} />;
-  const CreateEventPageWrapper = () => <CreateEventPage user={userData!} onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onPublish={() => {
-    showToast(MESSAGES.TOASTS.EVENT_PUBLISHED, 'success');
-    navigate(ROUTES.ORGANIZATION_EVENTS);
+  const CreateEventPageWrapper = () => <CreateEventPage user={userData!} onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onPublish={async (data) => {
+    try {
+      await createEvent(data);
+      showToast(MESSAGES.TOASTS.EVENT_PUBLISHED, 'success');
+      navigate(ROUTES.ORGANIZATION_EVENTS);
+    } catch (e) {
+      console.error('Failed to create event:', e);
+      showToast('Не удалось опубликовать событие', 'info');
+    }
   }} />;
   const EditEventPageWrapper = () => {
     const { eventId } = useParams<{ eventId: string }>();
-    return <CreateEventPage user={userData!} event={{ id: parseInt(eventId!, 10) } as OrganizationEvent} onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onPublish={() => {
-      showToast(MESSAGES.TOASTS.EVENT_SAVED, 'success');
-      navigate(ROUTES.ORGANIZATION_EVENTS);
+    const id = parseInt(eventId!, 10);
+    return <CreateEventPage user={userData!} event={{ id } as OrganizationEvent} onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onPublish={async (data) => {
+      try {
+        await updateEvent(id, data);
+        showToast(MESSAGES.TOASTS.EVENT_SAVED, 'success');
+        navigate(ROUTES.ORGANIZATION_EVENTS);
+      } catch (e) {
+        console.error('Failed to update event:', e);
+        showToast('Не удалось сохранить событие', 'info');
+      }
     }} />;
   };
   const EventParticipantsPageWrapper = () => <EventParticipantsPage user={userData!} onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)} />;

@@ -48,6 +48,9 @@ export class ProfileEntity
   @ApiProperty({ default: 0 })
   karmaPoints: number;
 
+  @ApiProperty({ required: false, nullable: true })
+  organizationId: number | null;
+
   @ApiProperty({ type: [UserAchievementEntity] })
   achievements: UserAchievementEntity[];
 

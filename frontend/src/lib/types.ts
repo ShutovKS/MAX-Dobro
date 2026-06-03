@@ -95,6 +95,21 @@ export type LessonCompletionResult = {
   courseCompleted: boolean;
 };
 
+export type EventCreatePayload = {
+  title: string;
+  description: string;
+  date: string; // ISO
+  location?: string;
+  maxParticipants?: number;
+  category?: string;
+  requirements?: string;
+  latitude?: number;
+  longitude?: number;
+  durationHours?: number;
+  karmaPoints?: number;
+  recommendedCourseId?: number;
+};
+
 export type Tab = 'home' | 'training' | 'organizations' | 'stories' | 'profile';
 export type ProfileSubScreen =
   | 'activityHistory'

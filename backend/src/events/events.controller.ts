@@ -45,8 +45,10 @@ export class EventsController {
     description: 'The event has been successfully created.',
     type: () => EventEntity,
   })
-  create(@Body() createEventDto: CreateEventDto) {
-    return this.eventsService.create(createEventDto);
+  create(@Body() createEventDto: CreateEventDto, @CurrentUser() user: User) {
+    // organizationId берём из авторизованного организатора; пока мультиорг вне
+    // scope — фолбэк на единственную организацию (1), чтобы не ломать демо.
+    return this.eventsService.create(createEventDto, user.organizationId ?? 1);
   }
 
   @Get()

@@ -23,6 +23,7 @@ import type {
   Course,
   CourseCompletionResult,
   LessonCompletionResult,
+  EventCreatePayload,
   EventChatMessage,
   EventParticipant,
   Friend,
@@ -104,6 +105,22 @@ export const cancelEventParticipation = (eventId: number): Promise<void> => {
 
   participatingEventIds.delete(eventId);
   return simulateRequest(undefined);
+};
+
+export const createEvent = (payload: EventCreatePayload): Promise<AppEvent> => {
+  return simulateRequest({
+    id: Math.floor(Math.random() * 100000) + 1000,
+    ...payload,
+    participantCount: 0,
+    organizationName: 'Моя организация',
+  } as unknown as AppEvent);
+};
+
+export const updateEvent = (
+  id: number,
+  payload: Partial<EventCreatePayload>,
+): Promise<AppEvent> => {
+  return simulateRequest({ id, ...payload } as unknown as AppEvent);
 };
 
 export const fetchAllCourses = (): Promise<Course[]> => {
