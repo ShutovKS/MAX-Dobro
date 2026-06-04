@@ -84,7 +84,7 @@
   body.present .deck{display:block;padding:0;height:100vh}
   body.present .slide{display:none;position:absolute;top:50%;left:50%;transform-origin:center;box-shadow:0 40px 90px -30px rgba(11,28,63,.6)}
   body.present .slide.active{display:block}
-  .hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(11,28,63,.85);color:#fff;
+  .hint{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(11,28,63,.85);color:#fff;
     padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;z-index:99;font-family:var(--body)}
   body:not(.present) .hint{display:none}
 
@@ -94,6 +94,35 @@
   body.shot .slide{display:none}
   body.shot .slide.show{display:block;border-radius:0;box-shadow:none}
   body.shot .hint{display:none}
+
+  /* ===== animations ===== */
+  @keyframes revIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes revInScale{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+  @keyframes slideFade{from{opacity:0}to{opacity:1}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @keyframes shimmer{0%{background-position:-180% 0}100%{background-position:180% 0}}
+
+  /* elements the script reveals get this; start hidden so there is no flash */
+  body.present .slide.active .anim{opacity:0;animation:revIn .55s cubic-bezier(.22,.7,.2,1) both}
+  body.present .slide.active .anim.pop{animation-name:revInScale}
+  /* slide itself gently fades in (opacity only — transform is JS-controlled scale) */
+  body.present .slide.active{animation:slideFade .4s ease both}
+
+  /* progress dots */
+  .nav{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:98}
+  body:not(.present) .nav{display:none}
+  .nav i{width:7px;height:7px;border-radius:50%;background:rgba(11,28,63,.22);transition:all .35s ease;cursor:pointer}
+  .nav i.on{background:var(--blue);width:22px;border-radius:6px}
+
+  /* animated gradient title accent on slide 1 */
+  .grad{background:linear-gradient(100deg,var(--blue),#5BB4FF 45%,var(--blue));background-size:200% 100%;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 5s linear infinite}
+
+  @media (prefers-reduced-motion: reduce){
+    body.present .slide.active .anim,
+    body.present .slide.active .floaty{animation:none!important;opacity:1!important}
+    .grad{animation:none}
+  }
 </style>
 </head>
 <body>
@@ -104,7 +133,7 @@
     <div class="pad" style="flex-direction:row;align-items:center;gap:46px">
       <div style="flex:1.12">
         <div class="chip blue" style="margin-bottom:24px">Маркетинг и продвижение продукта</div>
-        <h1 class="title big" style="font-size:90px">MAX <span class="accent">Добро</span></h1>
+        <h1 class="title big" style="font-size:90px">MAX <span class="accent grad">Добро</span></h1>
         <p class="sub" style="margin-top:20px;font-size:24px;max-width:540px">Экосистема добрых дел внутри мессенджера — там, где аудитория уже проводит время.</p>
         <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap">
           <span class="badge-live"><span class="pulse"></span>MVP развёрнут в проде</span>
@@ -525,19 +554,49 @@
     slides[n-1].classList.add('show');
   } else if(!params.has('shots')){
     document.body.classList.add('present');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let i=0;
+
+    // progress dots
+    const nav=document.createElement('div'); nav.className='nav';
+    slides.forEach((_,k)=>{ const d=document.createElement('i'); d.addEventListener('click',()=>{i=k;fit();}); nav.appendChild(d); });
+    document.body.appendChild(nav);
+
+    // staggered reveal of the active slide's top-level blocks
+    function animate(s){
+      if(reduce) return;
+      const sel='.kicker, h1, .sub, .chip, .badge-live, .feat, .phone, .card, table tbody tr, .qrtag';
+      const all=[...s.querySelectorAll(sel)]; const set=new Set(all);
+      const tops=all.filter(el=>{ let p=el.parentElement; while(p&&p!==s){ if(set.has(p)) return false; p=p.parentElement; } return true; });
+      tops.forEach((el,idx)=>{
+        el.classList.remove('anim');
+        if(el.classList.contains('phone')) el.classList.add('pop');
+        void el.offsetWidth;
+        el.style.animationDelay=(0.04+Math.min(idx,14)*0.06)+'s';
+        el.classList.add('anim');
+      });
+    }
+
     function fit(){
       const s=slides[i]; const sc=Math.min(window.innerWidth/1280, window.innerHeight/720);
       slides.forEach(x=>x.classList.remove('active'));
       s.classList.add('active');
       s.style.transform=`translate(-50%,-50%) scale(${sc})`;
+      [...nav.children].forEach((d,k)=>d.classList.toggle('on',k===i));
+      animate(s);
     }
-    function go(d){ i=Math.max(0,Math.min(slides.length-1,i+d)); fit(); }
+    function go(d){ const n=Math.max(0,Math.min(slides.length-1,i+d)); if(n!==i){ i=n; fit(); } }
+
     window.addEventListener('keydown',e=>{
       if(['ArrowRight',' ','Enter','PageDown'].includes(e.key)){e.preventDefault();go(1);}
       else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(-1);}
+      else if(e.key==='Home'){e.preventDefault();i=0;fit();}
+      else if(e.key==='End'){e.preventDefault();i=slides.length-1;fit();}
       else if(e.key==='Escape'){document.body.classList.toggle('present');if(document.body.classList.contains('present'))fit();else slides.forEach(x=>x.style.transform='');}
     });
+    // touch swipe
+    let tx=0; window.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+    window.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx; if(Math.abs(dx)>50) go(dx<0?1:-1);},{passive:true});
     window.addEventListener('resize',()=>{if(document.body.classList.contains('present'))fit();});
     fit();
   }
