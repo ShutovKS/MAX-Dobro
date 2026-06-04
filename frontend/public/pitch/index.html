@@ -79,6 +79,12 @@
   .feat b{font-size:18px}
   .feat .d{color:var(--muted);font-size:15px;line-height:1.45;margin-top:2px}
 
+  /* feature tiles (slide 12) */
+  .tile{background:#F6F9FE;border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;justify-content:center}
+  .tile .ti{font-size:24px;line-height:1}
+  .tile b{font-size:16px;margin-top:8px;color:var(--ink)}
+  .tile .ts{font-size:12.5px;color:var(--muted);font-weight:600;margin-top:3px;line-height:1.3}
+
   /* present mode */
   body.present{overflow:hidden;height:100vh}
   body.present .deck{display:block;padding:0;height:100vh}
@@ -431,55 +437,55 @@
     <div class="pad">
       <div class="kicker"><span class="num">11</span> &nbsp;Бизнес-модель и экономика</div>
       <h1 class="title" style="margin-top:6px;font-size:38px">Бесплатно для людей — <span class="accent">платят институты</span></h1>
-      <div style="display:flex;gap:16px;margin-top:14px;flex:1">
+      <div style="display:flex;gap:18px;margin-top:14px;flex:1">
         <!-- LEFT: revenue with per-unit math + "why" -->
-        <div style="flex:1.16;display:flex;flex-direction:column;gap:9px">
-          <div style="font-weight:800;font-size:14px;color:var(--ink2)">Доходы · откуда каждая цифра <span class="muted" style="font-weight:600">(без гранта, цикл 9 мес)</span></div>
-          <div class="card" style="padding:10px 15px">
-            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:14.5px">🏛️ Региональные контракты</span><b class="accent" style="font-size:16px">12,9 млн</b></div>
-            <div class="muted" style="font-size:12px;font-weight:600;margin-top:2px"><b style="color:var(--ink2)">4,3 млн × 3 контракта</b> · ориентир: госконтракт Оренбургской обл. (8 мес)</div>
+        <div style="flex:1.16;display:flex;flex-direction:column;justify-content:space-between">
+          <div style="font-weight:800;font-size:14.5px;color:var(--ink2)">Доходы · откуда каждая цифра <span class="muted" style="font-weight:600">(без гранта, цикл 9 мес)</span></div>
+          <div class="card" style="padding:14px 18px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:16px">🏛️ Региональные контракты</span><b class="accent" style="font-size:18px">12,9 млн</b></div>
+            <div class="muted" style="font-size:13px;font-weight:600;margin-top:4px"><b style="color:var(--ink2)">4,3 млн × 3 контракта</b> · ориентир: госконтракт Оренбургской обл. (8 мес)</div>
           </div>
-          <div class="card" style="padding:10px 15px">
-            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:14.5px">🏢 Расширенные кабинеты</span><b class="accent" style="font-size:16px">7,9 млн</b></div>
-            <div class="muted" style="font-size:12px;font-weight:600;margin-top:2px"><b style="color:var(--ink2)">71,9 тыс/год × 110 организаций</b> · тариф amoCRM «Расширенный» 1 199 ₽/мес на команду из 5 сотрудников × 12 мес</div>
+          <div class="card" style="padding:14px 18px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:16px">🏢 Расширенные кабинеты</span><b class="accent" style="font-size:18px">7,9 млн</b></div>
+            <div class="muted" style="font-size:13px;font-weight:600;margin-top:4px"><b style="color:var(--ink2)">71,9 тыс/год × 110 организаций</b> · amoCRM «Расширенный»: 1 199 ₽/мес × 5 сотр. × 12 мес</div>
           </div>
-          <div class="card" style="padding:10px 15px">
-            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:14.5px">📊 Аналитические пакеты</span><b class="accent" style="font-size:16px">5,0 млн</b></div>
-            <div class="muted" style="font-size:12px;font-weight:600;margin-top:2px"><b style="color:var(--ink2)">72 тыс/год × 70 пакетов</b> · Битрикс24 Проф.: 6 000 ₽ × 12 мес</div>
+          <div class="card" style="padding:14px 18px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:16px">📊 Аналитические пакеты</span><b class="accent" style="font-size:18px">5,0 млн</b></div>
+            <div class="muted" style="font-size:13px;font-weight:600;margin-top:4px"><b style="color:var(--ink2)">72 тыс/год × 70 пакетов</b> · Битрикс24 Проф.: 6 000 ₽/мес × 12 мес</div>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:2px 15px 0"><span style="font-weight:800;font-size:15px">Валовый доход</span><b style="font-family:var(--disp);font-size:21px">25,8 млн ₽</b></div>
-          <div class="card" style="padding:11px 15px;background:rgba(0,122,255,.06);border:1px solid rgba(0,122,255,.22);margin-top:auto">
-            <div style="font-weight:800;font-size:13px;color:var(--blue)">«Почему именно столько?» — это консервативная доля рынка</div>
-            <div style="font-size:12.5px;color:var(--ink2);font-weight:600;margin-top:3px;line-height:1.42">В России <b>89 регионов</b> — берём всего <b>3</b>. Сотни тысяч НКО и фондов — берём <b>110</b>. Цены не наши — это <b>публичные тарифы</b>. Каждая сумма = цена × объём, а не «с потолка».</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 18px"><span style="font-weight:800;font-size:16px">Валовый доход</span><b style="font-family:var(--disp);font-size:24px">25,8 млн ₽</b></div>
+          <div class="card" style="padding:14px 18px;background:rgba(0,122,255,.06);border:1px solid rgba(0,122,255,.22)">
+            <div style="font-weight:800;font-size:14px;color:var(--blue)">«Почему именно столько?» — консервативная доля рынка</div>
+            <div style="font-size:13.5px;color:var(--ink2);font-weight:600;margin-top:4px;line-height:1.5">В России <b>89 регионов</b> — берём всего <b>3</b>. Сотни тысяч НКО и фондов — берём <b>110</b>. Цены не наши — это <b>публичные тарифы</b>. Каждая сумма = цена × объём, а не «с потолка».</div>
           </div>
         </div>
         <!-- RIGHT: budget breakdown + scenarios -->
-        <div style="flex:1;display:flex;flex-direction:column;gap:9px">
-          <div class="card" style="padding:12px 16px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px"><span style="font-weight:800;font-size:14.5px">Бюджет цикла · 9 мес</span><b style="font-family:var(--disp);font-size:18px">20,0 млн</b></div>
-            <div style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--ink2);font-weight:600">
-              <div style="display:flex;justify-content:space-between"><span>👩‍💻 Команда разработки (зарплаты)</span><b>13,0 млн</b></div>
-              <div style="display:flex;justify-content:space-between"><span>☁️ Инфраструктура и сервисы <span class="muted" style="font-weight:600">(хостинг, БД, AI, лицензии)</span></span><b>1,6 млн</b></div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between">
+          <div class="card" style="padding:15px 18px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-weight:800;font-size:15.5px">Бюджет цикла · 9 мес</span><b style="font-family:var(--disp);font-size:19px">20,0 млн</b></div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--ink2);font-weight:600">
+              <div style="display:flex;justify-content:space-between"><span>👩‍💻 Команда разработки <span class="muted" style="font-weight:600">(зарплаты)</span></span><b>13,0 млн</b></div>
+              <div style="display:flex;justify-content:space-between"><span>☁️ Инфраструктура и сервисы</span><b>1,6 млн</b></div>
               <div style="display:flex;justify-content:space-between"><span>📣 Маркетинг, PR и контент</span><b>2,5 млн</b></div>
-              <div style="display:flex;justify-content:space-between"><span>⚖️ Юридическое и операционное <span class="muted" style="font-weight:600">(юрлицо, договоры, бухгалтерия)</span></span><b>0,8 млн</b></div>
+              <div style="display:flex;justify-content:space-between"><span>⚖️ Юридическое и операционное</span><b>0,8 млн</b></div>
               <div style="display:flex;justify-content:space-between"><span>🛡️ Резерв на непредвиденное</span><b>2,1 млн</b></div>
             </div>
-            <div class="muted" style="font-size:10.5px;font-weight:600;margin-top:6px;line-height:1.35">Маркетинг — это PR, контент и активации с вузами. Привлечение пользователей органическое — внутри мессенджера, без закупки трафика, поэтому статья компактная.</div>
+            <div class="muted" style="font-size:12px;font-weight:600;margin-top:10px;line-height:1.45">Маркетинг — PR, контент и активации с вузами: привлечение органическое, без закупки трафика.</div>
           </div>
-          <div class="card" style="padding:11px 16px;display:flex;align-items:center;justify-content:space-between">
-            <div><div class="chip green" style="font-size:11.5px;padding:4px 11px">Без гранта</div><div class="muted" style="font-size:11.5px;font-weight:600;margin-top:5px">25,8 − бюджет 20,0 − налог 20% (1,2)</div></div>
-            <div style="text-align:right"><div style="font-family:var(--disp);font-weight:800;font-size:30px;color:var(--green);line-height:1">+4,6</div><div class="muted" style="font-size:11px;font-weight:700">млн ₽ чистой</div></div>
+          <div class="card" style="padding:14px 18px;display:flex;align-items:center;justify-content:space-between">
+            <div><div class="chip green" style="font-size:12px;padding:5px 13px">Без гранта</div><div class="muted" style="font-size:12.5px;font-weight:600;margin-top:7px">25,8 − бюджет 20,0 − налог 20% (1,2)</div></div>
+            <div style="text-align:right"><div style="font-family:var(--disp);font-weight:800;font-size:36px;color:var(--green);line-height:1">+4,6</div><div class="muted" style="font-size:12px;font-weight:700">млн ₽ чистой</div></div>
           </div>
-          <div class="card" style="padding:11px 16px;display:flex;align-items:center;justify-content:space-between;border-left:4px solid var(--amber)">
-            <div><div class="chip coral" style="font-size:11.5px;padding:4px 11px">С грантом</div><div class="muted" style="font-size:11.5px;font-weight:600;margin-top:5px">+ разовый грант 10 млн → доход 35,8 − 20,0 − налог (3,2)</div></div>
-            <div style="text-align:right"><div style="font-family:var(--disp);font-weight:800;font-size:30px;color:#C98800;line-height:1">+12,6</div><div class="muted" style="font-size:11px;font-weight:700">млн ₽ чистой</div></div>
+          <div class="card" style="padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-left:4px solid var(--amber)">
+            <div><div class="chip coral" style="font-size:12px;padding:5px 13px">С грантом</div><div class="muted" style="font-size:12.5px;font-weight:600;margin-top:7px">+ грант 10 млн → 35,8 − 20,0 − налог (3,2)</div></div>
+            <div style="text-align:right"><div style="font-family:var(--disp);font-weight:800;font-size:36px;color:#C98800;line-height:1">+12,6</div><div class="muted" style="font-size:12px;font-weight:700">млн ₽ чистой</div></div>
           </div>
-          <div class="card" style="padding:10px 14px;background:rgba(26,190,67,.08);border:1px solid rgba(26,190,67,.25)">
-            <div style="font-size:12.5px;color:var(--ink2);font-weight:700">Проект выходит в плюс <b style="color:#0E8F31">без гранта</b> — за счёт контрактов, кабинетов и аналитики. Грант ускоряет рост, но не нужен, чтобы зарабатывать.</div>
+          <div class="card" style="padding:13px 16px;background:rgba(26,190,67,.08);border:1px solid rgba(26,190,67,.25)">
+            <div style="font-size:13.5px;color:var(--ink2);font-weight:700">Проект выходит в плюс <b style="color:#0E8F31">без гранта</b> — за счёт контрактов, кабинетов и аналитики. Грант ускоряет рост, но не нужен, чтобы зарабатывать.</div>
           </div>
         </div>
       </div>
-      <div class="muted" style="font-size:11.5px;margin-top:9px;font-weight:600">Цены за единицу — публичные ориентиры: amoCRM «Расширенный», Битрикс24 Проф., госконтракт Оренбургской обл. (4,3 млн / 8 мес), грант Фонда содействия инновациям «Развитие-ЦТ» (до 20 млн — в модель заложено 10). Объёмы — консервативные сценарные допущения.</div>
+      <div class="muted" style="font-size:11.5px;margin-top:8px;font-weight:600">Цены за единицу — публичные ориентиры: amoCRM «Расширенный», Битрикс24 Проф., госконтракт Оренбургской обл. (4,3 млн / 8 мес), грант Фонда содействия инновациям «Развитие-ЦТ» (до 20 млн — в модель заложено 10). Объёмы — консервативные сценарные допущения.</div>
     </div>
     <div class="foot"><div class="brand"><span class="dot"></span><b>MAX&nbsp;Добро</b> · Dobro Club</div><div>11</div></div>
   </section>
@@ -490,20 +496,21 @@
     <div class="pad">
       <div class="kicker"><span class="num">12</span> &nbsp;Готовность и план</div>
       <h1 class="title" style="margin-top:10px">Это не идея — это <span class="green">работает</span></h1>
-      <div style="display:flex;gap:18px;margin-top:18px;flex:1">
-        <div class="card" style="flex:.92;padding:22px">
+      <div style="display:flex;gap:18px;margin-top:16px;flex:1">
+        <div class="card" style="flex:.96;padding:24px;display:flex;flex-direction:column">
           <span class="badge-live"><span class="pulse"></span>MVP развёрнут в проде</span>
-          <ul style="list-style:none;display:flex;flex-direction:column;gap:9px;margin-top:14px;color:var(--ink2);font-size:15px;font-weight:600">
-            <li><span class="check">✓</span> Telegram Mini App + бот — <b>live</b> (dobroclub.online)</li>
-            <li><span class="check">✓</span> Карта, события, запись, чаты мероприятий</li>
-            <li><span class="check">✓</span> Обучение, тесты, авто-сертификаты</li>
-            <li><span class="check">✓</span> Карма, уровни, лидерборд, магазин наград</li>
-            <li><span class="check">✓</span> AI-поиск дел в боте</li>
-            <li><span class="check">✓</span> Кабинет организатора + аналитика</li>
-            <li><span class="check">✓</span> MAX-контур заложен в архитектуре</li>
-          </ul>
+          <div style="font-weight:800;font-size:21px;margin-top:15px;line-height:1.2">Весь путь пользователя — <span class="green">в проде</span>, не в макетах</div>
+          <div style="font-size:14px;color:var(--muted);font-weight:600;margin-top:6px">Telegram Mini App + бот живые · <b style="color:var(--ink2)">dobroclub.online</b></div>
+          <div class="grid" style="grid-template-columns:1fr 1fr;gap:13px;margin-top:20px;flex:1">
+            <div class="tile"><div class="ti">🗺️</div><b>Карта и события</b><div class="ts">запись в один тап, чаты мероприятий</div></div>
+            <div class="tile"><div class="ti">✨</div><b>Геймификация</b><div class="ts">карма, уровни, лидерборд, магазин</div></div>
+            <div class="tile"><div class="ti">🎓</div><b>Обучение</b><div class="ts">тесты + авто-сертификаты в портфолио</div></div>
+            <div class="tile"><div class="ti">🤖</div><b>AI-поиск дел</b><div class="ts">на естественном языке в чат-боте</div></div>
+            <div class="tile"><div class="ti">🏢</div><b>Кабинет организатора</b><div class="ts">создание событий + аналитика</div></div>
+            <div class="tile"><div class="ti">🧩</div><b>MAX-контур</b><div class="ts">заложен в архитектуре</div></div>
+          </div>
         </div>
-        <div class="card" style="flex:1.08;padding:22px">
+        <div class="card" style="flex:1.04;padding:24px">
           <div style="font-weight:800;font-size:15px;color:var(--ink2);margin-bottom:12px">Дорожная карта · разработка → продвижение → контракты</div>
           <div style="display:flex;flex-direction:column;gap:0">
             <div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:12px;height:12px;border-radius:50%;background:var(--green)"></div><div style="width:2px;flex:1;background:var(--line)"></div></div><div style="padding-bottom:8px"><b style="font-size:14.5px">Май 2026 — бюджет и команда</b><div class="muted" style="font-size:12.5px">питч, смета и финмодель согласованы; собрана core-team</div><div style="margin-top:3px"><span style="display:inline-block;font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;background:rgba(26,190,67,.12);color:#0E8F31">🤝 контракты: первые переговоры с регионом</span></div></div></div>
