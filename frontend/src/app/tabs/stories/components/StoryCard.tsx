@@ -71,7 +71,7 @@ const StoryCard: React.FC<{
             <Heart className={`w-6 h-6 ${isLiked ? 'fill-current text-[#FF303C]' : ''}`}/>
             <span className="font-semibold text-sm">{likes}</span>
           </button>
-          <button className="flex items-center space-x-1.5 hover:text-[#007AFF]">
+          <button onClick={() => onSelectStory(story.id)} className="flex items-center space-x-1.5 hover:text-[#007AFF]">
             <MessageSquare className="w-6 h-6"/>
             <span className="font-semibold text-sm">{story.comments}</span>
           </button>
