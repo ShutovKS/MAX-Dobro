@@ -239,7 +239,7 @@ const App: React.FC = () => {
 
   const EventChatPageWrapper = () => {
     const { id } = useParams();
-    return <EventChatPage eventId={parseInt(id || '0', 10)} user={userData!} onBack={() => navigate(ROUTES.EVENT_DETAIL(id!))} />;
+    return <EventChatPage eventId={parseInt(id || '0', 10)} user={userData!} onBack={() => navigate(-1)} />;
   };
 
   const CourseDetailPageWrapper = () => {
