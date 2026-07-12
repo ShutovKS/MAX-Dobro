@@ -1,12 +1,14 @@
-# Проект "MAX Добро"
+# MAX Dobro Project
 
-<!-- Здесь можно разместить логотип или баннер проекта -->
+[Русский](./README.ru.md) | [English](./README.md)
+
+<!-- Place a project logo or banner here -->
 <p align="center">
   <img src="icon.png" alt="MAX Dobro Banner" width="160"/>
 </p>
 
-> Полнофункциональная платформа для волонтеров и благотворительных организаций, созданная для геймификации добрых дел и
-> построения активного сообщества.
+> A full-featured platform for volunteers and charitable organizations, built to gamify good deeds and
+> build an active community.
 
 <p align="center">
   <img src="https://img.shields.io/badge/backend-NestJS-red" alt="Backend: NestJS">
@@ -17,116 +19,116 @@
 
 ---
 
-## 📖 Оглавление
+## 📖 Table of Contents
 
-- [✨ О проекте](#-о-проекте)
-- [📸 Скриншоты](#-скриншоты)
-- [🚀 Основные возможности (Features)](#-основные-возможности-features)
-    - [Для волонтеров](#для-волонтеров)
-    - [Для организаторов](#для-организаторов)
-    - [Общие функции](#общие-функции)
-- [🛠️ Технологический стек и архитектура](#️-технологический-стек-и-архитектура)
-    - [Архитектура](#архитектура)
+- [✨ About the project](#-about-the-project)
+- [📸 Screenshots](#-screenshots)
+- [🚀 Key features](#-key-features)
+    - [For volunteers](#for-volunteers)
+    - [For organizers](#for-organizers)
+    - [General functions](#general-functions)
+- [🛠️ Tech stack and architecture](#️-tech-stack-and-architecture)
+    - [Architecture](#architecture)
     - [Backend](#backend)
     - [Frontend](#frontend)
     - [Chat Bot](#chat-bot)
-- [⚙️ Быстрый старт и запуск](#️-быстрый-старт-и-запуск)
-    - [Требования](#требования)
-    - [1. Клонирование репозитория](#1-клонирование-репозитория)
-    - [2. Конфигурация окружения (.env)](#2-конфигурация-окружения-env)
-    - [3. Запуск с помощью Docker Compose](#3-запуск-с-помощью-docker-compose)
-    - [4. Миграции и наполнение БД](#4-миграции-и-наполнение-бд)
-- [🚶‍♂️ Пользовательские сценарии (User Scenarios)](#️-пользовательские-сценарии-user-scenarios)
-    - [Сценарий 1: Новый волонтер ищет первое событие](#сценарий-1-новый-волонтер-ищет-первое-событие)
-    - [Сценарий 2: Организатор создает и управляет событием](#сценарий-2-организатор-создает-и-управляет-событием)
-- [👨‍💻 Руководство для разработчиков](#-руководство-для-разработчиков)
-    - [Структура проекта](#структура-проекта)
-    - [Основные скрипты](#основные-скрипты)
-    - [Тестирование](#тестирование)
-- [☁️ Развертывание (Deployment)](#️-развертывание-deployment)
-- [👥 Авторы и контакты](#-авторы-и-контакты)
-- [📜 Лицензия](#-лицензия)
+- [⚙️ Quick start](#️-quick-start)
+    - [Requirements](#requirements)
+    - [1. Cloning the repository](#1-cloning-the-repository)
+    - [2. Environment configuration (.env)](#2-environment-configuration-env)
+    - [3. Running with Docker Compose](#3-running-with-docker-compose)
+    - [4. Migrations and database seeding](#4-migrations-and-database-seeding)
+- [🚶‍♂️ User scenarios](#️-user-scenarios)
+    - [Scenario 1: A new volunteer looks for their first event](#scenario-1-a-new-volunteer-looks-for-their-first-event)
+    - [Scenario 2: An organizer creates and manages an event](#scenario-2-an-organizer-creates-and-manages-an-event)
+- [👨‍💻 Developer guide](#-developer-guide)
+    - [Project structure](#project-structure)
+    - [Main scripts](#main-scripts)
+    - [Testing](#testing)
+- [☁️ Deployment](#️-deployment)
+- [👥 Authors and contacts](#-authors-and-contacts)
+- [📜 License](#-license)
 
 ---
 
-## ✨ О проекте
+## ✨ About the project
 
-**MAX Добро** — это веб-приложение, созданное для объединения людей, желающих делать добрые дела, и организаций,
-нуждающихся в помощи. Платформа не только служит доской объявлений для волонтерских мероприятий, но и добавляет элементы
-геймификации и социальной сети для повышения вовлеченности.
+**MAX Dobro** is a web application built to bring together people who want to do good deeds and organizations
+that need help. The platform is not only a bulletin board for volunteer events, but also adds gamification
+and social-network elements to boost engagement.
 
-**Ключевые цели проекта:**
+**Key project goals:**
 
-- **Упростить** поиск волонтерских активностей.
-- **Мотивировать** пользователей через систему кармы, достижений и наград.
-- **Обучать** волонтеров через встроенные курсы и тесты.
-- **Создать сообщество** с помощью историй, комментариев и системы друзей.
-- **Предоставить** удобные инструменты для организаторов мероприятий.
+- **Simplify** the search for volunteer activities.
+- **Motivate** users through a karma system, achievements, and rewards.
+- **Educate** volunteers via built-in courses and tests.
+- **Build a community** through stories, comments, and a friends system.
+- **Provide** convenient tools for event organizers.
 
 ---
 
-## 📸 Скриншоты
+## 📸 Screenshots
 
-*Здесь разместите несколько ключевых скриншотов приложения, чтобы наглядно показать его интерфейс.*
+*Place a few key screenshots of the app here to clearly show its interface.*
 
-|      Главный экран       |       Детали события       |   Профиль пользователя    |
+|      Home screen       |       Event details       |      User profile       |
 |:------------------------:|:--------------------------:|:-------------------------:|
 | ![](res/Home-screen.png) | ![](res/Event-details.png) | ![](res/User-profile.png) |
 
-|      Магазин наград       |     Панель организатора      |        Достижения         |
+|      Rewards shop       |     Organizer panel      |        Achievements         |
 |:-------------------------:|:----------------------------:|:-------------------------:|
 | ![](res/Shop-rewards.jpg) | ![](res/Organizer-panel.png) | ![](res/Achievements.png) |
 
 ---
 
-## 🚀 Основные возможности (Features)
+## 🚀 Key features
 
-### Для волонтеров
+### For volunteers
 
-- **Лента и карта событий:** Поиск мероприятий в виде списка или на интерактивной карте.
-- **Геймификация:**
-    - **Очки кармы и часы добра:** Зарабатываются за участие в событиях.
-    - **Достижения ("Ачивки"):** Выдаются за выполнение определенных целей.
-    - **Магазин наград:** Возможность потратить карму на виртуальные предметы.
-    - **Еженедельные челленджи:** Дополнительные задания для получения бонусов.
-- **Обучение:** Встроенные курсы с тестами и возможностью получить сертификат.
-- **Социальные функции:**
-    - **Лента историй:** Делитесь впечатлениями с мероприятий.
-    - **Друзья, лайки, комментарии:** Взаимодействуйте с другими волонтерами.
-- **Профиль:** Отслеживайте свой прогресс, статистику, достижения и сертификаты.
-- **Подписки:** Следите за новостями любимых организаций.
+- **Event feed and map:** Find events as a list or on an interactive map.
+- **Gamification:**
+    - **Karma points and good hours:** Earned for participating in events.
+    - **Achievements ("achievs"):** Awarded for completing specific goals.
+    - **Rewards shop:** Spend karma on virtual items.
+    - **Weekly challenges:** Extra tasks for bonus rewards.
+- **Learning:** Built-in courses with tests and the ability to earn a certificate.
+- **Social features:**
+    - **Stories feed:** Share impressions from events.
+    - **Friends, likes, comments:** Interact with other volunteers.
+- **Profile:** Track your progress, stats, achievements, and certificates.
+- **Subscriptions:** Follow news from your favorite organizations.
 
-### Для организаторов
+### For organizers
 
-- **Панель управления:** Удобный интерфейс для управления деятельностью организации.
-- **Создание и управление событиями:** Полный цикл от черновика до публикации.
-- **Управление участниками:** Подтверждение и отклонение заявок волонтеров.
-- **Статистика:** Аналитика по подписчикам, событиям и рейтингу.
+- **Control panel:** A convenient interface for managing an organization's activities.
+- **Event creation and management:** The full lifecycle from draft to publication.
+- **Participant management:** Approve and reject volunteer applications.
+- **Statistics:** Analytics on subscribers, events, and ratings.
 
-### Общие функции
+### General functions
 
-- **Аутентификация:** Бесшовный вход через платформу MAX и стандартная регистрация через Supabase (email/пароль).
-- **AI-помощник:** Чат-бот для быстрой навигации и поиска информации.
-- **Рейтинги (Лидерборды):** Соревнуйтесь с другими волонтерами за звание самого активного.
+- **Authentication:** Seamless login via the MAX platform and standard registration via Supabase (email/password).
+- **AI assistant:** A chatbot for quick navigation and information lookup.
+- **Leaderboards:** Compete with other volunteers for the title of most active.
 
 ---
 
-## 🛠️ Технологический стек и архитектура
+## 🛠️ Tech stack and architecture
 
-### Архитектура
+### Architecture
 
-Проект построен на микросервисной (в данном случае, сервисно-ориентированной) архитектуре и состоит из трех независимых
-частей:
+The project is built on a microservice (in this case, service-oriented) architecture and consists of three
+independent parts:
 
-1. **Backend (API):** Ядро приложения, обрабатывающее всю бизнес-логику.
-2. **Frontend (Mini App):** Клиентское приложение, с которым взаимодействует пользователь.
-3. **Chat Bot:** Точка входа для пользователей платформы MAX.
+1. **Backend (API):** The core of the application, handling all business logic.
+2. **Frontend (Mini App):** The client application the user interacts with.
+3. **Chat Bot:** The entry point for users of the MAX platform.
 
-*Здесь можно вставить простую диаграмму архитектуры.*
+*A simple architecture diagram can be inserted here.*
 
 ```
 
-[Пользователь] <--> [MAX Platform] <--> [Chat Bot]
+[User] <--> [MAX Platform] <--> [Chat Bot]
 |
 +-----> [Frontend (Mini App)] <--> [Backend API] <--> [PostgreSQL (Supabase)]
 ^
@@ -137,155 +139,155 @@
 
 ### Backend
 
-- **Фреймворк:** **NestJS** (Node.js)
-- **Язык:** **TypeScript**
-- **База данных:** **PostgreSQL** (управляется через **Supabase**)
+- **Framework:** **NestJS** (Node.js)
+- **Language:** **TypeScript**
+- **Database:** **PostgreSQL** (managed via **Supabase**)
 - **ORM:** **Prisma**
-- **Аутентификация:** **Supabase Auth** + **JWT** + **MAX Auth**
-- **API:** **REST API** с документацией **Swagger**
+- **Authentication:** **Supabase Auth** + **JWT** + **MAX Auth**
+- **API:** **REST API** with **Swagger** documentation
 
 ### Frontend
 
-- **Фреймворк:** **React**
-- **Сборщик:** **Vite**
-- **Язык:** **TypeScript**
-- **Стилизация:** **Tailwind CSS**
-- **Карты:** **Leaflet** + **React Leaflet**
+- **Framework:** **React**
+- **Bundler:** **Vite**
+- **Language:** **TypeScript**
+- **Styling:** **Tailwind CSS**
+- **Maps:** **Leaflet** + **React Leaflet**
 
 ### Chat Bot
 
-- **Платформа:** **MAX Bot API**
-- **Среда:** **Node.js** + **TypeScript**
+- **Platform:** **MAX Bot API**
+- **Runtime:** **Node.js** + **TypeScript**
 
 ---
 
-## ⚙️ Быстрый старт и запуск
+## ⚙️ Quick start
 
-### Требования
+### Requirements
 
-- **Docker** и **Docker Compose**
-- **Node.js** (v20+) и **npm**
+- **Docker** and **Docker Compose**
+- **Node.js** (v20+) and **npm**
 - **Git**
 
-### 1. Клонирование репозитория
+### 1. Cloning the repository
 
 ```bash
 git clone https://github.com/ShutovKS/MAX-Dobro.git
 cd MAX-Dobro
 ```
 
-### 2. Конфигурация окружения (.env)
+### 2. Environment configuration (.env)
 
-Создайте `.env` файлы в каждой из папок (`backend`, `frontend`, `chat-bot`) на основе `*.env.example` файлов.
+Create `.env` files in each of the folders (`backend`, `frontend`, `chat-bot`) based on the `*.env.example` files.
 
-#### `backend/.env` (Подробное описание)
+#### `backend/.env` (detailed description)
 
-* `PORT`: Порт для бэкенд-сервера. **3001** — стандартное значение.
-* `MAX_BOT_TOKEN`: Токен вашего бота из платформы MAX. Нужен для валидации входа через MAX.
-* `MINI_APP_URL`: URL вашего развернутого фронтенд-приложения.
-* `JWT_INTERNAL_SECRET`: Секретный ключ для подписи внутренних JWT. Сгенерируйте командой `openssl rand -base64 32`.
-* `DATABASE_URL`: Строка подключения к вашей базе данных Supabase (Project Settings -> Database -> Connection string ->
-  URI). **Добавьте `?pgbouncer=true` в конец для лучшей производительности.**
-* `DIRECT_URL`: То же самое, что и `DATABASE_URL`.
-* `SUPABASE_URL`: URL вашего проекта Supabase (Project Settings -> API -> Project URL).
-* `SUPABASE_ANON_KEY`: Анонимный публичный ключ Supabase (Project Settings -> API -> Project API Keys).
-* `SUPABASE_WEBHOOK_SECRET`: Придумайте любую секретную строку. Ее нужно будет указать в настройках вебхука в Supabase (
+* `PORT`: Port for the backend server. **3001** is the default value.
+* `MAX_BOT_TOKEN`: Your bot token from the MAX platform. Required for MAX login validation.
+* `MINI_APP_URL`: The URL of your deployed frontend application.
+* `JWT_INTERNAL_SECRET`: Secret key for signing internal JWTs. Generate it with `openssl rand -base64 32`.
+* `DATABASE_URL`: The connection string to your Supabase database (Project Settings -> Database -> Connection string ->
+  URI). **Add `?pgbouncer=true` at the end for better performance.**
+* `DIRECT_URL`: The same as `DATABASE_URL`.
+* `SUPABASE_URL`: Your Supabase project URL (Project Settings -> API -> Project URL).
+* `SUPABASE_ANON_KEY`: Supabase anonymous public key (Project Settings -> API -> Project API Keys).
+* `SUPABASE_WEBHOOK_SECRET`: Any secret string you come up with. It must be specified in the webhook settings in Supabase (
   Database -> Webhooks).
 
 #### `frontend/.env`
 
-* `VITE_API_BASE_URL`: URL вашего локального бэкенда (например, `http://localhost:3001`).
-* `VITE_API_MODE`: Установите `real` для работы с бэкендом или `mock` для использования моковых данных.
-* `VITE_SUPABASE_URL`: URL вашего проекта Supabase.
-* `VITE_SUPABASE_ANON_KEY`: Анонимный публичный ключ Supabase.
+* `VITE_API_BASE_URL`: The URL of your local backend (e.g., `http://localhost:3001`).
+* `VITE_API_MODE`: Set to `real` to work with the backend or `mock` to use mock data.
+* `VITE_SUPABASE_URL`: Your Supabase project URL.
+* `VITE_SUPABASE_ANON_KEY`: Supabase anonymous public key.
 
 #### `chat-bot/.env`
 
-* `BOT_TOKEN`: Токен бота от платформы MAX
-* `BOT_NAME`: Ник бота в MAX без @
+* `BOT_TOKEN`: The bot token from the MAX platform.
+* `BOT_NAME`: The bot's MAX username without the @.
 
-### 3. Запуск с помощью Docker Compose
+### 3. Running with Docker Compose
 
-Этот файл запускает все три сервиса (без локальной БД, так как используется Supabase).
+This file launches all three services (without a local DB, since Supabase is used).
 
 ```bash
 docker-compose up --build -d
 ```
 
-- **Frontend** будет доступен по адресу: `http://localhost:3000`
-- **Backend API** будет доступен по адресу: `http://localhost:3001`
-- **Swagger Docs** будут доступны по адресу: `http://localhost:3001/api/docs`
+- **Frontend** will be available at: `http://localhost:3000`
+- **Backend API** will be available at: `http://localhost:3001`
+- **Swagger Docs** will be available at: `http://localhost:3001/api/docs`
 
-### 4. Миграции и наполнение БД
+### 4. Migrations and database seeding
 
-После первого запуска контейнеров примените миграции и наполните базу данных.
+After the first launch of the containers, apply migrations and seed the database.
 
 ```bash
-# Применить миграции к базе данных Supabase
+# Apply migrations to the Supabase database
 docker-compose exec backend npm run migrate:dev
 
-# (Опционально) Наполнить базу тестовыми данными
+# (Optional) Seed the database with test data
 docker-compose exec backend npm run seed
 ```
 
 ---
 
-## 🚶‍♂️ Пользовательские сценарии (User Scenarios)
+## 🚶‍♂️ User scenarios
 
-### Сценарий 1: Новый волонтер ищет первое событие
+### Scenario 1: A new volunteer looks for their first event
 
-1. Пользователь регистрируется в приложении через Supabase или входит через MAX.
-2. Проходит короткий онбординг, выбирая интересующие его направления (например, "Экология", "Животные").
-3. На главном экране видит карту с ближайшими событиями и ленту мероприятий.
-4. Находит "Субботник в парке", открывает детали, читает требования.
-5. Нажимает "Я помогу", подтверждает участие.
-6. После мероприятия оставляет отзыв и получает очки кармы, часы и, возможно, первое достижение.
+1. The user registers in the app via Supabase or logs in via MAX.
+2. Goes through a short onboarding, selecting the directions of interest (e.g., "Ecology", "Animals").
+3. On the home screen, sees a map with nearby events and an event feed.
+4. Finds "Park cleanup", opens the details, reads the requirements.
+5. Clicks "I'll help" and confirms participation.
+6. After the event, leaves feedback and receives karma points, hours, and possibly their first achievement.
 
-### Сценарий 2: Организатор создает и управляет событием
+### Scenario 2: An organizer creates and manages an event
 
-1. Пользователь с ролью `organization` входит в систему. Его перенаправляет в панель управления.
-2. Нажимает "Создать событие", заполняет все поля: название, описание, дата, место, требования.
-3. Публикует событие. Оно появляется в общей ленте у волонтеров.
-4. В разделе "Управление событиями" отслеживает новые заявки.
-5. Просматривает профили волонтеров и подтверждает их участие.
-6. После проведения мероприятия чат события архивируется, а участники автоматически получают награды.
-
----
-
-## 👨‍💻 Руководство для разработчиков
-
-### Структура проекта
-
-Проект разделен на три основных каталога:
-
-- `/backend`: NestJS приложение.
-- `/frontend`: React (Vite) приложение.
-- `/chat-bot`: Node.js приложение для бота MAX.
-
-### Основные скрипты
-
-Все команды выполняются из корневой папки соответствующего сервиса (например, `cd backend`).
-
-- `npm run start:dev`: Запуск сервиса в режиме разработки с hot-reload.
-- `npm run build`: Сборка продакшен-версии.
-- `npm run lint`: Проверка кода с помощью ESLint.
-- `npm run format`: Форматирование кода с помощью Prettier.
+1. A user with the `organization` role logs in. They are redirected to the control panel.
+2. Clicks "Create event" and fills in all fields: title, description, date, location, requirements.
+3. Publishes the event. It appears in the common feed for volunteers.
+4. In the "Event management" section, tracks new applications.
+5. Reviews volunteer profiles and confirms their participation.
+6. After the event is held, the event chat is archived, and participants automatically receive rewards.
 
 ---
 
-## ☁️ Развертывание (Deployment)
+## 👨‍💻 Developer guide
 
-- **Backend:** Настроен для развертывания на **Vercel** (`vercel.json`).
-- **Frontend:** Docker-контейнер с **Nginx** для отдачи статики.
-- **Chat Bot:** Может быть развернут на любом хостинге для Node.js (например, Render, Vercel).
+### Project structure
+
+The project is divided into three main directories:
+
+- `/backend`: NestJS application.
+- `/frontend`: React (Vite) application.
+- `/chat-bot`: Node.js application for the MAX bot.
+
+### Main scripts
+
+All commands are run from the root folder of the corresponding service (e.g., `cd backend`).
+
+- `npm run start:dev`: Start the service in development mode with hot-reload.
+- `npm run build`: Build the production version.
+- `npm run lint`: Check the code with ESLint.
+- `npm run format`: Format the code with Prettier.
 
 ---
 
-## 👥 Авторы и контакты
+## ☁️ Deployment
 
-*Здесь укажите информацию о себе или команде.*
+- **Backend:** Configured for deployment on **Vercel** (`vercel.json`).
+- **Frontend:** Docker container with **Nginx** for serving static files.
+- **Chat Bot:** Can be deployed on any Node.js hosting (e.g., Render, Vercel).
 
-- **Михаил Данилов** - *Backend
-  разработчик* - [GitHub](https://github.com/seaG7) | [Telegram](https://t.me/yamishadanilov)
-- **Кирилл Корнилов** - *Backend разработчик* - [GitHub](https://github.com/krl76) | [Telegram](https://t.me/krl76)
-- **Шутов Кирилл** - *Frontend разработчик* - [GitHub](https://github.com/ShutovKS) | [Telegram](https://t.me/ShutovKS)
+---
+
+## 👥 Authors and contacts
+
+*Provide information about yourself or the team here.*
+
+- **Mikhail Danilov** - *Backend
+  developer* - [GitHub](https://github.com/seaG7) | [Telegram](https://t.me/yamishadanilov)
+- **Kirill Kornilov** - *Backend developer* - [GitHub](https://github.com/krl76) | [Telegram](https://t.me/krl76)
+- **Kirill Shutov** - *Frontend developer* - [GitHub](https://github.com/ShutovKS) | [Telegram](https://t.me/ShutovKS)
