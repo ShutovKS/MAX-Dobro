@@ -1,3 +1,26 @@
+/// FILE: backend/prisma/schema.prisma
+/// VERSION: 1.0.0
+/// START_MODULE_CONTRACT
+///   PURPOSE: Prisma PostgreSQL data model for identity, events, learning, social, and gamification.
+///   SCOPE: models, relations, indexes, and @@map table names
+///   DEPENDS: none
+///   LINKS: M-SCHEMA, V-M-SCHEMA, M-PRISMA, M-SEED
+///   ROLE: TYPES
+///   MAP_MODE: SUMMARY
+/// END_MODULE_CONTRACT
+///
+/// START_MODULE_MAP
+///   identity - User, Organization, UserOrganizationSubscription
+///   events - Event, EventParticipant, EventChat, EventChatMessage, Review
+///   learning - Course, UserCourseProgress, Lesson, QuizQuestion, QuizAnswer, UserCertificate
+///   social - Friendship, Story, StoryLike, Comment, AssistantChatMessage
+///   gamification - Achievement, UserAchievement, Challenge, UserChallenge, Reward, UserReward, KarmaLog
+/// END_MODULE_MAP
+///
+/// START_CHANGE_SUMMARY
+///   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+/// END_CHANGE_SUMMARY
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,7 +31,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-/// <context:data_model_boundary> User and organization models define the shared backend data boundary. </context:data_model_boundary>
+/// START_BLOCK_USER_ORG_BOUNDARY
 model User {
   id                Int                  @id @default(autoincrement())
   email             String               @unique
@@ -50,7 +73,6 @@ model User {
   @@map("users")
 }
 
-/// <context:data_model_boundary> Related models below stay aligned with the backend feature surface. </context:data_model_boundary>
 model Organization {
   id            Int      @id @default(autoincrement())
   name          String
@@ -73,7 +95,9 @@ model Organization {
 
   @@map("organizations")
 }
+/// END_BLOCK_USER_ORG_BOUNDARY
 
+/// START_BLOCK_EVENTS
 // Модель для подписок
 model UserOrganizationSubscription {
   userId         Int
@@ -128,32 +152,47 @@ model EventParticipant {
   @@map("event_participants")
 }
 
-// Модель достижения
-model Achievement {
-  id            Int               @id @default(autoincrement())
-  name          String            @unique
-  description   String
-  icon          String?
-  criteriaType  String
-  criteriaValue Int
-  createdAt     DateTime          @default(now())
-  users         UserAchievement[]
+// Модель чата для мероприятия
+model EventChat {
+  id       Int                @id @default(autoincrement())
+  eventId  Int                @unique
+  event    Event              @relation(fields: [eventId], references: [id])
+  messages EventChatMessage[]
 
-  @@map("achievements")
+  @@map("event_chats")
 }
 
-// Связующая таблица для полученных пользователем достижений
-model UserAchievement {
-  userId        Int
-  user          User        @relation(fields: [userId], references: [id])
-  achievementId Int
-  achievement   Achievement @relation(fields: [achievementId], references: [id])
-  unlockedAt    DateTime    @default(now())
+// Модель сообщения в чате мероприятия
+model EventChatMessage {
+  id        Int       @id @default(autoincrement())
+  text      String    @db.Text
+  createdAt DateTime  @default(now())
+  authorId  Int
+  author    User      @relation("UserToEventMessages", fields: [authorId], references: [id])
+  chatId    Int
+  chat      EventChat @relation(fields: [chatId], references: [id])
 
-  @@id([userId, achievementId])
-  @@map("user_achievements")
+  @@map("event_chat_messages")
 }
 
+model Review {
+  id             Int          @id @default(autoincrement())
+  rating         Int
+  text           String?      @db.Text
+  createdAt      DateTime     @default(now())
+  authorId       Int
+  author         User         @relation(fields: [authorId], references: [id])
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  eventId        Int
+  event          Event        @relation(fields: [eventId], references: [id])
+
+  @@unique([authorId, eventId], name: "user_event_review_unique")
+  @@map("reviews")
+}
+/// END_BLOCK_EVENTS
+
+/// START_BLOCK_LEARNING
 // Модель курса
 model Course {
   id           Int               @id @default(autoincrement())
@@ -232,7 +271,9 @@ model UserCertificate {
   @@id([userId, courseId])
   @@map("user_certificates")
 }
+/// END_BLOCK_LEARNING
 
+/// START_BLOCK_SOCIAL
 // Модель дружбы
 model Friendship {
   userId    Int
@@ -243,6 +284,89 @@ model Friendship {
 
   @@id([userId, friendId])
   @@map("friendships")
+}
+
+// Модель истории
+model Story {
+  id        Int       @id @default(autoincrement())
+  imageUrl  String    @map("image_url")
+  text      String    @db.Text
+  createdAt DateTime  @default(now())
+  authorId  Int
+  author    User      @relation(fields: [authorId], references: [id])
+  eventId   Int
+  event     Event     @relation(fields: [eventId], references: [id])
+  comments  Comment[]
+  likes     StoryLike[]
+
+  @@map("stories")
+}
+
+// Модель лайка
+model StoryLike {
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  storyId   Int
+  story     Story    @relation(fields: [storyId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@id([userId, storyId])
+  @@map("story_likes")
+}
+
+// Модель комментария
+model Comment {
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now())
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  storyId   Int
+  story     Story    @relation(fields: [storyId], references: [id])
+
+  @@map("comments")
+}
+
+// Модель сообщения в чате c AI-ассистентом
+model AssistantChatMessage {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  sender    String
+  type      String   @default("text")
+  payload   Json?
+  createdAt DateTime @default(now())
+  authorId  Int
+  author    User     @relation("UserToAssistantMessages", fields: [authorId], references: [id])
+
+  @@map("chat_messages")
+}
+/// END_BLOCK_SOCIAL
+
+/// START_BLOCK_GAMIFICATION
+// Модель достижения
+model Achievement {
+  id            Int               @id @default(autoincrement())
+  name          String            @unique
+  description   String
+  icon          String?
+  criteriaType  String
+  criteriaValue Int
+  createdAt     DateTime          @default(now())
+  users         UserAchievement[]
+
+  @@map("achievements")
+}
+
+// Связующая таблица для полученных пользователем достижений
+model UserAchievement {
+  userId        Int
+  user          User        @relation(fields: [userId], references: [id])
+  achievementId Int
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt    DateTime    @default(now())
+
+  @@id([userId, achievementId])
+  @@map("user_achievements")
 }
 
 // Модель челленджа
@@ -300,84 +424,6 @@ model UserReward {
   @@map("user_rewards")
 }
 
-// Модель истории
-model Story {
-  id        Int       @id @default(autoincrement())
-  imageUrl  String    @map("image_url")
-  text      String    @db.Text
-  createdAt DateTime  @default(now())
-  authorId  Int
-  author    User      @relation(fields: [authorId], references: [id])
-  eventId   Int
-  event     Event     @relation(fields: [eventId], references: [id])
-  comments  Comment[]
-  likes     StoryLike[]
-
-  @@map("stories")
-}
-
-// Модель лайка
-model StoryLike {
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  storyId   Int
-  story     Story    @relation(fields: [storyId], references: [id])
-  createdAt DateTime @default(now())
-
-  @@id([userId, storyId])
-  @@map("story_likes")
-}
-
-// Модель комментария
-model Comment {
-  id        Int      @id @default(autoincrement())
-  text      String
-  createdAt DateTime @default(now())
-  authorId  Int
-  author    User     @relation(fields: [authorId], references: [id])
-  storyId   Int
-  story     Story    @relation(fields: [storyId], references: [id])
-
-  @@map("comments")
-}
-
-// Модель сообщения в чате c AI-ассистентом
-model AssistantChatMessage {
-  id        Int      @id @default(autoincrement())
-  content   String   @db.Text
-  sender    String
-  type      String   @default("text")
-  payload   Json?
-  createdAt DateTime @default(now())
-  authorId  Int
-  author    User     @relation("UserToAssistantMessages", fields: [authorId], references: [id])
-
-  @@map("chat_messages")
-}
-
-// Модель чата для мероприятия
-model EventChat {
-  id       Int                @id @default(autoincrement())
-  eventId  Int                @unique
-  event    Event              @relation(fields: [eventId], references: [id])
-  messages EventChatMessage[]
-
-  @@map("event_chats")
-}
-
-// Модель сообщения в чате мероприятия
-model EventChatMessage {
-  id        Int       @id @default(autoincrement())
-  text      String    @db.Text
-  createdAt DateTime  @default(now())
-  authorId  Int
-  author    User      @relation("UserToEventMessages", fields: [authorId], references: [id])
-  chatId    Int
-  chat      EventChat @relation(fields: [chatId], references: [id])
-
-  @@map("event_chat_messages")
-}
-
 // Модель логов кармы
 model KarmaLog {
   id          Int       @id @default(autoincrement())
@@ -390,19 +436,4 @@ model KarmaLog {
   @@index([createdAt(sort: Desc)])
   @@map("karma_logs")
 }
-
-model Review {
-  id             Int          @id @default(autoincrement())
-  rating         Int
-  text           String?      @db.Text
-  createdAt      DateTime     @default(now())
-  authorId       Int
-  author         User         @relation(fields: [authorId], references: [id])
-  organizationId Int
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  eventId        Int
-  event          Event        @relation(fields: [eventId], references: [id])
-
-  @@unique([authorId, eventId], name: "user_event_review_unique")
-  @@map("reviews")
-}
+/// END_BLOCK_GAMIFICATION

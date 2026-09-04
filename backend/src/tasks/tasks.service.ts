@@ -1,9 +1,38 @@
+// FILE: backend/src/tasks/tasks.service.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Schedule and complete planned events, awarding hours, karma, and achievements.
+//   SCOPE: onModuleInit bootstrap, scheduleEventCompletion, handleEventCompletion
+//   DEPENDS: M-PRISMA
+//   LINKS: M-TASKS, V-M-TASKS, M-PRISMA, M-SCHEMA
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   TasksService - event completion scheduler
+//   onModuleInit - schedule all PLANNED events at boot
+//   scheduleEventCompletion - timeout job for a single event
+//   handleEventCompletion - award hours/karma and mark COMPLETED
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { Event } from '@prisma/client';
 import { AchievementsService } from '../achievements/achievements.service';
 import { PrismaService } from '../prisma/prisma.service';
 
+// START_CONTRACT: TasksService
+//   PURPOSE: Bootstrap timeouts for PLANNED events and process completion awards.
+//   INPUTS: { prisma: PrismaService, schedulerRegistry: SchedulerRegistry, achievementsService: AchievementsService }
+//   OUTPUTS: { scheduled timeouts; completed events with awarded stats }
+//   SIDE_EFFECTS: mutates event status, user hours/karma, karma logs, achievement checks
+//   LINKS: M-TASKS, V-M-TASKS, M-PRISMA
+// END_CONTRACT: TasksService
 @Injectable()
 export class TasksService implements OnModuleInit {
   private readonly logger = new Logger(TasksService.name);
@@ -14,6 +43,7 @@ export class TasksService implements OnModuleInit {
     private readonly achievementsService: AchievementsService,
   ) {}
 
+  // START_BLOCK_BOOTSTRAP_PLANNED_EVENTS
   async onModuleInit() {
     this.logger.log('Bootstrapping schedulers for existing events...');
     const eventsToSchedule = await this.prisma.event.findMany({
@@ -30,7 +60,9 @@ export class TasksService implements OnModuleInit {
       `Bootstrap finished. Processed ${eventsToSchedule.length} PLANNED events.`,
     );
   }
+  // END_BLOCK_BOOTSTRAP_PLANNED_EVENTS
 
+  // START_BLOCK_SCHEDULE_EVENT_COMPLETION
   scheduleEventCompletion(event: Event) {
     if (event.durationHours === null) {
       return;
@@ -75,7 +107,9 @@ export class TasksService implements OnModuleInit {
       this.logger.error(`Failed to schedule job ${jobName}: ${error.message}`);
     }
   }
+  // END_BLOCK_SCHEDULE_EVENT_COMPLETION
 
+  // START_BLOCK_HANDLE_EVENT_COMPLETION
   async handleEventCompletion(eventId: number) {
     this.logger.log(`Processing event completion for ID: ${eventId}`);
 
@@ -146,4 +180,5 @@ export class TasksService implements OnModuleInit {
       );
     }
   }
+  // END_BLOCK_HANDLE_EVENT_COMPLETION
 }

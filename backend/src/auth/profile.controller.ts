@@ -1,3 +1,29 @@
+// FILE: backend/src/auth/profile.controller.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Authenticated profile HTTP surface for the current user.
+//   SCOPE: GET/PATCH /profile/me plus events, certificates, rewards, achievements, courses
+//   DEPENDS: M-AUTH
+//   LINKS: M-AUTH, V-M-AUTH, M-PRISMA
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   ProfileController - current-user profile routes guarded by AuthGuard
+//   getMe - profile with level and stats
+//   updateMe - patch profile then re-read
+//   getMyEvents - upcoming and past events
+//   getMyCertificates - completed course certificates
+//   getMyRewards - purchased rewards
+//   getMyAchievements - unlocked achievements
+//   getMyCourses - courses with progress
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import {
   Body,
   Controller,
@@ -24,6 +50,13 @@ import { UserEventsEntity } from './entities/user-events.entity';
 import { UserRewardEntity } from './entities/user-reward.entity';
 import { AuthGuard } from './guards/auth.guard';
 
+// START_CONTRACT: ProfileController
+//   PURPOSE: Serve and update the authenticated user's profile collections.
+//   INPUTS: { authService: AuthService, CurrentUser: User }
+//   OUTPUTS: { profile, events, certificates, rewards, achievements, courses }
+//   SIDE_EFFECTS: updateMe persists profile fields
+//   LINKS: M-AUTH, V-M-AUTH
+// END_CONTRACT: ProfileController
 @ApiTags('Profile')
 @Controller('profile')
 @UseGuards(AuthGuard)
@@ -31,6 +64,7 @@ import { AuthGuard } from './guards/auth.guard';
 export class ProfileController {
   constructor(private readonly authService: AuthService) {}
 
+  // START_BLOCK_GET_AND_UPDATE_ME
   @Get('me')
   @ApiOperation({ summary: 'Get current user profile with achievements' })
   @ApiResponse({
@@ -74,7 +108,9 @@ export class ProfileController {
     await this.authService.updateProfile(user.id, dto);
     return this.getMe(user);
   }
+  // END_BLOCK_GET_AND_UPDATE_ME
 
+  // START_BLOCK_PROFILE_COLLECTIONS
   @Get('me/events')
   @ApiOperation({ summary: "Get current user's events" })
   @ApiResponse({
@@ -120,4 +156,5 @@ export class ProfileController {
   getMyCourses(@CurrentUser() user: User) {
     return this.authService.getUserCourses(user.id);
   }
+  // END_BLOCK_PROFILE_COLLECTIONS
 }

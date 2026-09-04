@@ -1,3 +1,22 @@
+// FILE: backend/src/auth/entities/user-course.entity.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Swagger entity for a course with the current user's progress.
+//   SCOPE: course fields plus hasCertificate, status, progress, lessons
+//   DEPENDS: none
+//   LINKS: M-AUTH, V-M-AUTH
+//   ROLE: TYPES
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   UserCourseEntity - course projection with completion status
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { ApiProperty } from '@nestjs/swagger';
 import { Course } from '@prisma/client';
 import { LessonEntity } from '../../learning/entities/lesson.entity';

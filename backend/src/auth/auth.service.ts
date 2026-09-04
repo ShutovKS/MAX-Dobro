@@ -1,3 +1,34 @@
+// FILE: backend/src/auth/auth.service.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Auth and profile domain service for messenger login, local user provisioning, and profile collections.
+//   SCOPE: profile, level, Supabase upsert, events/courses/certs/rewards/achievements, initData HMAC, MAX/Telegram/demo JWT
+//   DEPENDS: M-PRISMA
+//   LINKS: M-AUTH, V-M-AUTH, M-PRISMA, M-WEBHOOKS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   AuthService - login, profile, and local user provisioning
+//   getProfile - user with achievements
+//   calculateLevel - karma thresholds to level/progress
+//   createLocalUserAfterSignUp - upsert from Supabase webhook
+//   updateProfile - patch profile fields
+//   getUserEvents - upcoming/past participation history
+//   getUserCourses - courses with progress and quiz program
+//   getUserCertificates - completed certificates
+//   getUserRewards - purchased rewards
+//   getUserAchievements - catalog with unlock and progress
+//   loginWithMax - MAX initData login
+//   loginWithTelegram - Telegram initData login
+//   loginAsDemoOrganizer - seeded organizer JWT
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import {
   Injectable,
   InternalServerErrorException,
@@ -21,6 +52,13 @@ interface SupabaseUserPayload {
   };
 }
 
+// START_CONTRACT: AuthService
+//   PURPOSE: Verify messenger initData, issue internal JWTs, and load profile collections.
+//   INPUTS: { prisma: PrismaService, configService: ConfigService }
+//   OUTPUTS: { User rows, profile collections, { accessToken } }
+//   SIDE_EFFECTS: upserts users; updates profile; signs JWTs
+//   LINKS: M-AUTH, V-M-AUTH, M-PRISMA, M-WEBHOOKS
+// END_CONTRACT: AuthService
 @Injectable()
 export class AuthService {
   private readonly jwtSecret: string;
@@ -34,6 +72,7 @@ export class AuthService {
     );
   }
 
+  // START_BLOCK_PROFILE_AND_LEVEL
   async getProfile(userId: number) {
     return this.prisma.user.findUnique({
       where: { id: userId },
@@ -72,7 +111,9 @@ export class AuthService {
       nextLevel: next?.name ?? null,
     };
   }
+  // END_BLOCK_PROFILE_AND_LEVEL
 
+  // START_BLOCK_CREATE_LOCAL_USER
   async createLocalUserAfterSignUp(payload: SupabaseUserPayload) {
     if (!payload.email) {
       throw new InternalServerErrorException('Email is required');
@@ -122,7 +163,9 @@ export class AuthService {
       },
     });
   }
+  // END_BLOCK_CREATE_LOCAL_USER
 
+  // START_BLOCK_GET_USER_EVENTS
   async getUserEvents(userId: number) {
     const participations = await this.prisma.eventParticipant.findMany({
       where: { userId },
@@ -176,7 +219,9 @@ export class AuthService {
 
     return [...upcoming, ...past.reverse()];
   }
+  // END_BLOCK_GET_USER_EVENTS
 
+  // START_BLOCK_GET_USER_COURSES
   async getUserCourses(userId: number) {
     const [allCourses, userCertificates, progressRows] = await Promise.all([
       this.prisma.course.findMany({
@@ -247,7 +292,9 @@ export class AuthService {
       };
     });
   }
+  // END_BLOCK_GET_USER_COURSES
 
+  // START_BLOCK_GET_CERTS_REWARDS_ACHIEVEMENTS
   async getUserCertificates(userId: number) {
     return this.prisma.userCertificate.findMany({
       where: { userId },
@@ -346,7 +393,9 @@ export class AuthService {
       };
     });
   }
+  // END_BLOCK_GET_CERTS_REWARDS_ACHIEVEMENTS
 
+  // START_BLOCK_VERIFY_INIT_DATA
   /** data-check-string: key=value по всем полям кроме `exclude`, отсортировано. */
   private buildDataCheckString(
     params: URLSearchParams,
@@ -407,7 +456,9 @@ export class AuthService {
     const botToken = this.configService.getOrThrow<string>('MAX_BOT_TOKEN');
     return this.verifyWebAppInitData(initData, botToken);
   }
+  // END_BLOCK_VERIFY_INIT_DATA
 
+  // START_BLOCK_LOGIN_MAX_TELEGRAM
   async loginWithMax(dto: MaxAuthDto) {
     if (!this.isValidMaxHash(dto.initData)) {
       throw new UnauthorizedException('Invalid hash from MAX');
@@ -473,7 +524,9 @@ export class AuthService {
     const accessToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });
     return { accessToken };
   }
+  // END_BLOCK_LOGIN_MAX_TELEGRAM
 
+  // START_BLOCK_LOGIN_DEMO_ORGANIZER
   async loginAsDemoOrganizer() {
     const demoOrganizerEmail = 'organizer@test.com';
     const user = await this.prisma.user.findUnique({
@@ -490,4 +543,5 @@ export class AuthService {
     const accessToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });
     return { accessToken };
   }
+  // END_BLOCK_LOGIN_DEMO_ORGANIZER
 }

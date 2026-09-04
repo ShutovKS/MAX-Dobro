@@ -1,23 +1,43 @@
+// FILE: backend/src/auth/auth.service.spec.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Unit tests for Telegram initData HMAC verification including the signature field.
+//   SCOPE: buildInitData fixture, AuthService stubs, accept/reject and loginWithTelegram cases
+//   DEPENDS: M-AUTH
+//   LINKS: M-AUTH, V-M-AUTH
+//   ROLE: TEST
+//   MAP_MODE: LOCALS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   BOT_TOKEN - fixture bot token
+//   buildInitData - HMAC-signed initData with optional signature field
+//   makeService - AuthService with stub config and prisma
+//   describe AuthService — Telegram initData verification - accept, reject, login cases
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import * as crypto from 'crypto';
 import { AuthService } from './auth.service';
 
-/**
- * <context:auth_initdata_verification_test>
- * Проверяем верификацию подписи Telegram initData. Современные клиенты
- * добавляют поле `signature` (Ed25519) рядом с `hash`. Канонический алгоритм
- * исключает из data-check-string ОБА поля — `hash` и `signature`. Если
- * `signature` остаётся в строке, HMAC не сходится и вход падает с 401.
- * </context:auth_initdata_verification_test>
- */
-
 const BOT_TOKEN = '123456:TEST_BOT_TOKEN_VALUE';
 
-/** Строит initData с корректным hash (по канону: исключая hash и signature). */
+// START_CONTRACT: buildInitData
+//   PURPOSE: Build initData with a canonical HMAC hash, optionally adding a dummy signature field.
+//   INPUTS: { fields: Record<string, string>, botToken: string, opts.withSignature?: boolean }
+//   OUTPUTS: { string - URLSearchParams initData }
+//   SIDE_EFFECTS: none
+//   LINKS: M-AUTH, V-M-AUTH
+// END_CONTRACT: buildInitData
 function buildInitData(
   fields: Record<string, string>,
   botToken: string,
   opts: { withSignature?: boolean } = {},
 ): string {
+  // START_BLOCK_BUILD_INIT_DATA
   const dataCheckString = Object.keys(fields)
     .sort()
     .map((k) => `${k}=${fields[k]}`)
@@ -40,9 +60,18 @@ function buildInitData(
   }
   params.set('hash', hash);
   return params.toString();
+  // END_BLOCK_BUILD_INIT_DATA
 }
 
+// START_CONTRACT: makeService
+//   PURPOSE: Construct AuthService with stub ConfigService and Prisma upsert.
+//   INPUTS: { none }
+//   OUTPUTS: { AuthService }
+//   SIDE_EFFECTS: none
+//   LINKS: M-AUTH, V-M-AUTH
+// END_CONTRACT: makeService
 function makeService(): AuthService {
+  // START_BLOCK_MAKE_SERVICE
   const configService = {
     getOrThrow: (key: string) => {
       if (key === 'JWT_INTERNAL_SECRET') return 'test-jwt-secret';
@@ -55,6 +84,7 @@ function makeService(): AuthService {
     user: { upsert: jest.fn().mockResolvedValue({ id: 1, role: 'volunteer' }) },
   } as any;
   return new AuthService(prisma, configService);
+  // END_BLOCK_MAKE_SERVICE
 }
 
 describe('AuthService — Telegram initData verification', () => {
@@ -64,6 +94,7 @@ describe('AuthService — Telegram initData verification', () => {
     user: JSON.stringify({ id: 42, first_name: 'Тест', last_name: 'Юзер' }),
   };
 
+  // START_BLOCK_TELEGRAM_INITDATA_CASES
   it('accepts valid initData WITH a signature field (modern Telegram clients)', () => {
     const service = makeService();
     const initData = buildInitData(baseFields, BOT_TOKEN, {
@@ -102,4 +133,5 @@ describe('AuthService — Telegram initData verification', () => {
     const result = await service.loginWithTelegram({ initData });
     expect(result.accessToken).toEqual(expect.any(String));
   });
+  // END_BLOCK_TELEGRAM_INITDATA_CASES
 });

@@ -1,17 +1,47 @@
-/// <context:backend_seed> Seed data keeps local backend and frontend regression flows grounded. </context:backend_seed>
+// FILE: backend/prisma/seed.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Seed realistic local data so backend and frontend regression flows stay grounded.
+//   SCOPE: truncate, users, orgs, courses, events, relations, gamification, stories, chats, karma logs
+//   DEPENDS: M-SCHEMA, M-PRISMA
+//   LINKS: M-SEED, V-M-SEED, M-SCHEMA, M-AUTH
+//   ROLE: SCRIPT
+//   MAP_MODE: LOCALS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   prisma - PrismaClient instance
+//   volunteerId - stable volunteer supabaseUserId
+//   friendId - stable friend supabaseUserId
+//   organizerId - stable organizer supabaseUserId
+//   main - full seed sequence
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
 
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-/// <context:backend_seed_ids> Stable user IDs keep seeded auth and test flows predictable. </context:backend_seed_ids>
+// START_BLOCK_SEED_IDS
 const volunteerId = '3eec394c-a786-44f6-b29d-3b201d540502';
 const friendId = '61df2213-3982-40dd-9fe4-27c1c89eed9b';
 const organizerId = 'a1b2c3d4-e5f6-7890-1234-567890abcdef';
+// END_BLOCK_SEED_IDS
 
+// START_CONTRACT: main
+//   PURPOSE: Clear tables and insert the canonical demo dataset.
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<void> }
+//   SIDE_EFFECTS: truncates and writes all mapped seed tables
+//   LINKS: M-SEED, V-M-SEED, M-SCHEMA
+// END_CONTRACT: main
 async function main() {
   console.log('--- Start realistic data seeding ---');
 
+  // START_BLOCK_TRUNCATE
   // 1. Полная очистка таблиц
   const tableNames = [
     'reviews', 'story_likes', 'comments', 'stories', 'event_chat_messages', 'event_chats',
@@ -24,7 +54,9 @@ async function main() {
     await prisma.$queryRawUnsafe(`TRUNCATE TABLE "${tableName}" RESTART IDENTITY CASCADE;`);
   }
   console.log('✅ Database cleared.');
+  // END_BLOCK_TRUNCATE
 
+  // START_BLOCK_SEED_USERS
   // 2. Пользователи
   const mainUser = await prisma.user.create({
     data: {
@@ -73,7 +105,9 @@ async function main() {
     },
   });
   console.log('✅ Users created.');
+  // END_BLOCK_SEED_USERS
 
+  // START_BLOCK_SEED_ORGANIZATIONS
   // 3. Организации
   const [orgArt, orgEco, orgSeniors, orgAnimals, orgSport] = await prisma.organization.createManyAndReturn({
     data: [
@@ -85,7 +119,9 @@ async function main() {
     ]
   });
   console.log('✅ Organizations created.');
+  // END_BLOCK_SEED_ORGANIZATIONS
 
+  // START_BLOCK_SEED_COURSES
   // 4. Курсы, уроки и квизы
 const course1 = await prisma.course.create({
   data: {
@@ -275,8 +311,10 @@ await prisma.userCertificate.createMany({
 });
 
 console.log('✅ Courses, lessons and certificates created.');
+  // END_BLOCK_SEED_COURSES
 
 
+  // START_BLOCK_SEED_EVENTS
   // 5. События (как в mockData, с динамическими датами)
   const now = new Date();
   
@@ -313,7 +351,9 @@ console.log('✅ Courses, lessons and certificates created.');
     ]
   });
   console.log(`✅ Created ${events.length} events.`);
+  // END_BLOCK_SEED_EVENTS
 
+  // START_BLOCK_SEED_RELATIONS
   const eventPast1 = events.find(e => e.id === 1)!;
   const eventPast2 = events.find(e => e.id === 2)!;
   const eventFuture1 = events.find(e => e.id === 11)!;
@@ -331,7 +371,9 @@ console.log('✅ Courses, lessons and certificates created.');
     await prisma.organization.update({ where: { id: org.id }, data: { rating: agg._avg.rating, reviewCount: agg._count.id } });
   }
   console.log('✅ Reviews and ratings created.');
+  // END_BLOCK_SEED_RELATIONS
   
+  // START_BLOCK_SEED_GAMIFICATION
   // 8. Достижения
   const achievements = await prisma.achievement.createManyAndReturn({
     data: [
@@ -371,7 +413,9 @@ console.log('✅ Courses, lessons and certificates created.');
   const challenge = await prisma.challenge.create({ data: { title: "Челлендж недели", description: "Помогите животным 1 раз", reward: "Награда: +100 кармы ✨", criteriaType: "EVENT_CATEGORY", criteriaMeta: "Животные", criteriaValue: 1, period: "WEEKLY" } });
   await prisma.userChallenge.create({ data: { userId: mainUser.id, challengeId: challenge.id, progress: 1, completedAt: new Date() } });
   console.log('✅ Gamification entities created.');
+  // END_BLOCK_SEED_GAMIFICATION
 
+  // START_BLOCK_SEED_SOCIAL_AND_LOGS
   // 10. Истории, Чаты, Логи
   const story = await prisma.story.create({ data: { authorId: mainUser.id, eventId: eventPast2.id, text: "Провели день с пушистыми друзьями в приюте. Эти глаза не могут врать, им очень нужна наша забота. 🐾", imageUrl: "https://picsum.photos/seed/story2/600/600" } });
   await prisma.storyLike.create({ data: { storyId: story.id, userId: friendUser.id } });
@@ -391,13 +435,16 @@ console.log('✅ Courses, lessons and certificates created.');
     { userId: otherUsers[2].id, points: 400, description: 'Арт-волонтёрство' },
   ] });
   console.log('✅ Stories, chats and logs created.');
+  // END_BLOCK_SEED_SOCIAL_AND_LOGS
 
   console.log('--- Seeding complete! ---');
 }
 
+// START_BLOCK_SEED_MAIN_RUN
 main().catch((e) => {
   console.error(e);
   process.exit(1);
 }).finally(async () => {
   await prisma.$disconnect();
 });
+// END_BLOCK_SEED_MAIN_RUN
