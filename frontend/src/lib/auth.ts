@@ -1,11 +1,30 @@
+// FILE: frontend/src/lib/auth.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Switch mock session helpers and real Supabase-backed login/register/logout.
+//   SCOPE: VITE_API_MODE auth adapter selection and session helper re-exports
+//   DEPENDS: M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-AUTH V-M-FRONTEND-AUTH
+//   ROLE: BARREL
+//   MAP_MODE: SUMMARY
+// END_MODULE_CONTRACT
+// START_MODULE_MAP
+//   adapter selection - picks auth.real or auth.mock from VITE_API_MODE
+//   session surface - re-exports login, register, logout, and onboarding helpers
+//   supabase - real client when VITE_API_MODE is real, otherwise null
+// END_MODULE_MAP
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import * as realAuth from './auth.real';
 import * as mockAuth from './auth.mock';
 
+// START_BLOCK_SELECT_AUTH_ADAPTER
 const isReal = import.meta.env.VITE_API_MODE === 'real';
 
 const auth = isReal ? realAuth : mockAuth;
-
-/** <context:frontend_auth_adapter> Switches between mock session state and real Supabase-backed auth. </context:frontend_auth_adapter> */
+// END_BLOCK_SELECT_AUTH_ADAPTER
 
 export const {
   login,

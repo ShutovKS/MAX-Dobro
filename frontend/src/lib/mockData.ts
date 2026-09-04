@@ -1,3 +1,25 @@
+// FILE: frontend/src/lib/mockData.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Provide in-memory demo catalogs consumed by the mock API adapter.
+//   SCOPE: Events, courses, organizations, stories, rewards, users, and related fixtures
+//   DEPENDS: M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-API M-FRONTEND-TYPES
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+// START_MODULE_MAP
+//   allEvents - volunteer event catalog
+//   allCourses - training course catalog
+//   allOrganizationsData - organization catalog
+//   allStories - stories feed
+//   allRewards - karma store items
+//   defaultUserData - mock volunteer session user
+// END_MODULE_MAP
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import {CheckCircle, Eye, TrendingUp, User as UserIcon} from 'lucide-react';
 
 import type {
@@ -23,6 +45,7 @@ import type {
 } from './types';
 import {CURRENT_USER_ID, LEADERBOARD_DEFAULTS} from './constants';
 
+// START_BLOCK_EVENTS
 export const allEvents: AppEvent[] = [
   {
     id: 1,
@@ -147,7 +170,9 @@ export const activityHistoryEvents: HistoryEvent[] = [
   {...allEvents[1], status: 'past', role: 'Помощник по уходу'},
   {...allEvents[2], status: 'past', role: 'Водитель-волонтер'},
 ];
+// END_BLOCK_EVENTS
 
+// START_BLOCK_COURSES
 export const allCourses: Course[] = [
   {
     id: 1, title: "Основы первой помощи", description: "Научитесь оказывать первую помощь в экстренных ситуациях.",
@@ -246,7 +271,9 @@ export const allCourses: Course[] = [
     ]
   },
 ];
+// END_BLOCK_COURSES
 
+// START_BLOCK_ORGS
 export const allOrganizationsData: (Omit<Organization, 'isSubscribed'>)[] = [
   {
     id: 1,
@@ -369,6 +396,7 @@ export const allOrganizationsData: (Omit<Organization, 'isSubscribed'>)[] = [
     address: 'Москва, ул. Надежды, д. 4'
   },
 ];
+// END_BLOCK_ORGS
 
 export const allAchievements: Achievement[] = [
   {
@@ -514,6 +542,7 @@ export const allAchievements: Achievement[] = [
   },
 ];
 
+// START_BLOCK_ORG_DASHBOARD
 export const mockDashboardStats: OrganizationStat[] = [
   {id: 'new_volunteers', label: 'Новых волонтеров', value: '12', Icon: UserIcon, change: '+5%'},
   {id: 'total_regs', label: 'Всего регистраций', value: '87', Icon: CheckCircle, change: '+12%'},
@@ -597,6 +626,7 @@ export const mockParticipants: EventParticipant[] = [
   {id: 11, name: 'Иван Петров', avatarUrl: 'https://i.pravatar.cc/48?img=31', rating: 4.5, status: 'confirmed'},
   {id: 12, name: 'Олег Сидоров', avatarUrl: 'https://i.pravatar.cc/48?img=32', rating: 4.2, status: 'rejected'},
 ];
+// END_BLOCK_ORG_DASHBOARD
 
 export const defaultUserData: User = {
   firstName: "Елена",
@@ -691,6 +721,7 @@ export const mockFriends: Friend[] = [
   {id: 12, name: 'Олег Сидоров', avatarUrl: 'https://i.pravatar.cc/48?img=32'},
 ];
 
+// START_BLOCK_STORIES
 const mockComments: Comment[] = [
   {
     id: 1,
@@ -785,6 +816,7 @@ export const allStories: Story[] = [
     ],
   }
 ];
+// END_BLOCK_STORIES
 
 export const myChatsData: MyChatItem[] = [
   {
@@ -829,6 +861,7 @@ export const myChatsData: MyChatItem[] = [
   }
 ];
 
+// START_BLOCK_REWARDS
 export const allRewards: RewardItem[] = [
   {
     id: 1,
@@ -879,6 +912,7 @@ export const allRewards: RewardItem[] = [
     isPurchased: false
   },
 ];
+// END_BLOCK_REWARDS
 
 export const mockMapMarkers: MapMarker[] = [
   {id: 1, position: [55.7963, 37.679], title: 'Уборка парка "Сокольники"', description: '25 июля, 11:00'},

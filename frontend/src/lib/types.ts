@@ -1,3 +1,25 @@
+// FILE: frontend/src/lib/types.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Share TypeScript models used by screens and API adapters.
+//   SCOPE: Event, course, organization, user, story, chat, reward, and filter types
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-TYPES V-M-FRONTEND-TYPES
+//   ROLE: TYPES
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+// START_MODULE_MAP
+//   AppEvent - volunteer event card model
+//   Course - training course with lessons and quizzes
+//   Organization - catalog organization
+//   User - volunteer or organizer session profile
+//   Story - feed story with comments
+//   RewardItem - karma store item
+// END_MODULE_MAP
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
@@ -11,6 +33,8 @@ declare global {
 
 import React from 'react';
 
+// START_BLOCK_DOMAIN_TYPES
+// START_BLOCK_EVENT_TYPES
 export type AppEvent = {
   id: number;
   organizationId: number;
@@ -46,6 +70,23 @@ export interface Filters {
   distance: number;
 }
 
+export type EventCreatePayload = {
+  title: string;
+  description: string;
+  date: string; // ISO
+  location?: string;
+  maxParticipants?: number;
+  category?: string;
+  requirements?: string;
+  latitude?: number;
+  longitude?: number;
+  durationHours?: number;
+  karmaPoints?: number;
+  recommendedCourseId?: number;
+};
+// END_BLOCK_EVENT_TYPES
+
+// START_BLOCK_COURSE_TYPES
 export type QuizAnswer = {
   id: number;
   answer: string;
@@ -98,21 +139,7 @@ export type LessonCompletionResult = {
   totalLessons: number;
   courseCompleted: boolean;
 };
-
-export type EventCreatePayload = {
-  title: string;
-  description: string;
-  date: string; // ISO
-  location?: string;
-  maxParticipants?: number;
-  category?: string;
-  requirements?: string;
-  latitude?: number;
-  longitude?: number;
-  durationHours?: number;
-  karmaPoints?: number;
-  recommendedCourseId?: number;
-};
+// END_BLOCK_COURSE_TYPES
 
 export type Tab = 'home' | 'training' | 'organizations' | 'stories' | 'profile';
 export type ProfileSubScreen =
@@ -126,6 +153,7 @@ export type ProfileSubScreen =
   | 'myChats'
   | 'rewardsStore';
 
+// START_BLOCK_ORG_TYPES
 export interface OrganizationFilters {
   city: string;
   categories: string[];
@@ -179,7 +207,9 @@ export type EventParticipant = {
   rating: number;
   status: 'new' | 'confirmed' | 'rejected';
 };
+// END_BLOCK_ORG_TYPES
 
+// START_BLOCK_USER_TYPES
 export type Achievement = {
   id: number;
   name: string;
@@ -230,7 +260,9 @@ export type Friend = {
   name: string;
   avatarUrl: string;
 };
+// END_BLOCK_USER_TYPES
 
+// START_BLOCK_STORY_TYPES
 export type Comment = {
   id: number;
   author: {
@@ -259,7 +291,9 @@ export type Story = {
   commentsData: Comment[];
   isLiked?: boolean;
 };
+// END_BLOCK_STORY_TYPES
 
+// START_BLOCK_CHAT_TYPES
 export type ChatMessage = {
   id: number;
   sender: 'user' | 'assistant';
@@ -321,3 +355,5 @@ export type WeeklyChallenge = {
   filterCategory: string;
   isCompleted: boolean;
 };
+// END_BLOCK_CHAT_TYPES
+// END_BLOCK_DOMAIN_TYPES

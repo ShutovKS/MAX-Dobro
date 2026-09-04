@@ -1,12 +1,31 @@
+// FILE: frontend/src/lib/api.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Select mock or real HTTP adapters so screens share one API surface.
+//   SCOPE: VITE_API_MODE switch, volunteer API re-exports, organizer API re-exports
+//   DEPENDS: M-FRONTEND-AUTH M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-API V-M-FRONTEND-API
+//   ROLE: BARREL
+//   MAP_MODE: SUMMARY
+// END_MODULE_CONTRACT
+// START_MODULE_MAP
+//   adapter selection - picks api.real or api.mock from VITE_API_MODE
+//   volunteer API surface - re-exports fetch and mutate helpers from the selected adapter
+//   organizer API surface - re-exports organization dashboard helpers from api.organizer
+// END_MODULE_MAP
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import * as realApi from './api.real';
 import * as mockApi from './api.mock';
 import * as organizerApi from './api.organizer';
 
+// START_BLOCK_SELECT_ADAPTER
 const isReal = import.meta.env.VITE_API_MODE === 'real';
 
 const api = isReal ? realApi : mockApi;
-
-/** <context:frontend_api_adapter> Keeps mock and real API surfaces aligned for the app shell. </context:frontend_api_adapter> */
+// END_BLOCK_SELECT_ADAPTER
 
 export const fetchOrganizationDashboardStats = organizerApi.fetchOrganizationDashboardStats;
 export const fetchOrganizationDetails = organizerApi.fetchOrganizationDetails;

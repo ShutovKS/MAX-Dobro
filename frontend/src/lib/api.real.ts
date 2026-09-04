@@ -1,3 +1,24 @@
+// FILE: frontend/src/lib/api.real.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Call the NestJS API and map HTTP payloads onto mini-app domain types.
+//   SCOPE: Authenticated fetch, event/course/org/story/reward/chat adapters
+//   DEPENDS: M-FRONTEND-AUTH M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-API V-M-FRONTEND-API M-FRONTEND-AUTH M-FRONTEND-TYPES
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+// START_MODULE_MAP
+//   fetchAllEvents - event catalog
+//   participateInEvent - join an event
+//   completeCourse - submit course quiz answers
+//   purchaseReward - spend karma on a reward
+//   apiFetch - authenticated JSON fetch helper
+// END_MODULE_MAP
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { supabase } from './auth.real';
 import type {
   Achievement,
@@ -63,6 +84,7 @@ const getIconForCategory = (category?: string | null): React.FC<any> => {
   return categoryIconMap[category] || categoryIconMap['default'];
 };
 
+// START_BLOCK_API_FETCH
 const getAuthToken = async (): Promise<string | null> => {
   const internalToken = localStorage.getItem('internal_jwt');
   if (internalToken) {
@@ -106,6 +128,7 @@ async function apiFetch<T>(
   }
   return undefined as T;
 }
+// END_BLOCK_API_FETCH
 
 // Сохраняем строку icon (компоненты читают iconMap[item.icon]) И добавляем
 // готовый компонент Icon. Раньше icon вырезался → иконки падали в заглушку.
@@ -131,6 +154,7 @@ const mapEventData = (event: any): AppEvent => ({
 });
 
 const mapCourseData = (courseData: any): Course => {
+  // START_BLOCK_MAP_COURSE_DATA
   const courseStatus = courseData.status || 'not-started';
 
   const mappedProgram = (courseData.program || []).map((lesson: any) => {
@@ -186,6 +210,7 @@ const mapCourseData = (courseData: any): Course => {
     program: mappedProgram,
     completedLessonIds,
   };
+  // END_BLOCK_MAP_COURSE_DATA
 };
 
 const mapStoryData = (story: any): Story => ({
@@ -214,6 +239,14 @@ const mapAssistantMessage = (message: any): ChatMessage => ({
   timestamp: formatTimestamp(message.createdAt),
 });
 
+// START_BLOCK_FETCH_EVENTS
+// START_CONTRACT: fetchAllEvents
+//   PURPOSE: Load the volunteer event catalog
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<AppEvent[]> - mapped events }
+//   SIDE_EFFECTS: GET /events?limit=100
+//   LINKS: M-FRONTEND-API export-fetchAllEvents
+// END_CONTRACT: fetchAllEvents
 export const fetchAllEvents = async (): Promise<AppEvent[]> => {
   // limit=100: бэкенд по умолчанию отдаёт 10 — лента/карта/поиск видели только
   // первые 10 событий. Пагинация/бесконечная прокрутка — отдельной задачей.
@@ -221,6 +254,13 @@ export const fetchAllEvents = async (): Promise<AppEvent[]> => {
   return events.map(mapEventData);
 };
 
+// START_CONTRACT: fetchEventById
+//   PURPOSE: Load one event by id
+//   INPUTS: { id: number - event id }
+//   OUTPUTS: { Promise<AppEvent | HistoryEvent> - mapped event }
+//   SIDE_EFFECTS: GET /events/:id
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchEventById
 export const fetchEventById = async (
   id: number,
 ): Promise<AppEvent | HistoryEvent> => {
@@ -228,6 +268,13 @@ export const fetchEventById = async (
   return mapEventData(event);
 };
 
+// START_CONTRACT: createEvent
+//   PURPOSE: Create an organizer event
+//   INPUTS: { payload: EventCreatePayload }
+//   OUTPUTS: { Promise<AppEvent> - mapped created event }
+//   SIDE_EFFECTS: POST /events
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: createEvent
 export const createEvent = async (
   payload: EventCreatePayload,
 ): Promise<AppEvent> => {
@@ -238,6 +285,13 @@ export const createEvent = async (
   return mapEventData(event);
 };
 
+// START_CONTRACT: updateEvent
+//   PURPOSE: Patch an organizer event
+//   INPUTS: { id: number; payload: Partial<EventCreatePayload> }
+//   OUTPUTS: { Promise<AppEvent> - mapped updated event }
+//   SIDE_EFFECTS: PATCH /events/:id
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: updateEvent
 export const updateEvent = async (
   id: number,
   payload: Partial<EventCreatePayload>,
@@ -249,21 +303,51 @@ export const updateEvent = async (
   return mapEventData(event);
 };
 
+// START_CONTRACT: participateInEvent
+//   PURPOSE: Join an event as the current user
+//   INPUTS: { eventId: number }
+//   OUTPUTS: { Promise<void> }
+//   SIDE_EFFECTS: POST /events/:id/participate
+//   LINKS: M-FRONTEND-API export-participateInEvent
+// END_CONTRACT: participateInEvent
 export const participateInEvent = (eventId: number): Promise<void> =>
   apiFetch(`/events/${eventId}/participate`, {
     method: 'POST',
   });
 
+// START_CONTRACT: cancelEventParticipation
+//   PURPOSE: Leave an event as the current user
+//   INPUTS: { eventId: number }
+//   OUTPUTS: { Promise<void> }
+//   SIDE_EFFECTS: DELETE /events/:id/participate
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: cancelEventParticipation
 export const cancelEventParticipation = (eventId: number): Promise<void> =>
   apiFetch(`/events/${eventId}/participate`, {
     method: 'DELETE',
   });
+// END_BLOCK_FETCH_EVENTS
 
+// START_BLOCK_FETCH_COURSES
+// START_CONTRACT: fetchAllCourses
+//   PURPOSE: Load courses for the current user
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<Course[]> - mapped courses }
+//   SIDE_EFFECTS: GET /profile/me/courses
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchAllCourses
 export const fetchAllCourses = async (): Promise<Course[]> => {
   const coursesData = await apiFetch<any[]>('/profile/me/courses');
   return coursesData.map(mapCourseData);
 };
 
+// START_CONTRACT: fetchCourseById
+//   PURPOSE: Find one of the current user's courses by id
+//   INPUTS: { id: number }
+//   OUTPUTS: { Promise<Course | undefined> }
+//   SIDE_EFFECTS: GET /profile/me/courses via fetchAllCourses
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchCourseById
 export const fetchCourseById = async (
   id: number,
 ): Promise<Course | undefined> => {
@@ -271,6 +355,13 @@ export const fetchCourseById = async (
   return allUserCourses.find((c) => c.id === id);
 };
 
+// START_CONTRACT: completeCourse
+//   PURPOSE: Submit quiz answers and receive a pass/fail result
+//   INPUTS: { courseId: number; answers: { questionId, answerId }[] }
+//   OUTPUTS: { Promise<CourseCompletionResult> }
+//   SIDE_EFFECTS: POST /courses/:id/complete
+//   LINKS: M-FRONTEND-API export-completeCourse
+// END_CONTRACT: completeCourse
 export const completeCourse = async (
   courseId: number,
   answers: { questionId: number; answerId: number }[],
@@ -280,6 +371,13 @@ export const completeCourse = async (
     body: JSON.stringify({ answers }),
   });
 };
+// START_CONTRACT: markLessonComplete
+//   PURPOSE: Mark a course lesson complete on the server
+//   INPUTS: { courseId: number; lessonId: number }
+//   OUTPUTS: { Promise<LessonCompletionResult> }
+//   SIDE_EFFECTS: POST /courses/:id/lessons/:lessonId/complete
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: markLessonComplete
 export const markLessonComplete = async (
   courseId: number,
   lessonId: number,
@@ -288,11 +386,34 @@ export const markLessonComplete = async (
     method: 'POST',
   });
 };
+// END_BLOCK_FETCH_COURSES
 
+// START_BLOCK_FETCH_ORGANIZATIONS
+// START_CONTRACT: fetchAllOrganizations
+//   PURPOSE: Load the organization catalog
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<Organization[]> }
+//   SIDE_EFFECTS: GET /organizations?limit=100
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchAllOrganizations
 export const fetchAllOrganizations = (): Promise<Organization[]> =>
   apiFetch('/organizations?limit=100');
+// START_CONTRACT: fetchOrganizationById
+//   PURPOSE: Load one organization by id
+//   INPUTS: { id: number }
+//   OUTPUTS: { Promise<Organization> }
+//   SIDE_EFFECTS: GET /organizations/:id
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchOrganizationById
 export const fetchOrganizationById = (id: number): Promise<Organization> =>
   apiFetch(`/organizations/${id}`);
+// START_CONTRACT: updateOrganizationSubscription
+//   PURPOSE: Subscribe or unsubscribe from an organization
+//   INPUTS: { organizationId: number; isSubscribed: boolean }
+//   OUTPUTS: { Promise<void> }
+//   SIDE_EFFECTS: POST /organizations/:id/subscription
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: updateOrganizationSubscription
 export const updateOrganizationSubscription = (
   organizationId: number,
   isSubscribed: boolean,
@@ -302,12 +423,33 @@ export const updateOrganizationSubscription = (
     body: JSON.stringify({ isSubscribed }),
   });
 };
+// START_CONTRACT: fetchOrganizationEvents
+//   PURPOSE: Load events owned by the current organizer
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<OrganizationEvent[]> }
+//   SIDE_EFFECTS: GET /organization/events
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchOrganizationEvents
 export const fetchOrganizationEvents = (): Promise<OrganizationEvent[]> =>
   apiFetch(`/organization/events`);
+// START_CONTRACT: fetchEventParticipants
+//   PURPOSE: Load participants for an organizer-owned event
+//   INPUTS: { eventId: number }
+//   OUTPUTS: { Promise<EventParticipant[]> }
+//   SIDE_EFFECTS: GET /organization/events/:id/participants
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchEventParticipants
 export const fetchEventParticipants = (
   eventId: number,
 ): Promise<EventParticipant[]> =>
   apiFetch(`/organization/events/${eventId}/participants`);
+// START_CONTRACT: fetchOrganizationDashboardStats
+//   PURPOSE: Load organizer dashboard stats with icon components
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<OrganizationStat[]> }
+//   SIDE_EFFECTS: GET /organization/dashboard/stats
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchOrganizationDashboardStats
 export const fetchOrganizationDashboardStats = async (): Promise<
   OrganizationStat[]
 > => {
@@ -320,8 +462,25 @@ export const fetchOrganizationDashboardStats = async (): Promise<
   };
   return stats.map((s) => ({ ...s, Icon: iconByStatId[s.id] ?? Star }));
 };
+// START_CONTRACT: fetchOrganizationDetails
+//   PURPOSE: Load the current organizer organization record
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<OrganizationDetails> }
+//   SIDE_EFFECTS: GET /organization/details
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchOrganizationDetails
 export const fetchOrganizationDetails = (): Promise<OrganizationDetails> =>
   apiFetch(`/organization/details`);
+// END_BLOCK_FETCH_ORGANIZATIONS
+
+// START_BLOCK_FETCH_PROFILE
+// START_CONTRACT: fetchActivityHistoryEvents
+//   PURPOSE: Load the current user's event history
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<HistoryEvent[]> }
+//   SIDE_EFFECTS: GET /profile/me/events
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchActivityHistoryEvents
 export const fetchActivityHistoryEvents = async (): Promise<HistoryEvent[]> => {
   const data = await apiFetch<any[]>('/profile/me/events');
   return data.map((event) => ({
@@ -329,10 +488,24 @@ export const fetchActivityHistoryEvents = async (): Promise<HistoryEvent[]> => {
     status: new Date(event.date) < new Date() ? 'past' : 'upcoming',
   }));
 };
+// START_CONTRACT: fetchLeaderboardData
+//   PURPOSE: Load leaderboard rows for a period
+//   INPUTS: { period: 'week' | 'month' | 'allTime' }
+//   OUTPUTS: { Promise<{ topUsers, currentUser }> }
+//   SIDE_EFFECTS: GET /leaderboard
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchLeaderboardData
 export const fetchLeaderboardData = (
   period: 'week' | 'month' | 'allTime',
 ): Promise<{ topUsers: LeaderboardUser[]; currentUser: LeaderboardUser | null }> =>
   apiFetch(`/leaderboard?period=${period}`);
+// START_CONTRACT: updateProfile
+//   PURPOSE: Patch the current user's profile fields
+//   INPUTS: { data: { firstName?, lastName?, about?, avatarUrl? } }
+//   OUTPUTS: { Promise<void> }
+//   SIDE_EFFECTS: PATCH /profile/me
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: updateProfile
 export const updateProfile = (data: {
   firstName?: string;
   lastName?: string;
@@ -343,12 +516,26 @@ export const updateProfile = (data: {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
+// START_CONTRACT: fetchAllAchievements
+//   PURPOSE: Load the global achievement catalog
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<Achievement[]> }
+//   SIDE_EFFECTS: GET /achievements
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchAllAchievements
 export const fetchAllAchievements = async (): Promise<Achievement[]> => {
   const achievements = await apiFetch<
     (Omit<Achievement, 'Icon'> & { icon?: string | null })[]
   >('/achievements');
   return achievements.map(mapIcon);
 };
+// START_CONTRACT: fetchUserAchievements
+//   PURPOSE: Load achievements unlocked by the current user
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<Achievement[]> }
+//   SIDE_EFFECTS: GET /profile/me/achievements
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchUserAchievements
 export const fetchUserAchievements = async (): Promise<Achievement[]> => {
   const achievements = await apiFetch<any[]>('/profile/me/achievements');
   return achievements.map((ach) => ({
@@ -357,6 +544,13 @@ export const fetchUserAchievements = async (): Promise<Achievement[]> => {
     Icon: getIcon(ach.icon ?? 'Award'),
   }));
 };
+// START_CONTRACT: fetchMyChats
+//   PURPOSE: Load the current user's event chat list
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<MyChatItem[]> }
+//   SIDE_EFFECTS: GET /profile/chats
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchMyChats
 export const fetchMyChats = async (): Promise<MyChatItem[]> => {
   const chats = await apiFetch<any[]>('/profile/chats');
   return chats.map((chat) => ({
@@ -365,6 +559,13 @@ export const fetchMyChats = async (): Promise<MyChatItem[]> => {
     timestamp: formatTimestamp(chat.timestamp),
   }));
 };
+// START_CONTRACT: createEventReview
+//   PURPOSE: Submit a rating and optional review text for an event
+//   INPUTS: { eventId: number; rating: number; text?: string }
+//   OUTPUTS: { Promise<void> }
+//   SIDE_EFFECTS: POST /events/:id/reviews
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: createEventReview
 export const createEventReview = (
   eventId: number,
   rating: number,
@@ -374,14 +575,38 @@ export const createEventReview = (
     method: 'POST',
     body: JSON.stringify({ rating, ...(text?.trim() ? { text: text.trim() } : {}) }),
   });
+// END_BLOCK_FETCH_PROFILE
+
+// START_BLOCK_FETCH_STORIES
+// START_CONTRACT: fetchAllStories
+//   PURPOSE: Load the stories feed
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<Story[]> }
+//   SIDE_EFFECTS: GET /stories
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchAllStories
 export const fetchAllStories = async (): Promise<Story[]> => {
   const stories = await apiFetch<any[]>('/stories');
   return stories.map(mapStoryData);
 };
+// START_CONTRACT: fetchStoryById
+//   PURPOSE: Load one story by id
+//   INPUTS: { id: number }
+//   OUTPUTS: { Promise<Story> }
+//   SIDE_EFFECTS: GET /stories/:id
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchStoryById
 export const fetchStoryById = async (id: number): Promise<Story> => {
   const story = await apiFetch<any>(`/stories/${id}`);
   return mapStoryData(story);
 };
+// START_CONTRACT: createStory
+//   PURPOSE: Publish a story for an event
+//   INPUTS: { eventId: number; text: string; imageUrl: string }
+//   OUTPUTS: { Promise<Story> }
+//   SIDE_EFFECTS: POST /stories
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: createStory
 export const createStory = (
   eventId: number,
   text: string,
@@ -391,6 +616,13 @@ export const createStory = (
     method: 'POST',
     body: JSON.stringify({ eventId, text, imageUrl }),
   });
+// START_CONTRACT: createStoryComment
+//   PURPOSE: Add a comment to a story
+//   INPUTS: { storyId: number; text: string }
+//   OUTPUTS: { Promise<Comment> }
+//   SIDE_EFFECTS: POST /stories/:id/comments
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: createStoryComment
 export const createStoryComment = async (
   storyId: number,
   text: string,
@@ -401,10 +633,27 @@ export const createStoryComment = async (
   });
   return { ...c, timestamp: formatTimestamp(c.timestamp ?? c.createdAt) };
 };
+// START_CONTRACT: likeStory
+//   PURPOSE: Like a story
+//   INPUTS: { storyId: number }
+//   OUTPUTS: { Promise<void> }
+//   SIDE_EFFECTS: POST /stories/:id/like
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: likeStory
 export const likeStory = (storyId: number): Promise<void> =>
   apiFetch(`/stories/${storyId}/like`, { method: 'POST' });
+// START_CONTRACT: unlikeStory
+//   PURPOSE: Remove a like from a story
+//   INPUTS: { storyId: number }
+//   OUTPUTS: { Promise<void> }
+//   SIDE_EFFECTS: DELETE /stories/:id/like
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: unlikeStory
 export const unlikeStory = (storyId: number): Promise<void> =>
   apiFetch(`/stories/${storyId}/like`, { method: 'DELETE' });
+// END_BLOCK_FETCH_STORIES
+
+// START_BLOCK_FETCH_REWARDS
 const REWARD_IMAGE_FALLBACK = (id: number | string) =>
   `https://picsum.photos/seed/dobro-reward-${id}/300`;
 const mapRewardData = (r: any): RewardItem => ({
@@ -414,17 +663,55 @@ const mapRewardData = (r: any): RewardItem => ({
   imageUrl: r.imageUrl || REWARD_IMAGE_FALLBACK(r.id),
   isPurchased: r.isPurchased ?? false,
 });
+// START_CONTRACT: fetchRewards
+//   PURPOSE: Load karma store items
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<RewardItem[]> }
+//   SIDE_EFFECTS: GET /rewards
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchRewards
 export const fetchRewards = async (): Promise<RewardItem[]> => {
   const rewards = await apiFetch<any[]>('/rewards');
   return rewards.map(mapRewardData);
 };
+// START_CONTRACT: purchaseReward
+//   PURPOSE: Spend karma to purchase a reward
+//   INPUTS: { rewardId: number }
+//   OUTPUTS: { Promise<void> }
+//   SIDE_EFFECTS: POST /rewards/:id/purchase
+//   LINKS: M-FRONTEND-API export-purchaseReward
+// END_CONTRACT: purchaseReward
 export const purchaseReward = (rewardId: number): Promise<void> =>
   apiFetch(`/rewards/${rewardId}/purchase`, {
     method: 'POST',
   });
+// START_CONTRACT: fetchMapMarkers
+//   PURPOSE: Load map markers for the event map
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<MapMarker[]> }
+//   SIDE_EFFECTS: GET /map-markers
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchMapMarkers
 export const fetchMapMarkers = (): Promise<MapMarker[]> =>
   apiFetch('/map-markers');
+// START_CONTRACT: fetchFriends
+//   PURPOSE: Load the current user's friends
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<Friend[]> }
+//   SIDE_EFFECTS: GET /friends
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchFriends
 export const fetchFriends = (): Promise<Friend[]> => apiFetch('/friends');
+// END_BLOCK_FETCH_REWARDS
+
+// START_BLOCK_FETCH_CHATS
+// START_CONTRACT: fetchEventChatMessages
+//   PURPOSE: Load event chat messages in chronological order
+//   INPUTS: { eventId: number }
+//   OUTPUTS: { Promise<EventChatMessage[]> }
+//   SIDE_EFFECTS: GET /events/:id/messages
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchEventChatMessages
 export const fetchEventChatMessages = async (
   eventId: number,
 ): Promise<EventChatMessage[]> => {
@@ -439,6 +726,13 @@ export const fetchEventChatMessages = async (
     }))
     .reverse();
 };
+// START_CONTRACT: postEventChatMessage
+//   PURPOSE: Send a message in an event chat
+//   INPUTS: { eventId: number; text: string }
+//   OUTPUTS: { Promise<EventChatMessage> }
+//   SIDE_EFFECTS: POST /events/:id/messages
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: postEventChatMessage
 export const postEventChatMessage = async (
   eventId: number,
   text: string,
@@ -449,10 +743,24 @@ export const postEventChatMessage = async (
   });
   return { ...m, timestamp: formatTimestamp(m.timestamp ?? m.createdAt) };
 };
+// START_CONTRACT: fetchAssistantChatMessages
+//   PURPOSE: Load assistant chat history in chronological order
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<ChatMessage[]> }
+//   SIDE_EFFECTS: GET /assistant-chat/messages
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchAssistantChatMessages
 export const fetchAssistantChatMessages = async (): Promise<ChatMessage[]> => {
   const messages = await apiFetch<any[]>('/assistant-chat/messages');
   return messages.map(mapAssistantMessage).reverse();
 };
+// START_CONTRACT: postAssistantMessage
+//   PURPOSE: Send a user message to the assistant
+//   INPUTS: { text: string }
+//   OUTPUTS: { Promise<ChatMessage> - mapped assistant reply }
+//   SIDE_EFFECTS: POST /assistant-chat/messages
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: postAssistantMessage
 export const postAssistantMessage = async (text: string): Promise<ChatMessage> => {
   const message = await apiFetch<any>('/assistant-chat/messages', {
     method: 'POST',
@@ -460,6 +768,13 @@ export const postAssistantMessage = async (text: string): Promise<ChatMessage> =
   });
   return mapAssistantMessage(message);
 };
+// START_CONTRACT: fetchWeeklyChallenge
+//   PURPOSE: Load the active weekly challenge or null
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<WeeklyChallenge | null> }
+//   SIDE_EFFECTS: GET /challenge/weekly
+//   LINKS: M-FRONTEND-API
+// END_CONTRACT: fetchWeeklyChallenge
 export const fetchWeeklyChallenge = async (): Promise<WeeklyChallenge | null> => {
   const challenge = await apiFetch<
     (Omit<WeeklyChallenge, 'Icon'> & { icon?: string | null }) | null
@@ -468,3 +783,4 @@ export const fetchWeeklyChallenge = async (): Promise<WeeklyChallenge | null> =>
   if (!challenge) return null;
   return mapIcon({ ...challenge, icon: challenge.icon ?? 'Target' });
 };
+// END_BLOCK_FETCH_CHATS

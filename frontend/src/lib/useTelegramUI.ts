@@ -1,6 +1,22 @@
-// Хуки для нативных элементов Telegram WebApp (BackButton / MainButton).
-// Безопасны вне Telegram: если SDK/кнопки нет — ничего не делают, экран
-// продолжает работать со своими внутренними кнопками.
+// FILE: frontend/src/lib/useTelegramUI.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Bind Telegram WebApp BackButton and MainButton to React screen lifecycles.
+//   SCOPE: telegramUiActive flag and native button hooks that no-op outside Telegram
+//   DEPENDS: M-FRONTEND-TELEGRAM
+//   LINKS: M-FRONTEND-TELEGRAM V-M-FRONTEND-TELEGRAM
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+// START_MODULE_MAP
+//   telegramUiActive - true when native Telegram buttons should replace in-app chrome
+//   useTelegramBackButton - show Telegram BackButton while a screen is mounted
+//   useTelegramMainButton - configure Telegram MainButton while a screen is mounted
+// END_MODULE_MAP
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { useEffect } from 'react';
 import {
   getTelegramBackButton,
@@ -9,9 +25,23 @@ import {
 } from './telegram-sdk';
 
 /** true, если активны нативные кнопки Telegram (значит внутренние можно скрыть). */
+// START_CONTRACT: telegramUiActive
+//   PURPOSE: Report whether native Telegram chrome should replace in-app buttons
+//   INPUTS: { none }
+//   OUTPUTS: { boolean - true inside a Telegram WebApp client }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-TELEGRAM fn-isTelegramClient
+// END_CONTRACT: telegramUiActive
 export const telegramUiActive = (): boolean => isTelegramClient();
 
 /** Показывает нативную кнопку «Назад» и вешает обработчик на время жизни экрана. */
+// START_CONTRACT: useTelegramBackButton
+//   PURPOSE: Show Telegram BackButton and bind onBack for the screen lifetime
+//   INPUTS: { onBack?: () => void - back handler; skipped when absent }
+//   OUTPUTS: { void }
+//   SIDE_EFFECTS: shows/hides Telegram BackButton and registers click handlers
+//   LINKS: M-FRONTEND-TELEGRAM fn-getTelegramBackButton
+// END_CONTRACT: useTelegramBackButton
 export function useTelegramBackButton(onBack?: () => void): void {
   useEffect(() => {
     const bb = getTelegramBackButton();
@@ -34,6 +64,13 @@ interface MainButtonOptions {
 }
 
 /** Конфигурирует нативную MainButton Telegram. Скрывается при размонтировании. */
+// START_CONTRACT: useTelegramMainButton
+//   PURPOSE: Configure Telegram MainButton text, visibility, and click for a screen
+//   INPUTS: { text: string; onClick: () => void; visible?: boolean; disabled?: boolean; loading?: boolean }
+//   OUTPUTS: { void }
+//   SIDE_EFFECTS: mutates Telegram MainButton and hides it on unmount
+//   LINKS: M-FRONTEND-TELEGRAM fn-getTelegramMainButton
+// END_CONTRACT: useTelegramMainButton
 export function useTelegramMainButton({
   text,
   onClick,

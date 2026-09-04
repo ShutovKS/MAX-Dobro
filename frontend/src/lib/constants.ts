@@ -1,7 +1,27 @@
+// FILE: frontend/src/lib/constants.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Hold app-wide route, copy, filter, and UI constants used by screens.
+//   SCOPE: Routes, toasts, auth copy, categories, filters, calendar labels, rewards
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-SCREENS M-FRONTEND-TYPES
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+// START_MODULE_MAP
+//   ROUTES - volunteer and organizer path helpers
+//   MESSAGES - toast, auth, and assistant copy
+//   EVENT_CATEGORIES - volunteer event filter chips
+//   COURSE_PASS_THRESHOLD - quiz pass ratio used by mock completeCourse
+//   ONBOARDING_INTERESTS - onboarding interest cards
+// END_MODULE_MAP
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import {AnimalFriendIcon, ArtVolunteerIcon, ElderlyHelperIcon, NatureProtectorIcon} from '../components/ui/icons';
 import type {FilterDate, FilterFormat, OrganizationFilters} from './types';
 
-// <context:frontend_constants> App-wide constants used by route and API markers. </context:frontend_constants>
 export const APP_VERSION = '1.0.0';
 export const CURRENT_USER_ID = 1;
 

@@ -1,3 +1,26 @@
+// FILE: frontend/src/lib/auth.real.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Authenticate against Supabase and map backend profiles to the app User.
+//   SCOPE: Login, register, logout, session restore, onboarding flags, supabase client
+//   DEPENDS: M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-AUTH V-M-FRONTEND-AUTH M-FRONTEND-TYPES
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+// START_MODULE_MAP
+//   supabase - Supabase browser client
+//   login - email/password sign-in plus /profile/me mapping
+//   register - email sign-up plus /profile/me mapping
+//   logout - clear JWT and sign out of Supabase
+//   getCurrentSession - restore JWT or Supabase session via /profile/me
+//   isOnboardingComplete - read onboardingComplete flag
+//   setOnboardingComplete - persist onboardingComplete flag
+// END_MODULE_MAP
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { createClient } from '@supabase/supabase-js';
 import type { User } from './types';
 import {
@@ -42,6 +65,7 @@ const profileStatIdMap: Record<string, string> = {
 const STAT_ICONS: Record<string, string> = { hours: 'Clock', karma: 'Sparkles' };
 
 const mapBackendProfileToAppUser = (backendProfile: any): User => {
+  // START_BLOCK_MAP_BACKEND_PROFILE
   const stats = (backendProfile.stats || []).map((stat: any) => {
     const mappedId = profileStatIdMap[stat.id] || stat.id;
     const iconName = stat.icon || STAT_ICONS[mappedId] || 'Star';
@@ -72,12 +96,21 @@ const mapBackendProfileToAppUser = (backendProfile: any): User => {
     stats: stats,
     achievements: achievements,
   };
+  // END_BLOCK_MAP_BACKEND_PROFILE
 };
 
+// START_CONTRACT: login
+//   PURPOSE: Sign in with Supabase and load the backend profile
+//   INPUTS: { email: string; password: string }
+//   OUTPUTS: { Promise<{ user: User; token: string }> - mapped profile and access token }
+//   SIDE_EFFECTS: creates a Supabase session; signs out if /profile/me fails
+//   LINKS: M-FRONTEND-AUTH export-login
+// END_CONTRACT: login
 export const login = async (
   email: string,
   password: string,
 ): Promise<{ user: User; token: string }> => {
+  // START_BLOCK_LOGIN
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -103,14 +136,23 @@ export const login = async (
     user: mapBackendProfileToAppUser(backendProfile),
     token: data.session.access_token,
   };
+  // END_BLOCK_LOGIN
 };
 
+// START_CONTRACT: register
+//   PURPOSE: Sign up with Supabase and load the backend profile after webhook delay
+//   INPUTS: { userData: { firstName, lastName, email, password } }
+//   OUTPUTS: { Promise<{ user: User; token: string }> - mapped profile and access token }
+//   SIDE_EFFECTS: creates a Supabase user/session; signs out if /profile/me fails
+//   LINKS: M-FRONTEND-AUTH export-register
+// END_CONTRACT: register
 export const register = async (userData: {
   firstName: string;
   lastName: string;
   email: string;
   password: string;
 }): Promise<{ user: User; token: string }> => {
+  // START_BLOCK_REGISTER
   const { data, error } = await supabase.auth.signUp({
     email: userData.email,
     password: userData.password,
@@ -143,8 +185,16 @@ export const register = async (userData: {
     user: mapBackendProfileToAppUser(backendProfile),
     token: data.session.access_token,
   };
+  // END_BLOCK_REGISTER
 };
 
+// START_CONTRACT: logout
+//   PURPOSE: Clear the internal JWT and sign out of Supabase
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<void> }
+//   SIDE_EFFECTS: removes localStorage keys and ends the Supabase session
+//   LINKS: M-FRONTEND-AUTH export-logout
+// END_CONTRACT: logout
 export const logout = async (): Promise<void> => {
   localStorage.removeItem('internal_jwt');
   localStorage.removeItem('onboardingComplete');
@@ -154,10 +204,18 @@ export const logout = async (): Promise<void> => {
   }
 };
 
+// START_CONTRACT: getCurrentSession
+//   PURPOSE: Restore the current user from internal JWT or Supabase session
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<{ user: User; token: string } | null> - session or null }
+//   SIDE_EFFECTS: logs out only on 401/403; keeps token on transient errors
+//   LINKS: M-FRONTEND-AUTH export-getCurrentSession
+// END_CONTRACT: getCurrentSession
 export const getCurrentSession = async (): Promise<{
   user: User;
   token: string;
 } | null> => {
+  // START_BLOCK_RESTORE_SESSION
   let token: string | null = localStorage.getItem('internal_jwt');
 
   if (!token) {
@@ -197,14 +255,29 @@ export const getCurrentSession = async (): Promise<{
     console.error('Error during session check (token kept):', e);
     throw e;
   }
+  // END_BLOCK_RESTORE_SESSION
 };
 
 const ONBOARDING_KEY = 'onboardingComplete';
 
+// START_CONTRACT: isOnboardingComplete
+//   PURPOSE: Read whether onboarding has been completed
+//   INPUTS: { none }
+//   OUTPUTS: { boolean - true when onboardingComplete is stored }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-AUTH
+// END_CONTRACT: isOnboardingComplete
 export const isOnboardingComplete = (): boolean => {
   return localStorage.getItem(ONBOARDING_KEY) === 'true';
 };
 
+// START_CONTRACT: setOnboardingComplete
+//   PURPOSE: Persist the onboarding-complete flag
+//   INPUTS: { none }
+//   OUTPUTS: { void }
+//   SIDE_EFFECTS: writes onboardingComplete to localStorage
+//   LINKS: M-FRONTEND-AUTH
+// END_CONTRACT: setOnboardingComplete
 export const setOnboardingComplete = (): void => {
   localStorage.setItem(ONBOARDING_KEY, 'true');
 };
