@@ -1,9 +1,37 @@
+// FILE: backend/src/assistant-chat/assistant-chat.service.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Store volunteer assistant messages and return conversation history.
+//   SCOPE: Map stored rows, list paginated history, persist user text and assistant replies
+//   DEPENDS: M-PRISMA, M-AUTH
+//   LINKS: M-ASSISTANT-CHAT, V-M-ASSISTANT-CHAT, class-AssistantChatService
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   AssistantChatService - assistant history and keyword replies
+//   findUserMessages - paginated mapped history for one author
+//   postMessage - store user message and create assistant reply
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 
+// START_CONTRACT: AssistantChatService
+//   PURPOSE: Persist assistant conversation rows and map them for HTTP
+//   INPUTS: { userId: number, pagination: PaginationQueryDto, dto: CreateMessageDto }
+//   OUTPUTS: { mapped ChatMessageEntity values }
+//   SIDE_EFFECTS: writes AssistantChatMessage rows
+//   LINKS: M-ASSISTANT-CHAT, V-M-ASSISTANT-CHAT, M-PRISMA
+// END_CONTRACT: AssistantChatService
 @Injectable()
 export class AssistantChatService {
   constructor(private readonly prisma: PrismaService) {}
@@ -11,6 +39,7 @@ export class AssistantChatService {
   private async mapMessage(
     message: Prisma.AssistantChatMessageGetPayload<{}>,
   ): Promise<any> {
+    // START_BLOCK_MAP_MESSAGE
     const { payload, content, sender, type, ...rest } = message;
 
     const mappedMessage: any = {
@@ -42,9 +71,18 @@ export class AssistantChatService {
     }
 
     return mappedMessage;
+    // END_BLOCK_MAP_MESSAGE
   }
 
+  // START_CONTRACT: findUserMessages
+  //   PURPOSE: Load paginated assistant history for one author
+  //   INPUTS: { userId: number, pagination: PaginationQueryDto }
+  //   OUTPUTS: { Promise<mapped ChatMessageEntity[]> }
+  //   SIDE_EFFECTS: none
+  //   LINKS: M-ASSISTANT-CHAT, M-PRISMA, BLOCK_FIND_USER_MESSAGES
+  // END_CONTRACT: findUserMessages
   async findUserMessages(userId: number, pagination: PaginationQueryDto) {
+    // START_BLOCK_FIND_USER_MESSAGES
     const { page = 1, limit = 20 } = pagination;
     const skip = (page - 1) * limit;
 
@@ -56,9 +94,18 @@ export class AssistantChatService {
     });
 
     return Promise.all(messages.map((msg) => this.mapMessage(msg)));
+    // END_BLOCK_FIND_USER_MESSAGES
   }
 
+  // START_CONTRACT: postMessage
+  //   PURPOSE: Store user text and create a keyword-based assistant reply
+  //   INPUTS: { authorId: number, dto: CreateMessageDto }
+  //   OUTPUTS: { Promise<mapped ChatMessageEntity> }
+  //   SIDE_EFFECTS: creates user and assistant AssistantChatMessage rows
+  //   LINKS: M-ASSISTANT-CHAT, V-M-ASSISTANT-CHAT, BLOCK_POST_MESSAGE
+  // END_CONTRACT: postMessage
   async postMessage(authorId: number, dto: CreateMessageDto) {
+    // START_BLOCK_POST_MESSAGE
     await this.prisma.assistantChatMessage.create({
       data: {
         authorId,
@@ -119,5 +166,6 @@ export class AssistantChatService {
     }
 
     return this.mapMessage(assistantResponse);
+    // END_BLOCK_POST_MESSAGE
   }
 }

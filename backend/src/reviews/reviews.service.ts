@@ -1,3 +1,25 @@
+// FILE: backend/src/reviews/reviews.service.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: List and create event reviews that feed organization ratings.
+//   SCOPE: Event/org listing, participant-gated create, rating aggregate update
+//   DEPENDS: M-PRISMA, M-AUTH
+//   LINKS: M-REVIEWS, V-M-REVIEWS, class-ReviewsService
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   ReviewsService - event reviews
+//   findAllForEvent - paginated reviews for one event
+//   findAllForOrganization - paginated reviews for one organization
+//   create - participant review plus organization rating update
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import {
   ConflictException,
   ForbiddenException,
@@ -8,11 +30,26 @@ import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 
+// START_CONTRACT: ReviewsService
+//   PURPOSE: Query reviews and create participant reviews with rating rollup
+//   INPUTS: { eventId: number, organizationId: number, authorId: number, pagination: PaginationQueryDto, createReviewDto: CreateReviewDto }
+//   OUTPUTS: { mapped Review[] | Review }
+//   SIDE_EFFECTS: may create Review and update Organization rating
+//   LINKS: M-REVIEWS, V-M-REVIEWS, M-PRISMA
+// END_CONTRACT: ReviewsService
 @Injectable()
 export class ReviewsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // START_CONTRACT: findAllForEvent
+  //   PURPOSE: Load paginated reviews for one event with public authors
+  //   INPUTS: { eventId: number, pagination: PaginationQueryDto }
+  //   OUTPUTS: { Promise<mapped Review[]> }
+  //   SIDE_EFFECTS: none
+  //   LINKS: M-REVIEWS, BLOCK_LIST_EVENT_REVIEWS
+  // END_CONTRACT: findAllForEvent
   async findAllForEvent(eventId: number, pagination: PaginationQueryDto) {
+    // START_BLOCK_LIST_EVENT_REVIEWS
     const { page = 1, limit = 5 } = pagination;
     const skip = (page - 1) * limit;
 
@@ -39,12 +76,21 @@ export class ReviewsService {
         },
       };
     });
+    // END_BLOCK_LIST_EVENT_REVIEWS
   }
 
+  // START_CONTRACT: findAllForOrganization
+  //   PURPOSE: Load paginated reviews for one organization with public authors
+  //   INPUTS: { organizationId: number, pagination: PaginationQueryDto }
+  //   OUTPUTS: { Promise<mapped Review[]> }
+  //   SIDE_EFFECTS: none
+  //   LINKS: M-REVIEWS, BLOCK_LIST_ORG_REVIEWS
+  // END_CONTRACT: findAllForOrganization
   async findAllForOrganization(
     organizationId: number,
     pagination: PaginationQueryDto,
   ) {
+    // START_BLOCK_LIST_ORG_REVIEWS
     const { page = 1, limit = 10 } = pagination;
     const skip = (page - 1) * limit;
 
@@ -71,13 +117,22 @@ export class ReviewsService {
         },
       };
     });
+    // END_BLOCK_LIST_ORG_REVIEWS
   }
 
+  // START_CONTRACT: create
+  //   PURPOSE: Create a participant review and roll up organization rating
+  //   INPUTS: { eventId: number, authorId: number, createReviewDto: CreateReviewDto }
+  //   OUTPUTS: { Promise<Review> }
+  //   SIDE_EFFECTS: creates Review; updates Organization rating and reviewCount
+  //   LINKS: M-REVIEWS, V-M-REVIEWS, BLOCK_CREATE_REVIEW
+  // END_CONTRACT: create
   async create(
     eventId: number,
     authorId: number,
     createReviewDto: CreateReviewDto,
   ) {
+    // START_BLOCK_CREATE_REVIEW
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
     });
@@ -137,5 +192,6 @@ export class ReviewsService {
 
       return review;
     });
+    // END_BLOCK_CREATE_REVIEW
   }
 }

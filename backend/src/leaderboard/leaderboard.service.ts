@@ -1,3 +1,23 @@
+// FILE: backend/src/leaderboard/leaderboard.service.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Rank volunteers by karma or hours for leaderboard screens.
+//   SCOPE: All-time karma ranking, period ranking from karma_logs, current-user rank
+//   DEPENDS: M-PRISMA
+//   LINKS: M-LEADERBOARD, V-M-LEADERBOARD, class-LeaderboardService
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   LeaderboardService - ranked volunteer lists
+//   getLeaderboard - dispatch all-time vs period ranking
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -8,14 +28,29 @@ import {
 import { LeaderboardResponseEntity } from './entities/leaderboard-response.entity';
 import { LeaderboardUserEntity } from './entities/leaderboard-user.entity';
 
+// START_CONTRACT: LeaderboardService
+//   PURPOSE: Build ranked volunteer lists for all-time or period windows
+//   INPUTS: { query: LeaderboardQueryDto, currentUser: User }
+//   OUTPUTS: { LeaderboardResponseEntity }
+//   SIDE_EFFECTS: none
+//   LINKS: M-LEADERBOARD, V-M-LEADERBOARD, M-PRISMA, BLOCK_RANK_USERS
+// END_CONTRACT: LeaderboardService
 @Injectable()
 export class LeaderboardService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // START_CONTRACT: getLeaderboard
+  //   PURPOSE: Rank volunteers by karma for the requested period
+  //   INPUTS: { query: LeaderboardQueryDto, currentUser: User }
+  //   OUTPUTS: { Promise<LeaderboardResponseEntity> }
+  //   SIDE_EFFECTS: none
+  //   LINKS: M-LEADERBOARD, V-M-LEADERBOARD, BLOCK_RANK_USERS
+  // END_CONTRACT: getLeaderboard
   async getLeaderboard(
     query: LeaderboardQueryDto,
     currentUser: User,
   ): Promise<LeaderboardResponseEntity> {
+    // START_BLOCK_RANK_USERS
     const limit = query.limit ?? 50;
     const period = query.period ?? LeaderboardPeriod.ALL_TIME;
 
@@ -23,6 +58,7 @@ export class LeaderboardService {
       return this.getAllTimeLeaderboard(limit, currentUser.id);
     }
     return this.getPeriodicalLeaderboard(period, limit, currentUser.id);
+    // END_BLOCK_RANK_USERS
   }
 
   private getStartDate(period: LeaderboardPeriod): Date {
@@ -42,6 +78,7 @@ export class LeaderboardService {
     limit: number,
     currentUserId: number,
   ): Promise<LeaderboardResponseEntity> {
+    // START_BLOCK_ALL_TIME_LEADERBOARD
     const topUsersRaw = await this.prisma.user.findMany({
       take: limit,
       orderBy: [{ karmaPoints: 'desc' }, { id: 'asc' }],
@@ -99,6 +136,7 @@ export class LeaderboardService {
     }
 
     return { topUsers: topUsersWithRank, currentUser: currentUserWithRank };
+    // END_BLOCK_ALL_TIME_LEADERBOARD
   }
 
   private async getPeriodicalLeaderboard(
@@ -106,6 +144,7 @@ export class LeaderboardService {
     limit: number,
     currentUserId: number,
   ): Promise<LeaderboardResponseEntity> {
+    // START_BLOCK_PERIODICAL_LEADERBOARD
     const startDate = this.getStartDate(period);
 
     type RawLeaderboardUser = {
@@ -144,5 +183,6 @@ export class LeaderboardService {
       formattedLeaderboard.find((u) => u.id === currentUserId) || null;
 
     return { topUsers, currentUser };
+    // END_BLOCK_PERIODICAL_LEADERBOARD
   }
 }
