@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/profile/myChats/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: App-routed volunteer chats list with search and archive tabs.
+//   SCOPE: Load chats, filter, search toggle, /app navigation
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   MyChatsPage - volunteer chats list under /app routes
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
 import {fetchMyChats} from '../../../lib/api';
@@ -37,6 +56,13 @@ const ChatCell: React.FC<{ chat: MyChatItem; onSelect: () => void }> = ({chat, o
 };
 
 
+// START_CONTRACT: MyChatsPage
+//   PURPOSE: Load my chats and filter by tab and search
+//   INPUTS: { none - uses router }
+//   OUTPUTS: { ReactElement - chats list }
+//   SIDE_EFFECTS: fetchMyChats; navigates to event chat
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchMyChats
+// END_CONTRACT: MyChatsPage
 const MyChatsPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
@@ -50,6 +76,7 @@ const MyChatsPage: React.FC = () => {
   const onFindEvent = () => navigate('/app/home');
 
   useEffect(() => {
+    // START_BLOCK_LOAD_CHATS
     const loadChats = async () => {
       setLoading(true);
       const chats = await fetchMyChats();
@@ -58,6 +85,7 @@ const MyChatsPage: React.FC = () => {
     };
     loadChats();
   }, []);
+    // END_BLOCK_LOAD_CHATS
 
   const filteredChats = useMemo(() => {
     const chatsForTab = allChats.filter(chat => (activeTab === 'active' ? !chat.isArchived : chat.isArchived));
@@ -110,6 +138,7 @@ const MyChatsPage: React.FC = () => {
     );
   };
 
+  // START_BLOCK_RENDER_CHATS
   return (
     <div className="w-full h-screen font-sans antialiased bg-white flex flex-col">
       <header
@@ -167,6 +196,7 @@ const MyChatsPage: React.FC = () => {
       </main>
     </div>
   );
+  // END_BLOCK_RENDER_CHATS
 };
 
 export default MyChatsPage;

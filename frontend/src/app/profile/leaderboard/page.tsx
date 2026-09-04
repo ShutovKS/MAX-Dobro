@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/profile/leaderboard/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Karma leaderboard with period tabs, podium, and current-user footer.
+//   SCOPE: Load leaderboard by period, podium, list, current user fallback
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   LeaderboardPage - karma leaderboard
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useMemo, useState} from 'react';
 import {fetchLeaderboardData} from '../../../lib/api';
 import type {LeaderboardUser, User} from '../../../lib/types';
@@ -102,6 +121,13 @@ const SkeletonRow = () => (
   </div>
 );
 
+// START_CONTRACT: LeaderboardPage
+//   PURPOSE: Load leaderboard data for a period and render ranks
+//   INPUTS: { user: User; onBack: () => void }
+//   OUTPUTS: { ReactElement - leaderboard }
+//   SIDE_EFFECTS: fetchLeaderboardData
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchLeaderboardData
+// END_CONTRACT: LeaderboardPage
 const LeaderboardPage: React.FC<{ user: User; onBack: () => void; }> = ({user, onBack}) => {
   const [activeTab, setActiveTab] = useState<Period>('month');
   const [loading, setLoading] = useState(true);
@@ -109,6 +135,7 @@ const LeaderboardPage: React.FC<{ user: User; onBack: () => void; }> = ({user, o
   const [currentUser, setCurrentUser] = useState<LeaderboardUser | null>(null);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_LEADERBOARD
     const loadData = async () => {
       setLoading(true);
       const leaderboardData = await fetchLeaderboardData(activeTab);
@@ -118,6 +145,7 @@ const LeaderboardPage: React.FC<{ user: User; onBack: () => void; }> = ({user, o
     };
     loadData();
   }, [activeTab]);
+    // END_BLOCK_LOAD_LEADERBOARD
 
   const topThree = useMemo(() => data.slice(0, 3), [data]);
   const listData = useMemo(() => data.slice(3, 100), [data]);
@@ -136,6 +164,7 @@ const LeaderboardPage: React.FC<{ user: User; onBack: () => void; }> = ({user, o
     };
   }, [currentUser, user]);
 
+  // START_BLOCK_RENDER_LEADERBOARD
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       <header
@@ -191,6 +220,7 @@ const LeaderboardPage: React.FC<{ user: User; onBack: () => void; }> = ({user, o
       <UserPositionFooter user={currentUserData}/>
     </div>
   );
+  // END_BLOCK_RENDER_LEADERBOARD
 };
 
 export default LeaderboardPage;

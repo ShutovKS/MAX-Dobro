@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/courses/certificate/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Render a completed-course certificate with share and download actions.
+//   SCOPE: Certificate card, Telegram share, PNG export
+//   DEPENDS: M-FRONTEND-UI, M-FRONTEND-TYPES, M-FRONTEND-TELEGRAM
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   CertificatePage - course completion certificate screen
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useRef} from 'react';
 import {toPng} from 'html-to-image';
 import type {Course, User} from '../../../lib/types';
@@ -7,6 +26,13 @@ import {CERTIFICATE_DEFAULTS} from '../../../lib/constants';
 import {buildDeepLink, tgDownloadFile, tgHaptic, tgShareUrl} from '../../../lib/telegram-sdk';
 import {useTelegramBackButton} from '../../../lib/useTelegramUI';
 
+// START_CONTRACT: CertificatePage
+//   PURPOSE: Show a course certificate and share or download it
+//   INPUTS: { courseId: number; allCourses: Course[]; user: User; onBack: () => void }
+//   OUTPUTS: { ReactElement - certificate card or not-found }
+//   SIDE_EFFECTS: tgShareUrl, tgDownloadFile, haptic
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+// END_CONTRACT: CertificatePage
 const CertificatePage: React.FC<{
   courseId: number;
   allCourses: Course[];
@@ -26,6 +52,7 @@ const CertificatePage: React.FC<{
   const issueDate = new Date().toLocaleDateString('ru-RU');
   const certificateId = `${CERTIFICATE_DEFAULTS.ID_PREFIX}${String(course.id).padStart(CERTIFICATE_DEFAULTS.ID_PADDING, CERTIFICATE_DEFAULTS.ID_PAD_CHAR)}-${new Date().getFullYear()}`;
 
+  // START_BLOCK_SHARE_DOWNLOAD
   const handleShare = () => {
     tgShareUrl(
       buildDeepLink('course', course.id),
@@ -43,7 +70,9 @@ const CertificatePage: React.FC<{
       console.error('Failed to export certificate:', e);
     }
   };
+  // END_BLOCK_SHARE_DOWNLOAD
 
+  // START_BLOCK_RENDER_CERTIFICATE
   return (
     <div className="w-full h-screen font-sans antialiased bg-gray-100 flex flex-col">
       <header className="flex-shrink-0 p-4 bg-white border-b border-gray-200">
@@ -101,6 +130,7 @@ const CertificatePage: React.FC<{
       </main>
     </div>
   );
+  // END_BLOCK_RENDER_CERTIFICATE
 };
 
 export default CertificatePage;

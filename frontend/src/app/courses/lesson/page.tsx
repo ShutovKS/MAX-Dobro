@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/courses/lesson/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Lesson reader and quiz with completion and certificate handoff.
+//   SCOPE: Load course, answer quiz, submit test, mark lesson complete
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   LessonPage - course lesson and quiz screen
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Course } from '../../../lib/types';
 import { Check, Puzzle, Trophy, X } from 'lucide-react';
@@ -111,6 +130,13 @@ const renderMarkdown = (text: string | undefined) => {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
 };
 
+// START_CONTRACT: LessonPage
+//   PURPOSE: Render a lesson or quiz and record completion
+//   INPUTS: { courseId: number; lessonId: number; onClose: () => void; onComplete: (courseId: number) => void }
+//   OUTPUTS: { ReactElement - lesson, quiz, or not-found }
+//   SIDE_EFFECTS: fetchCourseById, completeCourse, markLessonComplete
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-completeCourse, fn-markLessonComplete
+// END_CONTRACT: LessonPage
 const LessonPage: React.FC<{
   courseId: number;
   lessonId: number;
@@ -135,6 +161,7 @@ const LessonPage: React.FC<{
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_LESSON
     const loadCourse = async () => {
       setLoading(true);
       try {
@@ -150,6 +177,7 @@ const LessonPage: React.FC<{
 
     loadCourse();
   }, [courseId]);
+    // END_BLOCK_LOAD_LESSON
 
   const lesson = useMemo(() => {
     if (!course?.program) return null;
@@ -180,6 +208,7 @@ const LessonPage: React.FC<{
     });
   };
 
+  // START_BLOCK_SUBMIT_TEST
   const handleSubmitTest = async () => {
     if (!lesson?.quiz || !course?.program) return;
 
@@ -227,6 +256,7 @@ const LessonPage: React.FC<{
       setShowResultModal(true);
     }
   };
+  // END_BLOCK_SUBMIT_TEST
 
   const handleTryAgain = () => {
     setAnswers({});
@@ -271,6 +301,7 @@ const LessonPage: React.FC<{
     );
   }
 
+  // START_BLOCK_RENDER_LESSON
   return (
     <>
       <div className="w-full h-screen font-sans antialiased bg-white flex flex-col">
@@ -403,6 +434,7 @@ const LessonPage: React.FC<{
       />
     </>
   );
+  // END_BLOCK_RENDER_LESSON
 };
 
 export default LessonPage;

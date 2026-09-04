@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/onboarding/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Collect volunteer interest categories before first home navigation.
+//   SCOPE: Interest card selection and continue CTA
+//   DEPENDS: M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   OnboardingPage - first-run interest picker
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useState} from 'react';
 import {CheckCircle} from 'lucide-react';
 import {ONBOARDING_INTERESTS} from '../../lib/constants';
@@ -29,6 +48,13 @@ const InterestCard: React.FC<InterestCardProps> = ({title, Icon, isSelected, onC
   );
 };
 
+// START_CONTRACT: OnboardingPage
+//   PURPOSE: Let a new volunteer pick interest categories then complete onboarding
+//   INPUTS: { onComplete: () => void - parent marks onboarding done and navigates }
+//   OUTPUTS: { ReactElement - interest grid and continue button }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+// END_CONTRACT: OnboardingPage
 const OnboardingPage: React.FC<{ onComplete: () => void }> = ({onComplete}) => {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
 
@@ -40,6 +66,7 @@ const OnboardingPage: React.FC<{ onComplete: () => void }> = ({onComplete}) => {
 
   const isContinueEnabled = selectedInterests.length > 0;
 
+  // START_BLOCK_RENDER_INTERESTS
   return (
     <div className="bg-white w-full min-h-screen flex flex-col p-6 font-sans antialiased">
       <div className="flex-grow flex flex-col items-center justify-center">
@@ -72,6 +99,7 @@ const OnboardingPage: React.FC<{ onComplete: () => void }> = ({onComplete}) => {
       </div>
     </div>
   );
+  // END_BLOCK_RENDER_INTERESTS
 };
 
 export default OnboardingPage;

@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/tabs/stories/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Volunteer stories feed with create CTA and empty/error states.
+//   SCOPE: fetchAllStories, skeleton, empty, and StoryCard list
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   StoriesPage - stories tab feed
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router';
 import {fetchAllStories} from '../../../lib/api';
@@ -8,12 +27,20 @@ import EmptyState from '../../../components/ui/EmptyState';
 import StoryCard from './components/StoryCard';
 import StorySkeletonCard from './components/StorySkeletonCard';
 
+// START_CONTRACT: StoriesPage
+//   PURPOSE: Load and render the stories feed
+//   INPUTS: { none - uses router navigation }
+//   OUTPUTS: { ReactElement - stories list, skeleton, or empty state }
+//   SIDE_EFFECTS: fetchAllStories; navigates to create
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchAllStories
+// END_CONTRACT: StoriesPage
 const StoriesPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stories, setStories] = useState<Story[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // START_BLOCK_LOAD_STORIES
   useEffect(() => {
     const loadStories = async () => {
       try {
@@ -29,6 +56,7 @@ const StoriesPage: React.FC = () => {
     };
     loadStories();
   }, []);
+  // END_BLOCK_LOAD_STORIES
 
   const onStartCreateStory = () => {
     navigate('/app/stories/create');
@@ -72,6 +100,7 @@ const StoriesPage: React.FC = () => {
     );
   };
 
+  // START_BLOCK_RENDER_FEED
   return (
     <div className="w-full bg-[#F0F0F0] min-h-full relative">
       <header className="p-6 bg-white/80 backdrop-blur-sm sticky top-0 z-10 flex justify-between items-center">
@@ -90,6 +119,7 @@ const StoriesPage: React.FC = () => {
       </main>
     </div>
   );
+  // END_BLOCK_RENDER_FEED
 };
 
 export default StoriesPage;

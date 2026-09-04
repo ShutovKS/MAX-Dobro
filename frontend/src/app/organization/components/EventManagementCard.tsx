@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/organization/components/EventManagementCard.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Card for an organizer event with edit, more, and participant actions.
+//   SCOPE: Event summary, draft badge, participant counts, action buttons
+//   DEPENDS: M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   EventManagementCard - organizer event management row card
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import type {OrganizationEvent} from '../../../lib/types';
 import {MoreHorizontal, Pencil, Users} from 'lucide-react';
@@ -9,12 +28,20 @@ interface EventManagementCardProps {
   onMore: (id: number) => void;
 }
 
+// START_CONTRACT: EventManagementCard
+//   PURPOSE: Render one organizer event with edit and more actions
+//   INPUTS: { event: OrganizationEvent; onSelect/onEdit/onMore: callbacks }
+//   OUTPUTS: { ReactElement - event management card }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+// END_CONTRACT: EventManagementCard
 const EventManagementCard: React.FC<EventManagementCardProps> = ({event, onSelect, onEdit, onMore}) => {
   const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     action();
   };
 
+  // START_BLOCK_RENDER_CARD
   return (
     <button
       onClick={onSelect}
@@ -64,6 +91,7 @@ const EventManagementCard: React.FC<EventManagementCardProps> = ({event, onSelec
       </div>
     </button>
   );
+  // END_BLOCK_RENDER_CARD
 };
 
 export default EventManagementCard;

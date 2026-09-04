@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/tabs/stories/detail/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Story detail with like, comments, share, and event link.
+//   SCOPE: Load story, toggle like, post comment, share deep link
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES, M-FRONTEND-TELEGRAM
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   StoryDetailPage - story detail and comments
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router';
 import {createStoryComment, fetchStoryById, likeStory, unlikeStory} from '../../../../lib/api';
@@ -22,6 +41,13 @@ const CommentView: React.FC<{ comment: Comment }> = ({comment}) => (
   </div>
 );
 
+// START_CONTRACT: StoryDetailPage
+//   PURPOSE: Load a story and handle like, comment, and share
+//   INPUTS: { id: number; currentUserAvatar: string }
+//   OUTPUTS: { ReactElement - story detail }
+//   SIDE_EFFECTS: fetchStoryById, likeStory, unlikeStory, createStoryComment
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchStoryById, fn-createStoryComment
+// END_CONTRACT: StoryDetailPage
 const StoryDetailPage: React.FC<{
   id: number;
   currentUserAvatar: string;
@@ -35,6 +61,7 @@ const StoryDetailPage: React.FC<{
   const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_STORY
     const loadStory = async () => {
       setLoading(true);
       const data = await fetchStoryById(id);
@@ -48,10 +75,12 @@ const StoryDetailPage: React.FC<{
     };
     loadStory();
   }, [id]);
+    // END_BLOCK_LOAD_STORY
 
   const onBack = () => navigate('/app/stories');
   const onSelectEvent = (eventId: number) => navigate(`/app/events/${eventId}`);
 
+  // START_BLOCK_STORY_ACTIONS
   const handleToggleLike = async () => {
     if (!story) return;
     const nextIsLiked = !isLiked;
@@ -90,11 +119,13 @@ const StoryDetailPage: React.FC<{
       setNewComment(text);
     }
   };
+  // END_BLOCK_STORY_ACTIONS
 
   if (loading || !story) {
     return <ArticleSkeleton />;
   }
 
+  // START_BLOCK_RENDER_STORY_DETAIL
   return (
     <div className="w-full h-screen font-sans antialiased bg-white flex flex-col">
       <header
@@ -186,6 +217,7 @@ const StoryDetailPage: React.FC<{
       </footer>
     </div>
   );
+  // END_BLOCK_RENDER_STORY_DETAIL
 };
 
 export default StoryDetailPage;

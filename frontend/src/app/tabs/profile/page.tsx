@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/tabs/profile/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Volunteer profile tab with stats, challenge, achievements, and shortcuts.
+//   SCOPE: Load weekly challenge, stat navigation, organizer switch
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   ProfilePage - profile tab hub
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useState} from 'react';
 import {useNavigate, useOutletContext} from 'react-router';
 import type {ProfileSubScreen, User, WeeklyChallenge} from '../../../lib/types';
@@ -50,12 +69,20 @@ const AchievementBadge: React.FC<{ achievement: User['achievements'][0] }> = Rea
   );
 });
 
+// START_CONTRACT: ProfilePage
+//   PURPOSE: Render the volunteer profile hub from outlet user context
+//   INPUTS: { none - reads user from Outlet context }
+//   OUTPUTS: { ReactElement - profile hub }
+//   SIDE_EFFECTS: fetchWeeklyChallenge; navigates to profile sub-screens
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchWeeklyChallenge
+// END_CONTRACT: ProfilePage
 const ProfilePage: React.FC = () => {
   const {user, onSwitchToOrganizationMode} = useOutletContext<{ user: User, onSwitchToOrganizationMode: () => void }>();
   const navigate = useNavigate();
   const [challenge, setChallenge] = useState<WeeklyChallenge | null>(null);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_PROFILE
     const loadChallenge = async () => {
       try {
         const challengeData = await fetchWeeklyChallenge();
@@ -66,6 +93,7 @@ const ProfilePage: React.FC = () => {
     };
     loadChallenge();
   }, []);
+    // END_BLOCK_LOAD_PROFILE
 
   const onNavigate = (screen: ProfileSubScreen) => {
     navigate(`/app/profile/${screen}`);
@@ -102,6 +130,7 @@ const ProfilePage: React.FC = () => {
   ];
 
 
+  // START_BLOCK_RENDER_PROFILE
   return (
     <div className="w-full min-h-full bg-gray-50 pb-10">
       <header className="p-6 flex justify-between items-center">
@@ -212,6 +241,7 @@ const ProfilePage: React.FC = () => {
       )}
     </div>
   );
+  // END_BLOCK_RENDER_PROFILE
 };
 
 export default ProfilePage;

@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/organization/settings/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Organization settings for profile, notifications, and logout.
+//   SCOPE: Settings rows, notification toggles, logout confirm modal
+//   DEPENDS: M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   OrganizationSettingsPage - organizer settings screen
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useState} from 'react';
 import {ArrowLeft, Bell, Briefcase, ChevronRight, FileText, LogOut, MessageSquare, Users} from 'lucide-react';
 import LogoutConfirmationModal from '../../../components/ui/LogoutConfirmationModal';
@@ -61,6 +80,13 @@ const ToggleRow: React.FC<{ label: string; enabled: boolean; onChange: (enabled:
 );
 
 
+// START_CONTRACT: OrganizationSettingsPage
+//   PURPOSE: Render organizer settings and confirm logout
+//   INPUTS: { onBack: () => void; onLogout: () => void }
+//   OUTPUTS: { ReactElement - settings lists and logout modal }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+// END_CONTRACT: OrganizationSettingsPage
 const OrganizationSettingsPage: React.FC<{ onBack: () => void; onLogout: () => void; }> = ({onBack, onLogout}) => {
   const [notifications, setNotifications] = useState({newApplications: true, chatMessages: true});
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -69,6 +95,7 @@ const OrganizationSettingsPage: React.FC<{ onBack: () => void; onLogout: () => v
     setNotifications(prev => ({...prev, [key]: !prev[key]}));
   }
 
+  // START_BLOCK_RENDER_ORG_SETTINGS
   return (
     <>
       <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
@@ -129,6 +156,7 @@ const OrganizationSettingsPage: React.FC<{ onBack: () => void; onLogout: () => v
       />
     </>
   );
+  // END_BLOCK_RENDER_ORG_SETTINGS
 };
 
 export default OrganizationSettingsPage;

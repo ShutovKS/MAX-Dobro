@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/profile/achievements/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Volunteer achievement gallery with progress and detail modal.
+//   SCOPE: Load user achievements, unlocked/locked grids, navigate by category
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   AllAchievementsPage - achievements gallery
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { fetchUserAchievements } from '../../../lib/api'; // <-- Меняем импорт
@@ -72,6 +91,13 @@ const AchievementBadge: React.FC<{ achievement: Achievement }> = ({achievement})
 };
 
 
+// START_CONTRACT: AllAchievementsPage
+//   PURPOSE: Load achievements and open detail for unlocked or locked badges
+//   INPUTS: { none - uses router }
+//   OUTPUTS: { ReactElement - achievement gallery }
+//   SIDE_EFFECTS: fetchUserAchievements; navigates to related tabs
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchUserAchievements
+// END_CONTRACT: AllAchievementsPage
 const AllAchievementsPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(
@@ -83,6 +109,7 @@ const AllAchievementsPage: React.FC = () => {
   const onBack = () => navigate('/app/profile');
 
   useEffect(() => {
+    // START_BLOCK_LOAD_ACHIEVEMENTS
     const loadAchievements = async () => {
       setLoading(true);
       const data = await fetchUserAchievements(); // <-- Используем новую функцию
@@ -91,6 +118,7 @@ const AllAchievementsPage: React.FC = () => {
     };
     loadAchievements();
   }, []);
+    // END_BLOCK_LOAD_ACHIEVEMENTS
 
   const unlockedAchievements = achievements.filter((a) => a.unlocked);
   const lockedAchievements = achievements.filter((a) => !a.unlocked);
@@ -111,6 +139,7 @@ const AllAchievementsPage: React.FC = () => {
 
   const onFindEvent = () => navigate('/app/home');
 
+  // START_BLOCK_RENDER_ACHIEVEMENTS
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       <header className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center">
@@ -208,6 +237,7 @@ const AllAchievementsPage: React.FC = () => {
       />
     </div>
   );
+  // END_BLOCK_RENDER_ACHIEVEMENTS
 };
 
 export default AllAchievementsPage;

@@ -1,9 +1,35 @@
+// FILE: frontend/src/app/tabs/stories/components/StoryCard.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Feed card for a volunteer story with like, comments, and event link.
+//   SCOPE: Optimistic like toggle, navigation to story and event detail
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   StoryCard - stories feed card with like and comment actions
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useState} from 'react';
 import {useNavigate} from 'react-router';
 import type {Story} from '../../../../lib/types';
 import {likeStory, unlikeStory} from '../../../../lib/api';
 import {Heart, MessageSquare, Upload} from 'lucide-react';
 
+// START_CONTRACT: StoryCard
+//   PURPOSE: Render a story preview and toggle like against the API
+//   INPUTS: { story: Story }
+//   OUTPUTS: { ReactElement - story card }
+//   SIDE_EFFECTS: likeStory/unlikeStory; navigates to story or event
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-likeStory
+// END_CONTRACT: StoryCard
 const StoryCard: React.FC<{
   story: Story;
 }> = React.memo(({story}) => {
@@ -19,6 +45,7 @@ const StoryCard: React.FC<{
     navigate(`/app/stories/${id}`);
   };
 
+  // START_BLOCK_TOGGLE_LIKE
   const onToggleLike = async () => {
     const nextIsLiked = !isLiked;
     setIsLiked(nextIsLiked);
@@ -34,7 +61,9 @@ const StoryCard: React.FC<{
       setLikes(prev => Math.max(0, prev + (nextIsLiked ? -1 : 1)));
     }
   };
+  // END_BLOCK_TOGGLE_LIKE
 
+  // START_BLOCK_RENDER_STORY_CARD
   return (
     <div className="bg-white rounded-2xl shadow-sm w-full max-w-lg mx-auto">
       <div className="p-4 cursor-pointer" onClick={() => onSelectStory(story.id)}>
@@ -82,6 +111,7 @@ const StoryCard: React.FC<{
       </div>
     </div>
   );
+  // END_BLOCK_RENDER_STORY_CARD
 });
 
 export default StoryCard;

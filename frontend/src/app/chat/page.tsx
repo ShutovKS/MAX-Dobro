@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/chat/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Assistant chat that answers volunteer questions and suggests events.
+//   SCOPE: Intent matching, mock fallback, history load, message send, event cards
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   AssistantChatPage - in-app assistant chat screen
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useRef, useState} from 'react';
 import {useNavigate} from 'react-router';
 import type {AppEvent, ChatMessage, User} from '../../lib/types';
@@ -15,6 +34,7 @@ const formatTimestamp = () => new Intl.DateTimeFormat('ru-RU', {
   minute: '2-digit'
 }).format(new Date());
 
+// START_BLOCK_ASSISTANT_INTENTS
 const INTENTS = [
   {
     key: 'greeting',
@@ -203,6 +223,7 @@ const INTENTS = [
     }
   }
 ] as const;
+// END_BLOCK_ASSISTANT_INTENTS
 
 const empatheticPhrases = [
   'Рада помочь!',
@@ -243,6 +264,13 @@ const getMockAssistantResponse = async (text: string): Promise<ChatMessage> => {
   };
 };
 
+// START_CONTRACT: AssistantChatPage
+//   PURPOSE: Load chat history, send messages, and render the assistant thread
+//   INPUTS: { onClose: () => void; user: User }
+//   OUTPUTS: { ReactElement - assistant chat }
+//   SIDE_EFFECTS: fetchAssistantChatMessages, postAssistantMessage
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-postAssistantMessage
+// END_CONTRACT: AssistantChatPage
 const AssistantChatPage: React.FC<{
   onClose: () => void;
   user: User;
@@ -255,6 +283,7 @@ const AssistantChatPage: React.FC<{
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const inputRef = useRef<null | HTMLInputElement>(null);
 
+  // START_BLOCK_LOAD_CHAT_HISTORY
   useEffect(() => {
     let isMounted = true;
     const initialMessages: ChatMessage[] = [
@@ -293,11 +322,13 @@ const AssistantChatPage: React.FC<{
       isMounted = false;
     };
   }, [user.firstName]);
+  // END_BLOCK_LOAD_CHAT_HISTORY
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
   }, [messages, isLoading]);
 
+  // START_BLOCK_SEND_MESSAGE
   const handleSend = async (messageText?: string) => {
     const textToSend = (messageText || input).trim();
     if (!textToSend || isLoading) return;
@@ -329,12 +360,14 @@ const AssistantChatPage: React.FC<{
     setTimeout(() => setContextTip(null), 4000);
     setIsLoading(false);
   };
+  // END_BLOCK_SEND_MESSAGE
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSend();
   };
 
+  // START_BLOCK_RENDER_CHAT
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       <header
@@ -451,6 +484,7 @@ const AssistantChatPage: React.FC<{
       </footer>
     </div>
   );
+  // END_BLOCK_RENDER_CHAT
 };
 
 export default AssistantChatPage;

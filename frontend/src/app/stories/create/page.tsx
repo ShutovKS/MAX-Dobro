@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/stories/create/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Compose and publish a volunteer story with photos and a linked event.
+//   SCOPE: Event pick, image upload, text, createStory
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   CreateStoryPage - new story composer
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useRef, useState} from 'react';
 import type {HistoryEvent} from '../../../lib/types';
 import {createStory, fetchActivityHistoryEvents} from '../../../lib/api';
@@ -11,6 +30,13 @@ interface CreateStoryPageProps {
   initialEventId: string | null;
 }
 
+// START_CONTRACT: CreateStoryPage
+//   PURPOSE: Collect event, photos, and text then publish a story
+//   INPUTS: { onCancel: () => void; onPublish: (storyData) => void; initialEventId: string | null }
+//   OUTPUTS: { ReactElement - composer plus SelectEventModal }
+//   SIDE_EFFECTS: uploadImage, createStory, fetchActivityHistoryEvents
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-createStory
+// END_CONTRACT: CreateStoryPage
 const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, initialEventId}) => {
   const [selectedEvent, setSelectedEvent] = useState<HistoryEvent | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -21,6 +47,7 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
   const [uploadError, setUploadError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // START_BLOCK_LOAD_INITIAL_EVENT
   useEffect(() => {
     if (initialEventId) {
       const loadInitialEvent = async () => {
@@ -31,6 +58,7 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
       loadInitialEvent();
     }
   }, [initialEventId]);
+  // END_BLOCK_LOAD_INITIAL_EVENT
 
   const isPublishEnabled = !!selectedEvent && text.trim().length > 0 && photos.length > 0;
 
@@ -59,6 +87,7 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
     setPhotos(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
+  // START_BLOCK_PUBLISH_STORY
   const handlePublishClick = async () => {
     if (isPublishEnabled && selectedEvent && !isPublishing) {
       setIsPublishing(true);
@@ -71,7 +100,9 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
       }
     }
   };
+  // END_BLOCK_PUBLISH_STORY
 
+  // START_BLOCK_RENDER_COMPOSER
   return (
     <>
       <div className="w-full h-screen font-sans antialiased bg-white flex flex-col">
@@ -155,6 +186,7 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
       />
     </>
   );
+  // END_BLOCK_RENDER_COMPOSER
 };
 
 export default CreateStoryPage;

@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/tabs/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Home tab event feed and map with search, filters, and stories carousel.
+//   SCOPE: Load events/stories/markers, filter, map/feed toggle
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   HomePage - home tab map and event feed
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
 import {Filter, List, MapPin as MapPinIcon, Search, ServerCrash, Sparkles, X} from 'lucide-react';
@@ -30,6 +49,7 @@ const getDistance = (from: [number, number], to: [number, number]): number => {
   return R * c; // Distance in km
 };
 
+// START_BLOCK_APPLY_FILTERS
 const applyAllFilters = (
   events: AppEvent[],
   markers: MapMarker[],
@@ -89,6 +109,7 @@ const applyAllFilters = (
     return true;
   });
 };
+    // END_BLOCK_APPLY_FILTERS
 
 
 const StoryPreviewCard: React.FC<{ story: Story; onSelectStory: (id: number) => void }> = ({story, onSelectStory}) => (
@@ -360,6 +381,13 @@ const FeedScreen: React.FC<{
   </div>
 );
 
+// START_CONTRACT: HomePage
+//   PURPOSE: Load home catalog and render map or feed with filters
+//   INPUTS: { none - uses router }
+//   OUTPUTS: { ReactElement - home map or feed }
+//   SIDE_EFFECTS: fetchAllEvents, fetchAllStories, fetchMapMarkers
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchAllEvents, fn-fetchMapMarkers
+// END_CONTRACT: HomePage
 export default function HomePage() {
   const navigate = useNavigate();
   const [view, setView] = useState<'map' | 'feed'>('map');
@@ -374,6 +402,7 @@ export default function HomePage() {
   const [userLocation] = useState<[number, number]>([55.751244, 37.618423]); // Mock user location (Moscow Center)
 
   useEffect(() => {
+    // START_BLOCK_LOAD_HOME
     const loadData = async () => {
       setLoading(true);
       setError(null);
@@ -394,6 +423,7 @@ export default function HomePage() {
     };
     loadData();
   }, []);
+    // END_BLOCK_LOAD_HOME
 
   const filteredEvents = useMemo(() => {
     const baseFiltered = applyAllFilters(allEvents, allMarkers, appliedFilters, userLocation);
@@ -429,6 +459,7 @@ export default function HomePage() {
     )
   }
 
+  // START_BLOCK_RENDER_HOME
   return (
     <div className="w-full h-full relative">
       <header className="absolute top-0 left-0 right-0 p-4 z-40 space-y-3">
@@ -525,4 +556,5 @@ export default function HomePage() {
       />
     </div>
   );
+  // END_BLOCK_RENDER_HOME
 };

@@ -1,8 +1,34 @@
+// FILE: frontend/src/app/profile/edit/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Edit volunteer name, about, and avatar photo.
+//   SCOPE: Form dirty tracking, image upload, save callback
+//   DEPENDS: M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   EditProfilePage - profile editor form
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useRef, useState} from 'react';
 import type {User} from '../../../lib/types';
 import {Camera, Loader2} from 'lucide-react';
 import {uploadImage} from '../../../lib/upload';
 
+// START_CONTRACT: EditProfilePage
+//   PURPOSE: Edit profile fields and avatar then call onSave
+//   INPUTS: { user: User; onCancel: () => void; onSave: (updatedUser: User) => void }
+//   OUTPUTS: { ReactElement - edit form }
+//   SIDE_EFFECTS: uploadImage
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+// END_CONTRACT: EditProfilePage
 const EditProfilePage: React.FC<{
   user: User;
   onCancel: () => void;
@@ -43,6 +69,7 @@ const EditProfilePage: React.FC<{
     fileInputRef.current?.click();
   };
 
+  // START_BLOCK_UPLOAD_AVATAR
   const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -58,7 +85,9 @@ const EditProfilePage: React.FC<{
       setIsUploading(false);
     }
   };
+  // END_BLOCK_UPLOAD_AVATAR
 
+  // START_BLOCK_RENDER_EDIT_FORM
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       <header
@@ -141,6 +170,7 @@ const EditProfilePage: React.FC<{
       </main>
     </div>
   );
+  // END_BLOCK_RENDER_EDIT_FORM
 };
 
 export default EditProfilePage;

@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/events/chat/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Event participant chat with pinned organizer note and send box.
+//   SCOPE: Load event and messages, post message, render bubbles
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   EventChatPage - event participant chat screen
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useRef, useState} from 'react';
 import type {AppEvent, EventChatMessage, User} from '../../../lib/types';
 import {fetchEventById, fetchEventChatMessages, postEventChatMessage} from '../../../lib/api';
@@ -40,6 +59,13 @@ const PinnedMessage: React.FC<{ onDismiss: () => void }> = ({onDismiss}) => (
   </div>
 );
 
+// START_CONTRACT: EventChatPage
+//   PURPOSE: Load event chat history and send messages
+//   INPUTS: { eventId: number; user: User; onBack: () => void }
+//   OUTPUTS: { ReactElement - event chat }
+//   SIDE_EFFECTS: fetchEventById, fetchEventChatMessages, postEventChatMessage
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-postEventChatMessage
+// END_CONTRACT: EventChatPage
 const EventChatPage: React.FC<{
   eventId: number;
   user: User;
@@ -53,6 +79,7 @@ const EventChatPage: React.FC<{
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_EVENT_CHAT
     const loadData = async () => {
       setLoading(true);
       const [eventData, messagesData] = await Promise.all([
@@ -65,11 +92,13 @@ const EventChatPage: React.FC<{
     };
     loadData();
   }, [eventId]);
+    // END_BLOCK_LOAD_EVENT_CHAT
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
   }, [messages]);
 
+  // START_BLOCK_SEND_EVENT_MESSAGE
   const handleSend = async () => {
     const textToSend = input.trim();
     if (!textToSend) return;
@@ -90,6 +119,7 @@ const EventChatPage: React.FC<{
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
+  // END_BLOCK_SEND_EVENT_MESSAGE
     e.preventDefault();
     handleSend();
   };
@@ -98,6 +128,7 @@ const EventChatPage: React.FC<{
     return <ChatSkeleton />;
   }
 
+  // START_BLOCK_RENDER_EVENT_CHAT
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       <header
@@ -153,6 +184,7 @@ const EventChatPage: React.FC<{
       </footer>
     </div>
   );
+  // END_BLOCK_RENDER_EVENT_CHAT
 };
 
 export default EventChatPage;

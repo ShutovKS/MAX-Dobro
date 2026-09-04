@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/organization/events/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Organizer event list with active, past, and draft tabs.
+//   SCOPE: Load org events, filter by tab, navigate to create/edit/participants
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   EventManagementPage - organizer event management list
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useMemo, useState} from 'react';
 import {fetchOrganizationEvents} from '../../../lib/api';
 import type {OrganizationEvent, User} from '../../../lib/types';
@@ -17,6 +36,13 @@ const SkeletonCard = () => (
 );
 
 
+// START_CONTRACT: EventManagementPage
+//   PURPOSE: Load organizer events and render tabbed management cards
+//   INPUTS: { user: User; onBack/onCreateEvent/onEditEvent/onManageParticipants: callbacks }
+//   OUTPUTS: { ReactElement - event list }
+//   SIDE_EFFECTS: fetchOrganizationEvents
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchOrganizationEvents
+// END_CONTRACT: EventManagementPage
 const EventManagementPage: React.FC<{
   user: User;
   onBack: () => void;
@@ -29,6 +55,7 @@ const EventManagementPage: React.FC<{
   const [events, setEvents] = useState<OrganizationEvent[]>([]);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_ORG_EVENTS
     const loadEvents = async () => {
       setLoading(true);
       try {
@@ -42,6 +69,7 @@ const EventManagementPage: React.FC<{
     };
     loadEvents();
   }, []);
+    // END_BLOCK_LOAD_ORG_EVENTS
 
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
@@ -84,6 +112,7 @@ const EventManagementPage: React.FC<{
     }
   };
 
+  // START_BLOCK_RENDER_ORG_EVENTS
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       <header
@@ -136,6 +165,7 @@ const EventManagementPage: React.FC<{
       </main>
     </div>
   );
+  // END_BLOCK_RENDER_ORG_EVENTS
 };
 
 export default EventManagementPage;

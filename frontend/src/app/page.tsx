@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Compose routes, session restore, onboarding, and tab navigation for the mini-app.
+//   SCOPE: Session restore, Telegram auto-login, startapp deep-links, guest and authenticated route tables, toast shell
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-AUTH, M-FRONTEND-TELEGRAM, M-FRONTEND-SCREENS, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-APP, V-M-FRONTEND-APP
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   App - route shell and session gate for the mini-app
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Navigate,
@@ -53,6 +72,7 @@ import {
 import { MESSAGES, ROUTES } from '../lib/constants';
 import { initTelegram, isTelegramClient, telegramLogin, tgGetStartParam, waitForTelegramInitData } from '../lib/telegram-sdk';
 
+// START_BLOCK_PARSE_START_PARAM
 // Telegram deep-link `?startapp=kind_id` -> маршрут сущности (или null).
 const routeFromStartParam = (): string | null => {
   const param = tgGetStartParam();
@@ -71,9 +91,16 @@ const routeFromStartParam = (): string | null => {
   };
   return map[kind] ?? null;
 };
+// END_BLOCK_PARSE_START_PARAM
 
+// START_CONTRACT: App
+//   PURPOSE: Restore session, apply Telegram deep links, and render the mini-app route table
+//   INPUTS: { none - reads router location, session storage, and Telegram start param }
+//   OUTPUTS: { ReactElement - splash, error, guest, or authenticated route tree }
+//   SIDE_EFFECTS: Navigates, loads rewards/courses, writes onboarding flag, logout
+//   LINKS: M-FRONTEND-APP, V-M-FRONTEND-APP, fn-getCurrentSession, fn-initTelegram
+// END_CONTRACT: App
 const App: React.FC = () => {
-  /** <context:frontend_app_shell> Route shell for auth, onboarding, and tab switching. </context:frontend_app_shell> */
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<'network' | 'server' | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
@@ -99,6 +126,7 @@ const App: React.FC = () => {
       : ROUTES.HOME;
   };
 
+  // START_BLOCK_RESTORE_SESSION
   const initializeApp = async () => {
     setError(null);
     initTelegram();
@@ -161,11 +189,13 @@ const App: React.FC = () => {
       }
     }
   };
+  // END_BLOCK_RESTORE_SESSION
 
   useEffect(() => {
     initializeApp();
   }, []);
 
+  // START_BLOCK_TELEGRAM_START_PARAM
   // Подстраховка для deep-link: срабатывает ПОСЛЕ полной инициализации
   // (isInitialized=true ставится в finally, уже после возможного navigate на
   // главную) — поэтому переход на сущность не перетирается.
@@ -178,7 +208,9 @@ const App: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInitialized, isAuthenticated]);
+  // END_BLOCK_TELEGRAM_START_PARAM
 
+  // START_BLOCK_SESSION_HANDLERS
   const handleAuthSuccess = (session: { user: User; token: string }) => {
     setUserData(session.user);
     initializeApp(); // Переинициализируем приложение, чтобы загрузить все данные
@@ -236,7 +268,9 @@ const App: React.FC = () => {
       console.error("Failed to re-fetch courses after completion:", e);
     }
   };
+  // END_BLOCK_SESSION_HANDLERS
 
+  // START_BLOCK_ROUTE_WRAPPERS
   const EventChatPageWrapper = () => {
     const { id } = useParams();
     return <EventChatPage eventId={parseInt(id || '0', 10)} user={userData!} onBack={() => navigate(-1)} />;
@@ -331,7 +365,9 @@ const App: React.FC = () => {
   };
   const EventParticipantsPageWrapper = () => <EventParticipantsPage user={userData!} onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)} />;
   const OrganizationSettingsPageWrapper = () => <OrganizationSettingsPage onBack={() => navigate(ROUTES.ORGANIZATION_DASHBOARD)} onLogout={handleLogout} />;
-  
+  // END_BLOCK_ROUTE_WRAPPERS
+
+  // START_BLOCK_ROUTE_TABLE
   const element = useRoutes(
     isAuthenticated && userData ?
       [
@@ -382,7 +418,9 @@ const App: React.FC = () => {
         { path: "*", element: <Navigate to={ROUTES.AUTH} replace /> },
       ]
   );
+  // END_BLOCK_ROUTE_TABLE
 
+  // START_BLOCK_RENDER_GATE
   if (!isInitialized) {
     return <SplashPage />;
   }
@@ -410,6 +448,7 @@ const App: React.FC = () => {
       />
     </>
   );
+  // END_BLOCK_RENDER_GATE
 };
 
 export default App;

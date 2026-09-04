@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/organization/events/participants/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Review event applications and confirm or reject participants.
+//   SCOPE: Load participants, tab filters, local status change
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   EventParticipantsPage - organizer event participants screen
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useMemo, useState} from 'react';
 import {useParams} from 'react-router';
 import {fetchEventParticipants, fetchOrganizationEvents} from '../../../../lib/api';
@@ -61,6 +80,13 @@ const ParticipantCellSkeleton: React.FC = () => (
   </div>
 );
 
+// START_CONTRACT: EventParticipantsPage
+//   PURPOSE: Load event participants and accept or reject applications
+//   INPUTS: { user: User; onBack: () => void }
+//   OUTPUTS: { ReactElement - participant lists }
+//   SIDE_EFFECTS: fetchOrganizationEvents, fetchEventParticipants
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchEventParticipants
+// END_CONTRACT: EventParticipantsPage
 const EventParticipantsPage: React.FC<{
   user: User;
   onBack: () => void;
@@ -72,6 +98,7 @@ const EventParticipantsPage: React.FC<{
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_PARTICIPANTS
     const loadData = async () => {
       if (!eventId) {
         setLoading(false);
@@ -97,6 +124,7 @@ const EventParticipantsPage: React.FC<{
     };
     loadData();
   }, [eventId]);
+    // END_BLOCK_LOAD_PARTICIPANTS
 
   const newApplications = useMemo(() => participants.filter(p => p.status === 'new'), [participants]);
   const confirmedParticipants = useMemo(() => participants.filter(p => p.status === 'confirmed'), [participants]);
@@ -174,6 +202,7 @@ const EventParticipantsPage: React.FC<{
     )
   }
 
+  // START_BLOCK_RENDER_PARTICIPANTS
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       {renderHeader()}
@@ -246,6 +275,7 @@ const EventParticipantsPage: React.FC<{
       </main>
     </div>
   );
+  // END_BLOCK_RENDER_PARTICIPANTS
 };
 
 export default EventParticipantsPage;

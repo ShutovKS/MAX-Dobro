@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/profile/history/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Activity history with upcoming cancel, past reviews, and PDF print.
+//   SCOPE: Load history, cancel signup, submit review, start story
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   ActivityHistoryPage - volunteer activity history
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router';
 import {createEventReview, fetchActivityHistoryEvents} from '../../../lib/api';
@@ -91,6 +110,13 @@ const PastEventCard: React.FC<{
   );
 };
 
+// START_CONTRACT: ActivityHistoryPage
+//   PURPOSE: Load activity history and handle cancel, review, and story
+//   INPUTS: { none - uses router }
+//   OUTPUTS: { ReactElement - upcoming and past event lists }
+//   SIDE_EFFECTS: fetchActivityHistoryEvents, createEventReview
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchActivityHistoryEvents, fn-createEventReview
+// END_CONTRACT: ActivityHistoryPage
 const ActivityHistoryPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
@@ -116,6 +142,7 @@ const ActivityHistoryPage: React.FC = () => {
   const onStartCreateStory = (event: HistoryEvent) => navigate(`/app/stories/create?eventId=${event.id}`);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_HISTORY
     const loadHistory = async () => {
       setLoading(true);
       const events = await fetchActivityHistoryEvents();
@@ -126,7 +153,9 @@ const ActivityHistoryPage: React.FC = () => {
     };
     loadHistory();
   }, []);
+    // END_BLOCK_LOAD_HISTORY
 
+  // START_BLOCK_CANCEL_AND_REVIEW
   const handleConfirmCancel = () => {
     if (!cancellingEvent) return;
 
@@ -160,7 +189,9 @@ const ActivityHistoryPage: React.FC = () => {
       type: "success",
     });
   };
+  // END_BLOCK_CANCEL_AND_REVIEW
 
+  // START_BLOCK_RENDER_HISTORY
   return (
     <>
       <Toast
@@ -270,6 +301,7 @@ const ActivityHistoryPage: React.FC = () => {
       />
     </>
   );
+  // END_BLOCK_RENDER_HISTORY
 };
 
 export default ActivityHistoryPage;

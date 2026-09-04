@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/profile/calendar/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Calendar of upcoming volunteer events by month and selected day.
+//   SCOPE: Load upcoming history events, month grid, day list
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   CalendarPage - volunteer event calendar
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
 import {fetchActivityHistoryEvents} from '../../../lib/api';
@@ -6,6 +25,13 @@ import {parseRuDateToDate} from '../../../lib/dateUtils';
 import {ArrowLeft, CalendarDays, ChevronLeft, ChevronRight} from 'lucide-react';
 import {CATEGORY_COLORS, DAY_NAMES, MONTH_NAMES} from '../../../lib/constants';
 
+// START_CONTRACT: CalendarPage
+//   PURPOSE: Load upcoming events and render a month calendar
+//   INPUTS: { none - uses router }
+//   OUTPUTS: { ReactElement - calendar }
+//   SIDE_EFFECTS: fetchActivityHistoryEvents; navigates to event detail
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchActivityHistoryEvents
+// END_CONTRACT: CalendarPage
 const CalendarPage: React.FC = () => {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -18,6 +44,7 @@ const CalendarPage: React.FC = () => {
   const onSelectEvent = (id: number) => navigate(`/app/events/${id}`);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_CALENDAR
     const loadEvents = async () => {
       setLoading(true);
       const events = await fetchActivityHistoryEvents();
@@ -30,6 +57,7 @@ const CalendarPage: React.FC = () => {
     };
     loadEvents();
   }, []);
+    // END_BLOCK_LOAD_CALENDAR
 
   const eventDates = useMemo(() => {
     const dates = new Set<string>();
@@ -73,6 +101,7 @@ const CalendarPage: React.FC = () => {
   const today = new Date();
   const calendarGrid = generateCalendarGrid();
 
+  // START_BLOCK_RENDER_CALENDAR
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       <header className="flex-shrink-0 p-6 pb-4 bg-white flex items-center">
@@ -172,6 +201,7 @@ const CalendarPage: React.FC = () => {
       </main>
     </div>
   );
+  // END_BLOCK_RENDER_CALENDAR
 };
 
 export default CalendarPage;

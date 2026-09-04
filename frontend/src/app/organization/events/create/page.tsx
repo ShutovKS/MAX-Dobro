@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/organization/events/create/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Create or edit an organizer event with map, rewards, and publish.
+//   SCOPE: Form fields, map pick, reward presets, publish payload
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES, M-FRONTEND-TELEGRAM
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   CreateEventPage - create and edit event form
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useState} from 'react';
 import type {Course, EventCreatePayload, OrganizationEvent, User} from '../../../../lib/types';
 import {fetchAllCourses, fetchOrganizationEvents} from '../../../../lib/api';
@@ -49,6 +68,13 @@ interface CreateEventPageProps {
   onPublish: (data: EventCreatePayload) => void;
 }
 
+// START_CONTRACT: CreateEventPage
+//   PURPOSE: Collect event fields and publish via onPublish
+//   INPUTS: { user: User; event?: OrganizationEvent | null; onBack: () => void; onPublish: (data: EventCreatePayload) => void }
+//   OUTPUTS: { ReactElement - event form }
+//   SIDE_EFFECTS: fetchAllCourses, fetchOrganizationEvents, haptic
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-createEvent, fn-updateEvent
+// END_CONTRACT: CreateEventPage
 const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, onPublish}) => {
   const [title, setTitle] = useState(event?.title || '');
   const [category, setCategory] = useState<string | null>(null);
@@ -66,6 +92,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, o
   const [recommendedCourseId, setRecommendedCourseId] = useState<number | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
 
+  // START_BLOCK_LOAD_EVENT_FORM
   useEffect(() => {
     fetchAllCourses().then(setCourses).catch(() => setCourses([]));
   }, []);
@@ -84,6 +111,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, o
       loadEventData();
     }
   }, [event]);
+  // END_BLOCK_LOAD_EVENT_FORM
 
   const handlePickPoint = (lat: number, lng: number) => {
     setCoords({lat, lng});
@@ -93,6 +121,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, o
 
   const isFormValid = title && category && description && startDate && (format === 'Онлайн' || address);
 
+  // START_BLOCK_PUBLISH_EVENT
   const handlePublish = () => {
     if (!isFormValid) return;
     const payload: EventCreatePayload = {
@@ -111,6 +140,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, o
     };
     onPublish(payload);
   };
+  // END_BLOCK_PUBLISH_EVENT
 
   const PresetGroup: React.FC<{
     label: string;
@@ -137,6 +167,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, o
     </InputField>
   );
 
+  // START_BLOCK_RENDER_EVENT_FORM
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       <header
@@ -293,6 +324,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, o
       </footer>
     </div>
   );
+  // END_BLOCK_RENDER_EVENT_FORM
 };
 
 export default CreateEventPage;

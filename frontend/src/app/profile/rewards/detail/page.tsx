@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/profile/rewards/detail/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Reward detail with affordability check and purchase confirmation.
+//   SCOPE: Karma balance, purchase modal, already-owned state
+//   DEPENDS: M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   RewardsDetailPage - single reward purchase screen
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
 import type {RewardItem, User} from '../../../../lib/types';
@@ -11,6 +30,13 @@ interface RewardsDetailPageProps {
   onPurchase: (rewardId: number) => Promise<void>;
 }
 
+// START_CONTRACT: RewardsDetailPage
+//   PURPOSE: Show a reward and confirm purchase when affordable
+//   INPUTS: { rewardId: number; allRewards: RewardItem[]; user: User; onPurchase: (rewardId: number) => Promise<void> }
+//   OUTPUTS: { ReactElement - reward detail or not-found }
+//   SIDE_EFFECTS: Calls onPurchase
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-purchaseReward
+// END_CONTRACT: RewardsDetailPage
 const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewards, user, onPurchase}) => {
   const navigate = useNavigate();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -30,6 +56,7 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
 
   const canAfford = karmaBalance >= reward.price;
 
+  // START_BLOCK_PURCHASE_REWARD
   const handlePurchaseClick = () => {
     if (canAfford && !reward.isPurchased) {
       setIsConfirmModalOpen(true);
@@ -40,6 +67,7 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
     await onPurchase(reward.id);
     setIsConfirmModalOpen(false);
   };
+  // END_BLOCK_PURCHASE_REWARD
 
   const renderFooterButton = () => {
     if (reward.isPurchased) {
@@ -67,6 +95,7 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
     );
   };
 
+  // START_BLOCK_RENDER_REWARD_DETAIL
   return (
     <>
       <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
@@ -124,6 +153,7 @@ const RewardsDetailPage: React.FC<RewardsDetailPageProps> = ({rewardId, allRewar
       />
     </>
   );
+  // END_BLOCK_RENDER_REWARD_DETAIL
 };
 
 export default RewardsDetailPage;

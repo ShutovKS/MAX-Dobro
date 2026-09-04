@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/auth/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Login, register, and forgot-password entry for mock and Telegram sessions.
+//   SCOPE: Telegram auto-login, demo login, email register, password-reset UI
+//   DEPENDS: M-FRONTEND-AUTH, M-FRONTEND-TELEGRAM, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   AuthPage - switches login, register, and forgot-password views
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
@@ -30,7 +49,6 @@ const LoginView: React.FC<{
   onSwitchToRegister: () => void;
   onSwitchToForgotPassword: () => void;
 }> = ({ onAuthSuccess, onSwitchToRegister, onSwitchToForgotPassword }) => {
-  /** <context:frontend_auth_entry> Auth entrypoint for mock and real MAX login flows. </context:frontend_auth_entry> */
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -49,6 +67,7 @@ const LoginView: React.FC<{
     isMock ? 'demo' : 'checking',
   );
 
+  // START_BLOCK_TELEGRAM_LOGIN
   const handleTelegramLogin = async () => {
     setLoginError('');
     setIsLoading(true);
@@ -83,7 +102,9 @@ const LoginView: React.FC<{
       setIsLoading(false);
     }
   };
+  // END_BLOCK_TELEGRAM_LOGIN
 
+  // START_BLOCK_EMAIL_LOGIN
   const handleFormSubmit = async () => {
     let isValid = true;
     if (!email) {
@@ -116,6 +137,7 @@ const LoginView: React.FC<{
       }
     }
   };
+  // END_BLOCK_EMAIL_LOGIN
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -157,6 +179,7 @@ const LoginView: React.FC<{
   void handleFormSubmit; void handleEmailChange; void handlePasswordChange;
   void onSwitchToRegister; void onSwitchToForgotPassword;
 
+  // START_BLOCK_RENDER_LOGIN
   return (
     <div className="bg-white w-full h-screen flex flex-col items-center justify-center p-6 font-sans antialiased">
       <div className="w-full max-w-sm flex flex-col items-center text-center">
@@ -215,6 +238,7 @@ const LoginView: React.FC<{
       </div>
     </div>
   );
+  // END_BLOCK_RENDER_LOGIN
 };
 
 const RegisterView: React.FC<{
@@ -260,6 +284,7 @@ const RegisterView: React.FC<{
     if (registerError) setRegisterError('');
   };
 
+  // START_BLOCK_REGISTER_SUBMIT
   const handleRegister = async () => {
     if (validate()) {
       setIsLoading(true);
@@ -273,6 +298,7 @@ const RegisterView: React.FC<{
       }
     }
   };
+  // END_BLOCK_REGISTER_SUBMIT
 
   const isFormValid = useMemo(() => {
     return (
@@ -285,6 +311,7 @@ const RegisterView: React.FC<{
     );
   }, [formData]);
 
+  // START_BLOCK_RENDER_REGISTER
   return (
     <div className="bg-white w-full min-h-screen flex flex-col items-center justify-center p-6 font-sans antialiased">
       <div className="w-full max-w-sm flex flex-col items-center">
@@ -432,6 +459,7 @@ const RegisterView: React.FC<{
       </div>
     </div>
   );
+  // END_BLOCK_RENDER_REGISTER
 };
 
 const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({
@@ -455,6 +483,7 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({
     if (emailError) setEmailError('');
   };
 
+  // START_BLOCK_RENDER_FORGOT_PASSWORD
   if (isSubmitted) {
     return (
       <div className="bg-white w-full h-screen flex flex-col items-center justify-center p-6 font-sans antialiased text-center">
@@ -530,6 +559,7 @@ const ForgotPasswordView: React.FC<{ onBackToLogin: () => void }> = ({
       </div>
     </div>
   );
+  // END_BLOCK_RENDER_FORGOT_PASSWORD
 };
 
 type AuthMode = 'login' | 'register' | 'forgotPassword';
@@ -538,9 +568,17 @@ interface AuthPageProps {
   onAuthSuccess: (session: { user: User; token: string }) => void;
 }
 
+// START_CONTRACT: AuthPage
+//   PURPOSE: Switch login, register, and forgot-password views and report session success
+//   INPUTS: { onAuthSuccess: (session: { user: User; token: string }) => void }
+//   OUTPUTS: { ReactElement - active auth view }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-login, fn-telegramLogin
+// END_CONTRACT: AuthPage
 const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
 
+  // START_BLOCK_AUTH_MODE_SWITCH
   switch (authMode) {
     case 'register':
       return (
@@ -561,6 +599,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
         />
       );
   }
+  // END_BLOCK_AUTH_MODE_SWITCH
 };
 
 export default AuthPage;

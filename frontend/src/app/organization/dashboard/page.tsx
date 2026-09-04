@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/organization/dashboard/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Organizer dashboard with stats, create-event CTA, and volunteer-mode switch.
+//   SCOPE: Load stats and org details, navigation to events and settings
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   OrganizationDashboardPage - organizer home dashboard
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useState} from 'react';
 import {List, Plus, Settings} from 'lucide-react';
 import {fetchOrganizationDashboardStats, fetchOrganizationDetails,} from '../../../lib/api';
@@ -46,6 +65,13 @@ interface OrganizationDashboardPageProps {
   onNavigateToSettings: () => void;
 }
 
+// START_CONTRACT: OrganizationDashboardPage
+//   PURPOSE: Load organizer stats and render dashboard actions
+//   INPUTS: { user: User; onSwitchToVolunteer/onManageEvents/onCreateEvent/onNavigateToSettings: callbacks }
+//   OUTPUTS: { ReactElement - dashboard }
+//   SIDE_EFFECTS: fetchOrganizationDashboardStats, fetchOrganizationDetails
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchOrganizationDashboardStats
+// END_CONTRACT: OrganizationDashboardPage
 const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
                                                                                user,
                                                                                onSwitchToVolunteer,
@@ -59,6 +85,7 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_DASHBOARD
     const loadData = async () => {
       setLoading(true);
       try {
@@ -76,9 +103,11 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
     };
     loadData();
   }, []);
+    // END_BLOCK_LOAD_DASHBOARD
 
   const isMockMode = import.meta.env.VITE_API_MODE !== 'real';
 
+  // START_BLOCK_RENDER_DASHBOARD
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       <header className="flex-shrink-0 p-6 pb-4 bg-white/80 backdrop-blur-sm flex items-center justify-between">
@@ -163,6 +192,7 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
       </main>
     </div>
   );
+  // END_BLOCK_RENDER_DASHBOARD
 };
 
 export default OrganizationDashboardPage;

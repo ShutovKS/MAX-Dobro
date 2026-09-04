@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/events/detail/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Event detail with signup, cancel, map, share, and achievement toast.
+//   SCOPE: Load event, participate, cancel, share, invite, chat gate
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES, M-FRONTEND-TELEGRAM
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   EventDetailPage - event detail and participation screen
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router';
 import type {Achievement, AppEvent, Friend, MapMarker, Organization, ProfileSubScreen} from '../../../lib/types';
@@ -147,6 +166,13 @@ const EventDetailSkeleton: React.FC = () => (
   </div>
 );
 
+// START_CONTRACT: EventDetailPage
+//   PURPOSE: Load an event and handle signup, cancel, and share
+//   INPUTS: { none - reads :id from the route }
+//   OUTPUTS: { ReactElement - event detail or not-found }
+//   SIDE_EFFECTS: participateInEvent, cancelEventParticipation, share
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-participateInEvent, fn-cancelEventParticipation
+// END_CONTRACT: EventDetailPage
 export const EventDetailPage: React.FC = () => {
   const {id} = useParams();
   const navigate = useNavigate();
@@ -168,6 +194,7 @@ export const EventDetailPage: React.FC = () => {
   const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_EVENT
     const loadData = async () => {
       if (id) {
         setLoading(true);
@@ -197,6 +224,7 @@ export const EventDetailPage: React.FC = () => {
     };
     loadData();
   }, [id]);
+    // END_BLOCK_LOAD_EVENT
 
   const onBack = () => navigate(-1);
   const onNavigateProfile = (screen: ProfileSubScreen) => navigate(`/app/profile/${screen}`);
@@ -204,6 +232,7 @@ export const EventDetailPage: React.FC = () => {
   const onOpenChat = (evt: AppEvent) => navigate(`/app/events/${evt.id}/chat`);
 
   const handleSignUpClick = () => setShowConfirmation(true);
+  // START_BLOCK_SIGNUP_FLOW
   const handleConfirmSignUp = async () => {
     if (!event) return;
 
@@ -262,6 +291,7 @@ export const EventDetailPage: React.FC = () => {
     // отправлены» — мы лишь открыли окно, факт отправки нам неизвестен.
     shareEvent();
   };
+  // END_BLOCK_SIGNUP_FLOW
 
   const mainButtonAction = isSignedUp ? handleOpenCancelModal : handleSignUpClick;
 
@@ -281,6 +311,7 @@ export const EventDetailPage: React.FC = () => {
   const friendsToShow = friends.slice(0, 3);
   const remainingFriendsCount = friends.length - friendsToShow.length;
 
+  // START_BLOCK_RENDER_EVENT
   return (
     <>
       <Toast message={toast.message} show={toast.show} onClose={() => setToast({...toast, show: false})}
@@ -424,4 +455,5 @@ export const EventDetailPage: React.FC = () => {
                            onNavigateToAchievements={handleNavigateToAchievements}/>
     </>
   );
+  // END_BLOCK_RENDER_EVENT
 };

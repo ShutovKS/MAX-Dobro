@@ -1,8 +1,34 @@
+// FILE: frontend/src/app/stories/create/SelectEventModal.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Modal to pick a past event when composing a story.
+//   SCOPE: Load past history events, search, and select
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   SelectEventModal - past-event picker for story creation
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useState} from 'react';
 import {fetchActivityHistoryEvents} from '../../../lib/api';
 import type {HistoryEvent} from '../../../lib/types';
 import {Search, X} from 'lucide-react';
 
+// START_CONTRACT: SelectEventModal
+//   PURPOSE: Load past events and let the user pick one for a new story
+//   INPUTS: { isOpen: boolean; onClose: () => void; onSelect: (event: HistoryEvent) => void }
+//   OUTPUTS: { ReactElement - bottom-sheet event list }
+//   SIDE_EFFECTS: fetchActivityHistoryEvents when opened
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchActivityHistoryEvents
+// END_CONTRACT: SelectEventModal
 const SelectEventModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
@@ -12,6 +38,7 @@ const SelectEventModal: React.FC<{
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // START_BLOCK_LOAD_PAST_EVENTS
   useEffect(() => {
     if (isOpen) {
       const loadEvents = async () => {
@@ -23,11 +50,13 @@ const SelectEventModal: React.FC<{
       loadEvents();
     }
   }, [isOpen]);
+  // END_BLOCK_LOAD_PAST_EVENTS
 
   const filteredEvents = pastEvents.filter(event =>
     event.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // START_BLOCK_RENDER_EVENT_LIST
   return (
     <div
       className={`fixed inset-0 z-[60] transition-colors duration-300 ${isOpen ? 'bg-black/40' : 'bg-transparent pointer-events-none'}`}
@@ -91,6 +120,7 @@ const SelectEventModal: React.FC<{
       </div>
     </div>
   );
+  // END_BLOCK_RENDER_EVENT_LIST
 };
 
 export default SelectEventModal;

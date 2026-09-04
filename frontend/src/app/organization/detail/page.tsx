@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/organization/detail/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Public organization profile with subscribe, events tab, and share.
+//   SCOPE: Load org and events, subscribe/unsubscribe, share deep link
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES, M-FRONTEND-TELEGRAM
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   OrganizationProfilePage - public organization profile
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router';
 import type {AppEvent, Organization} from '../../../lib/types';
@@ -12,6 +31,13 @@ import {MESSAGES} from '../../../lib/constants';
 import {buildDeepLink, tgShareUrl} from '../../../lib/telegram-sdk';
 import {HeroDetailSkeleton} from '../../../components/ui/Skeletons';
 
+// START_CONTRACT: OrganizationProfilePage
+//   PURPOSE: Load an organization and toggle subscription
+//   INPUTS: { id: number }
+//   OUTPUTS: { ReactElement - org profile or not-found }
+//   SIDE_EFFECTS: fetchOrganizationById, fetchAllEvents, updateOrganizationSubscription
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-updateOrganizationSubscription
+// END_CONTRACT: OrganizationProfilePage
 const OrganizationProfilePage: React.FC<{
   id: number;
 }> = ({id}) => {
@@ -28,6 +54,7 @@ const OrganizationProfilePage: React.FC<{
   });
 
   useEffect(() => {
+    // START_BLOCK_LOAD_ORGANIZATION
     const loadOrg = async () => {
       setLoading(true);
       const data = await fetchOrganizationById(id);
@@ -36,6 +63,7 @@ const OrganizationProfilePage: React.FC<{
     };
     loadOrg();
   }, [id]);
+    // END_BLOCK_LOAD_ORGANIZATION
 
   useEffect(() => {
     if (!organization) return;
@@ -53,6 +81,7 @@ const OrganizationProfilePage: React.FC<{
   const onBack = () => navigate('/app/organizations');
   const onSelectEvent = (eventId: number) => navigate(`/app/events/${eventId}`);
 
+  // START_BLOCK_TOGGLE_SUBSCRIPTION
   const onToggleSubscription = async () => {
     if (!organization) return;
     const newSubStatus = !organization.isSubscribed;
@@ -84,6 +113,7 @@ const OrganizationProfilePage: React.FC<{
       onUndo: onToggleSubscription,
     });
   };
+  // END_BLOCK_TOGGLE_SUBSCRIPTION
 
   if (loading) {
     return <HeroDetailSkeleton />;
@@ -92,6 +122,7 @@ const OrganizationProfilePage: React.FC<{
     return <div className="w-full h-screen flex items-center justify-center text-gray-500">Организация не найдена.</div>;
   }
 
+  // START_BLOCK_RENDER_ORG_PROFILE
   return (
     <>
       <div className="relative w-full h-screen font-sans antialiased bg-white overflow-y-auto">
@@ -228,6 +259,7 @@ const OrganizationProfilePage: React.FC<{
       />
     </>
   );
+  // END_BLOCK_RENDER_ORG_PROFILE
 };
 
 export default OrganizationProfilePage;

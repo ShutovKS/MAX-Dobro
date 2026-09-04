@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/courses/detail/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Course detail with program, progress, and start or resume CTA.
+//   SCOPE: Load course, derive lesson status, share, open lesson or certificate
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES, M-FRONTEND-TELEGRAM
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   CourseDetailPage - course program and progress screen
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, { useEffect, useState } from 'react';
 import { fetchCourseById } from '../../../lib/api';
 import { useNavigate } from 'react-router';
@@ -59,6 +78,13 @@ const LessonRow: React.FC<{
   );
 };
 
+// START_CONTRACT: CourseDetailPage
+//   PURPOSE: Load a course and render program, progress, and CTA
+//   INPUTS: { id: number }
+//   OUTPUTS: { ReactElement - course detail or not-found }
+//   SIDE_EFFECTS: fetchCourseById; navigates to lesson or certificate
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchCourseById
+// END_CONTRACT: CourseDetailPage
 const CourseDetailPage: React.FC<{
   id: number;
 }> = ({ id }) => {
@@ -67,6 +93,7 @@ const CourseDetailPage: React.FC<{
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_COURSE
     const loadCourse = async () => {
       setLoading(true);
       const data = await fetchCourseById(id);
@@ -111,6 +138,7 @@ const CourseDetailPage: React.FC<{
     };
     loadCourse();
   }, [id]);
+    // END_BLOCK_LOAD_COURSE
 
   const onBack = () => navigate('/app/training');
   useTelegramBackButton(onBack);
@@ -157,6 +185,7 @@ const CourseDetailPage: React.FC<{
     );
   }
 
+  // START_BLOCK_RENDER_COURSE
   return (
     <div className="relative w-full h-screen font-sans antialiased bg-white overflow-y-auto">
       <header className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4">
@@ -254,6 +283,7 @@ const CourseDetailPage: React.FC<{
       </div>
     </div>
   );
+  // END_BLOCK_RENDER_COURSE
 };
 
 export default CourseDetailPage;

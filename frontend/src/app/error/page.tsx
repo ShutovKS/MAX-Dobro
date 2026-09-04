@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/error/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Show a retryable network or server error screen.
+//   SCOPE: Error copy lookup and retry CTA
+//   DEPENDS: M-FRONTEND-UI
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   ErrorPage - network or server failure screen with retry
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import {RefreshCw, ServerCrash, WifiOff} from 'lucide-react';
 
@@ -19,9 +38,17 @@ const errorDetails = {
   }
 };
 
+// START_CONTRACT: ErrorPage
+//   PURPOSE: Render a typed error screen and invoke onRetry
+//   INPUTS: { type: 'network' | 'server'; onRetry: () => void }
+//   OUTPUTS: { ReactElement - error illustration, copy, retry button }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+// END_CONTRACT: ErrorPage
 const ErrorPage: React.FC<ErrorPageProps> = ({type, onRetry}) => {
   const {Icon, title, subtitle} = errorDetails[type];
 
+  // START_BLOCK_RENDER_ERROR
   return (
     <div
       className="bg-white w-full h-screen flex flex-col items-center justify-center p-6 font-sans antialiased text-center">
@@ -39,6 +66,7 @@ const ErrorPage: React.FC<ErrorPageProps> = ({type, onRetry}) => {
       </div>
     </div>
   );
+  // END_BLOCK_RENDER_ERROR
 };
 
 export default ErrorPage;

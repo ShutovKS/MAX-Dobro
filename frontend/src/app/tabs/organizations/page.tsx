@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/tabs/organizations/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Organizations catalog with search, filters, and subscribe.
+//   SCOPE: Load orgs, filter, subscribe confirm, toast undo
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   OrganizationsPage - organizations tab catalog
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
 import {fetchAllOrganizations, updateOrganizationSubscription} from '../../../lib/api';
@@ -160,6 +179,13 @@ const OrganizationFilterPanel: React.FC<{
   );
 };
 
+// START_CONTRACT: OrganizationsPage
+//   PURPOSE: Load organizations and handle search, filter, and subscribe
+//   INPUTS: { none - uses router }
+//   OUTPUTS: { ReactElement - org list }
+//   SIDE_EFFECTS: fetchAllOrganizations, updateOrganizationSubscription
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchAllOrganizations, fn-updateOrganizationSubscription
+// END_CONTRACT: OrganizationsPage
 const OrganizationsPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -175,6 +201,7 @@ const OrganizationsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_ORGANIZATIONS
     const loadOrgs = async () => {
       try {
         setLoading(true);
@@ -189,6 +216,7 @@ const OrganizationsPage: React.FC = () => {
     };
     loadOrgs();
   }, []);
+    // END_BLOCK_LOAD_ORGANIZATIONS
 
   const onSelectOrganization = (id: number) => {
     navigate(`/app/organizations/${id}`);
@@ -206,6 +234,7 @@ const OrganizationsPage: React.FC = () => {
     return filtered.filter(org => org.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [searchQuery, organizations, appliedFilters]);
 
+  // START_BLOCK_SUBSCRIBE_ORG
   const handleSubscribeClick = async (id: number) => {
     const orgToUpdate = organizations.find(org => org.id === id);
     if (!orgToUpdate) return;
@@ -238,7 +267,9 @@ const OrganizationsPage: React.FC = () => {
     setAppliedFilters(filters);
     setIsFilterPanelOpen(false);
   };
+  // END_BLOCK_SUBSCRIBE_ORG
 
+  // START_BLOCK_RENDER_ORGANIZATIONS
   return (
     <>
       <div className="w-full min-h-full bg-white flex flex-col">
@@ -284,6 +315,7 @@ const OrganizationsPage: React.FC = () => {
              onUndo={toast.onUndo} type="success"/>
     </>
   );
+  // END_BLOCK_RENDER_ORGANIZATIONS
 };
 
 export default OrganizationsPage;

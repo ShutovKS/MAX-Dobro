@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/tabs/courses/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Training tab catalog with category chips and course-of-the-week.
+//   SCOPE: Load courses, filter by category, navigate to detail
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   CoursesPage - training tab course catalog
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
 import {fetchAllCourses} from '../../../lib/api';
@@ -61,6 +80,13 @@ const CourseCard: React.FC<{ course: Course; onSelect: () => void; }> = React.me
   );
 });
 
+// START_CONTRACT: CoursesPage
+//   PURPOSE: Load courses and render the training catalog
+//   INPUTS: { none - uses router }
+//   OUTPUTS: { ReactElement - course list }
+//   SIDE_EFFECTS: fetchAllCourses; navigates to course detail
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchAllCourses
+// END_CONTRACT: CoursesPage
 const CoursesPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -69,6 +95,7 @@ const CoursesPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // START_BLOCK_LOAD_COURSES
     const loadCourses = async () => {
       try {
         setLoading(true);
@@ -83,6 +110,7 @@ const CoursesPage: React.FC = () => {
     };
     loadCourses();
   }, []);
+    // END_BLOCK_LOAD_COURSES
 
   const onSelectCourse = (id: number) => {
     navigate(`/app/courses/${id}`);
@@ -93,6 +121,7 @@ const CoursesPage: React.FC = () => {
     return allCourses.filter(c => c.category === selectedCategory);
   }, [selectedCategory, allCourses]);
 
+  // START_BLOCK_RENDER_COURSES
   return (
     <div className="w-full bg-white">
       <header className="p-6">
@@ -149,6 +178,7 @@ const CoursesPage: React.FC = () => {
       </main>
     </div>
   );
+  // END_BLOCK_RENDER_COURSES
 };
 
 export default CoursesPage;

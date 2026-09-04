@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/profile/myCertificates/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: List completed-course certificates for the current volunteer.
+//   SCOPE: Fetch courses, filter completed with certificate, preview cards
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   MyCertificatesPage - volunteer certificate gallery
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useMemo, useState} from 'react';
 import {fetchAllCourses} from '../../../lib/api';
 import type {Course, User} from '../../../lib/types';
@@ -27,6 +46,13 @@ const CertificatePreviewCard: React.FC<{ course: Course; userName: string; onSel
   </button>
 );
 
+// START_CONTRACT: MyCertificatesPage
+//   PURPOSE: Load completed courses and show certificate previews
+//   INPUTS: { user: User; onBack/onSelectCertificate/onGoToTraining: callbacks }
+//   OUTPUTS: { ReactElement - certificate grid or empty state }
+//   SIDE_EFFECTS: fetchAllCourses
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-fetchAllCourses
+// END_CONTRACT: MyCertificatesPage
 const MyCertificatesPage: React.FC<{
   user: User;
   onBack: () => void;
@@ -37,6 +63,7 @@ const MyCertificatesPage: React.FC<{
   const [allCourses, setAllCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // START_BLOCK_LOAD_CERTIFICATES
   useEffect(() => {
     const loadCourses = async () => {
       setLoading(true);
@@ -51,6 +78,7 @@ const MyCertificatesPage: React.FC<{
     };
     loadCourses();
   }, []);
+  // END_BLOCK_LOAD_CERTIFICATES
 
   const completedCourses = useMemo(() => {
     return allCourses.filter(c => c.status === 'completed' && c.hasCertificate);
@@ -90,6 +118,7 @@ const MyCertificatesPage: React.FC<{
     );
   };
 
+  // START_BLOCK_RENDER_CERTIFICATES
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       <header
@@ -107,6 +136,7 @@ const MyCertificatesPage: React.FC<{
       </main>
     </div>
   );
+  // END_BLOCK_RENDER_CERTIFICATES
 };
 
 export default MyCertificatesPage;

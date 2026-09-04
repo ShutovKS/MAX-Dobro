@@ -1,3 +1,22 @@
+// FILE: frontend/src/app/profile/rewards/page.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Karma rewards store with category chips and balance header.
+//   SCOPE: Filter rewards, navigate to reward detail
+//   DEPENDS: M-FRONTEND-UI, M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   RewardsStorePage - karma rewards catalog
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
 import type {RewardItem, User} from '../../../lib/types';
@@ -42,6 +61,13 @@ interface RewardsStorePageProps {
   onBack: () => void;
 }
 
+// START_CONTRACT: RewardsStorePage
+//   PURPOSE: Filter rewards by category and open a reward detail
+//   INPUTS: { user: User; rewards: RewardItem[]; onBack: () => void }
+//   OUTPUTS: { ReactElement - rewards grid }
+//   SIDE_EFFECTS: Navigates to reward detail
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, M-FRONTEND-APP
+// END_CONTRACT: RewardsStorePage
 const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBack}) => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<typeof REWARD_CATEGORIES[number]>('Все');
@@ -55,13 +81,16 @@ const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBac
     return karmaStat ? parseInt(karmaStat.value.replace(/,/g, ''), 10) : 0;
   }, [user.stats]);
 
+  // START_BLOCK_FILTER_REWARDS
   const filteredRewards = useMemo(() => {
     if (selectedCategory === 'Все') return rewards;
     return rewards.filter(r => r.category === selectedCategory);
   }, [selectedCategory, rewards]);
+  // END_BLOCK_FILTER_REWARDS
 
   const loading = rewards.length === 0;
 
+  // START_BLOCK_RENDER_REWARDS
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
       <header
@@ -122,6 +151,7 @@ const RewardsStorePage: React.FC<RewardsStorePageProps> = ({user, rewards, onBac
       </main>
     </div>
   );
+  // END_BLOCK_RENDER_REWARDS
 };
 
 export default RewardsStorePage;
