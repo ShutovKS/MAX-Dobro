@@ -1,3 +1,22 @@
+// FILE: frontend/src/components/ui/CourseCompleteModal.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Celebrate course completion and offer certificate navigation.
+//   SCOPE: Show completion copy, view-certificate action, and close
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   CourseCompleteModal - course-complete celebration dialog
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import {GraduationCap} from 'lucide-react';
 
@@ -8,6 +27,13 @@ interface CourseCompleteModalProps {
   onClose: () => void;
 }
 
+// START_CONTRACT: CourseCompleteModal
+//   PURPOSE: Show course-complete celebration and certificate action
+//   INPUTS: { isOpen: boolean; courseTitle: string; onViewCertificate: () => void; onClose: () => void }
+//   OUTPUTS: { ReactElement | null - dialog when open }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: CourseCompleteModal
 const CourseCompleteModal: React.FC<CourseCompleteModalProps> = ({
                                                                    isOpen,
                                                                    courseTitle,

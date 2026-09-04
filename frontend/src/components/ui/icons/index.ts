@@ -1,3 +1,24 @@
+// FILE: frontend/src/components/ui/icons/index.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Barrel re-exports for volunteer illustration icons.
+//   SCOPE: Re-export category, medal, and empty-state icons
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: BARREL
+//   MAP_MODE: SUMMARY
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   category icons - animal, art, elderly, nature, heart, map, max
+//   medal icons - gold, silver, bronze
+//   empty-state illustrations - calendar, chat, shelf, binoculars, diploma, magnifier, album
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 export {default as AnimalFriendIcon} from './AnimalFriendIcon';
 export {default as ArtVolunteerIcon} from './ArtVolunteerIcon';
 export {default as BinocularsIllustrationIcon} from './BinocularsIllustrationIcon';

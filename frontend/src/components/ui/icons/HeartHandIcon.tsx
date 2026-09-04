@@ -1,3 +1,22 @@
+// FILE: frontend/src/components/ui/icons/HeartHandIcon.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Pulsating heart illustration used as a volunteer brand icon.
+//   SCOPE: Render animated heart SVG from SVG props
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   HeartHandIcon - pulsating heart SVG icon
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import type { SVGProps } from 'react';
 
@@ -27,6 +46,13 @@ const styles = `
   }
 `;
 
+// START_CONTRACT: HeartHandIcon
+//   PURPOSE: Render the pulsating heart SVG icon
+//   INPUTS: { className?: string; props: IconProps - SVG attributes }
+//   OUTPUTS: { ReactElement - animated SVG icon }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: HeartHandIcon
 const HeartHandIcon: React.FC<IconProps> = ({ className, ...props }) => (
   <>
     <style>{styles}</style>

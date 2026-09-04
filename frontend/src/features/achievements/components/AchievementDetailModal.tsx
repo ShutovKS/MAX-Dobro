@@ -1,8 +1,34 @@
+// FILE: frontend/src/features/achievements/components/AchievementDetailModal.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Bottom-sheet detail for unlocked or locked achievements.
+//   SCOPE: Show icon, description, unlock date or progress, share or CTA
+//   DEPENDS: M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   AchievementDetailModal - achievement detail bottom sheet
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import type { Achievement } from '../../../lib/types';
 import { Lock } from 'lucide-react';
 import { iconMap } from '../../../lib/iconMap';
 
+// START_CONTRACT: AchievementDetailModal
+//   PURPOSE: Show achievement details and a share or progress CTA
+//   INPUTS: { achievement: Achievement | null; onClose: () => void; onNavigateWithFilter: (category: string) => void }
+//   OUTPUTS: { ReactElement | null - bottom sheet when an achievement is present }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: AchievementDetailModal
 const AchievementDetailModal: React.FC<{
   achievement: Achievement | null;
   onClose: () => void;
@@ -31,6 +57,7 @@ const AchievementDetailModal: React.FC<{
 
         {achievement.unlocked ? (
           <>
+            {/* START_BLOCK_RENDER_UNLOCKED */}
             <div className="w-32 h-32 rounded-full bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] flex items-center justify-center shadow-lg -mt-20 mb-2 animate-pop-in">
               <IconComponent className="w-20 h-20 text-white" />
             </div>
@@ -46,9 +73,11 @@ const AchievementDetailModal: React.FC<{
             <button className="w-full bg-[#007AFF] text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-colors mt-2">
               Поделиться достижением
             </button>
+            {/* END_BLOCK_RENDER_UNLOCKED */}
           </>
         ) : (
           <>
+            {/* START_BLOCK_RENDER_LOCKED */}
             <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center -mt-20 mb-2 animate-pop-in">
               <Lock className="w-20 h-20 text-gray-400" />
             </div>
@@ -81,6 +110,7 @@ const AchievementDetailModal: React.FC<{
             >
               {achievement.cta || 'К цели!'}
             </button>
+            {/* END_BLOCK_RENDER_LOCKED */}
           </>
         )}
       </div>

@@ -1,6 +1,32 @@
+// FILE: frontend/src/components/ui/icons/MaxIcon.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: MAX messenger brand bubble icon.
+//   SCOPE: Render SVG icon from IconProps
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   MaxIcon - MAX messenger bubble SVG icon
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import type {IconProps} from './types';
 
+// START_CONTRACT: MaxIcon
+//   PURPOSE: Render the MAX messenger SVG icon
+//   INPUTS: { props: IconProps - SVG attributes }
+//   OUTPUTS: { ReactElement - SVG icon }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: MaxIcon
 const MaxIcon: React.FC<IconProps> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
     <path

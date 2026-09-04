@@ -1,6 +1,32 @@
+// FILE: frontend/src/components/ui/SubscribeModal.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Confirm subscription to organization event updates.
+//   SCOPE: Confirm or cancel org notification subscription
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   SubscribeModal - organization subscribe confirmation dialog
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import {Bell} from 'lucide-react';
 
+// START_CONTRACT: SubscribeModal
+//   PURPOSE: Confirm subscription to an organization
+//   INPUTS: { isOpen: boolean; organizationName: string; onConfirm: () => void; onCancel: () => void }
+//   OUTPUTS: { ReactElement | null - dialog when open }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: SubscribeModal
 const SubscribeModal: React.FC<{
   isOpen: boolean;
   organizationName: string;

@@ -1,6 +1,32 @@
+// FILE: frontend/src/components/ui/icons/EmptyCalendarIllustrationIcon.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Empty-events calendar illustration icon.
+//   SCOPE: Render SVG icon from IconProps
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   EmptyCalendarIllustrationIcon - empty-events calendar illustration
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import type {IconProps} from './types';
 
+// START_CONTRACT: EmptyCalendarIllustrationIcon
+//   PURPOSE: Render the empty-calendar illustration
+//   INPUTS: { props: IconProps - SVG attributes }
+//   OUTPUTS: { ReactElement - SVG icon }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: EmptyCalendarIllustrationIcon
 const EmptyCalendarIllustrationIcon: React.FC<IconProps> = (props) => (
   <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" {...props}>
     <g transform="translate(80, 80)">

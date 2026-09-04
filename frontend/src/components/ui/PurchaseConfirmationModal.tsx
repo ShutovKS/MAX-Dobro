@@ -1,3 +1,22 @@
+// FILE: frontend/src/components/ui/PurchaseConfirmationModal.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Confirm a karma reward purchase and remaining balance.
+//   SCOPE: Show reward, price, balance, remaining karma, confirm or cancel
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   PurchaseConfirmationModal - reward purchase confirmation dialog
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import {Sparkles} from 'lucide-react';
 
@@ -10,6 +29,13 @@ interface PurchaseConfirmationModalProps {
   userKarma: number;
 }
 
+// START_CONTRACT: PurchaseConfirmationModal
+//   PURPOSE: Confirm a karma purchase and remaining balance
+//   INPUTS: { isOpen: boolean; onConfirm: () => void; onCancel: () => void; rewardName: string; rewardPrice: number; userKarma: number }
+//   OUTPUTS: { ReactElement | null - dialog when open }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: PurchaseConfirmationModal
 const PurchaseConfirmationModal: React.FC<PurchaseConfirmationModalProps> = ({
                                                                                isOpen,
                                                                                onConfirm,

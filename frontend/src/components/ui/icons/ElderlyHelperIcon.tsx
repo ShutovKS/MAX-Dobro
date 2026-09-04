@@ -1,7 +1,33 @@
+// FILE: frontend/src/components/ui/icons/ElderlyHelperIcon.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Elderly-care volunteer category illustration icon.
+//   SCOPE: Render SVG icon from SVG props
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   ElderlyHelperIcon - SVG icon for elderly-care volunteer category
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import type { SVGProps } from 'react';
 type IconProps = SVGProps<SVGSVGElement>;
 
+// START_CONTRACT: ElderlyHelperIcon
+//   PURPOSE: Render the elderly-helper SVG icon
+//   INPUTS: { props: IconProps - SVG attributes }
+//   OUTPUTS: { ReactElement - SVG icon }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: ElderlyHelperIcon
 const ElderlyHelperIcon: React.FC<IconProps> = (props) => (
   <svg
     fill="currentColor" 

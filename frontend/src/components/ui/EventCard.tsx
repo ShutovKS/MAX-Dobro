@@ -1,7 +1,33 @@
+// FILE: frontend/src/components/ui/EventCard.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Event summary card used in volunteer feeds.
+//   SCOPE: Render event thumbnail or icon, title, category, date, and location
+//   DEPENDS: M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   EventCard - compact event summary card
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import type {AppEvent} from '../../lib/types';
 import {iconMap} from '../../lib/iconMap';
 
+// START_CONTRACT: EventCard
+//   PURPOSE: Render an event summary card
+//   INPUTS: { event: AppEvent - event to display }
+//   OUTPUTS: { ReactElement - card UI }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI, export-EventCard
+// END_CONTRACT: EventCard
 const EventCard: React.FC<{ event: AppEvent }> = React.memo(({event}) => {
   const IconComponent = iconMap[event.icon] || React.Fragment;
   return (

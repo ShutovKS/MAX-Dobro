@@ -1,14 +1,35 @@
+// FILE: frontend/src/components/ui/InteractiveMap.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Leaflet map for event markers and optional point picking.
+//   SCOPE: Render tiles, markers, popups, click-to-pick, and resize invalidation
+//   DEPENDS: M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI, export-InteractiveMap
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   InteractiveMap - Leaflet event map with marker click and optional pick mode
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect} from 'react';
 import {MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents} from 'react-leaflet';
 import L from 'leaflet';
 import type {MapMarker} from '../../lib/types';
 
+// START_BLOCK_LEAFLET_DEFAULT_ICONS
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
+// END_BLOCK_LEAFLET_DEFAULT_ICONS
 
 const MapResizeHandler: React.FC = () => {
   const map = useMap();
@@ -40,6 +61,13 @@ const MapClickHandler: React.FC<{ onMapClick: (lat: number, lng: number) => void
   return null;
 };
 
+// START_CONTRACT: InteractiveMap
+//   PURPOSE: Render a Leaflet map of events with optional pick-point mode
+//   INPUTS: { markers: MapMarker[]; onMarkerClick: (id: number) => void; center?: [number, number]; zoom?: number; onMapClick?: (lat, lng) => void; pickedPosition?: [number, number] | null }
+//   OUTPUTS: { ReactElement - map container }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI, export-InteractiveMap
+// END_CONTRACT: InteractiveMap
 const InteractiveMap: React.FC<InteractiveMapProps> = ({
                                                          markers,
                                                          onMarkerClick,
@@ -49,6 +77,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                                                          pickedPosition,
                                                        }) => {
   return (
+    // START_BLOCK_RENDER_MAP
     <MapContainer attributionControl={false} center={center} zoom={zoom} scrollWheelZoom={true}
                   style={{height: '100%', width: '100%'}}>
       <TileLayer
@@ -87,6 +116,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       ))}
       <MapResizeHandler/>
     </MapContainer>
+    // END_BLOCK_RENDER_MAP
   );
 };
 

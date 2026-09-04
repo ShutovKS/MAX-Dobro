@@ -1,6 +1,32 @@
+// FILE: frontend/src/components/ui/CancelModal.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Confirm cancellation of event participation.
+//   SCOPE: Confirm or keep participation when the modal is open
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   CancelModal - participation cancel confirmation dialog
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import {HelpCircle} from 'lucide-react';
 
+// START_CONTRACT: CancelModal
+//   PURPOSE: Confirm that the user wants to cancel event participation
+//   INPUTS: { isOpen: boolean; onConfirm: () => void; onCancel: () => void }
+//   OUTPUTS: { ReactElement | null - dialog when open }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: CancelModal
 const CancelModal: React.FC<{
   isOpen: boolean;
   onConfirm: () => void;

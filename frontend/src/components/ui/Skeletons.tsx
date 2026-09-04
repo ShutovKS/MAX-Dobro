@@ -1,9 +1,38 @@
+// FILE: frontend/src/components/ui/Skeletons.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Screen-shaped loading skeletons for detail, lesson, chat, and article views.
+//   SCOPE: Hero, lesson, chat, and article pulse placeholders
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   HeroDetailSkeleton - hero plus content-card loading layout
+//   LessonSkeleton - lesson header, progress, and body loading layout
+//   ChatSkeleton - chat header and message-bubble loading layout
+//   ArticleSkeleton - story image and comment loading layout
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 
 // Переиспользуемые скелетоны загрузки в стиле дашборда (серые блоки animate-pulse),
 // повторяют структуру экрана — вместо текста «Загрузка...».
 
 /** Экран-деталь с «героем» сверху и карточкой контента (курс, организация). */
+// START_CONTRACT: HeroDetailSkeleton
+//   PURPOSE: Render a hero-plus-card loading placeholder
+//   INPUTS: { none }
+//   OUTPUTS: { ReactElement - pulse skeleton }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: HeroDetailSkeleton
 export const HeroDetailSkeleton: React.FC = () => (
   <div className="w-full h-screen bg-white overflow-hidden animate-pulse">
     <div className="h-[35vh] w-full bg-gray-200" />
@@ -25,6 +54,13 @@ export const HeroDetailSkeleton: React.FC = () => (
 );
 
 /** Экран урока: шапка, полоса прогресса, абзацы текста. */
+// START_CONTRACT: LessonSkeleton
+//   PURPOSE: Render a lesson-screen loading placeholder
+//   INPUTS: { none }
+//   OUTPUTS: { ReactElement - pulse skeleton }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: LessonSkeleton
 export const LessonSkeleton: React.FC = () => (
   <div className="w-full h-screen bg-white flex flex-col animate-pulse">
     <div className="flex-shrink-0 p-4 border-b border-gray-200 flex items-center space-x-2">
@@ -50,6 +86,13 @@ export const LessonSkeleton: React.FC = () => (
 );
 
 /** Экран чата: шапка и чередующиеся «пузыри» сообщений. */
+// START_CONTRACT: ChatSkeleton
+//   PURPOSE: Render a chat-screen loading placeholder
+//   INPUTS: { none }
+//   OUTPUTS: { ReactElement - pulse skeleton }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: ChatSkeleton
 export const ChatSkeleton: React.FC = () => (
   <div className="w-full h-screen bg-[#F0F0F0] flex flex-col animate-pulse">
     <div className="flex-shrink-0 p-4 bg-white border-b border-gray-200 flex items-center justify-between">
@@ -73,6 +116,13 @@ export const ChatSkeleton: React.FC = () => (
 );
 
 /** Экран истории/статьи: картинка, строки текста, блок комментариев. */
+// START_CONTRACT: ArticleSkeleton
+//   PURPOSE: Render a story/article loading placeholder
+//   INPUTS: { none }
+//   OUTPUTS: { ReactElement - pulse skeleton }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: ArticleSkeleton
 export const ArticleSkeleton: React.FC = () => (
   <div className="w-full h-screen bg-white flex flex-col animate-pulse">
     <div className="flex-shrink-0 p-4 flex items-center space-x-3 border-b border-gray-100">

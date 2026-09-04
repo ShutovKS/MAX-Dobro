@@ -1,9 +1,36 @@
+// FILE: frontend/src/features/invites/components/InviteFriendModal.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Bottom-sheet for selecting friends to invite to an event.
+//   SCOPE: Load friends, search, multi-select, and send invite
+//   DEPENDS: M-FRONTEND-TYPES, M-FRONTEND-API
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   InviteFriendModal - event friend-invite bottom sheet
+//   CheckboxIcon - selected or unselected friend checkbox
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useMemo, useState} from 'react';
 import type {AppEvent, Friend} from '../../../lib/types';
 import {fetchFriends} from '../../../lib/api';
 import {Calendar, List, Search, X} from 'lucide-react';
 import {MODAL_TRANSITION_DURATION} from '../../../lib/constants';
 
+// START_CONTRACT: CheckboxIcon
+//   PURPOSE: Render a selected or empty friend checkbox
+//   INPUTS: { checked: boolean - whether the friend is selected }
+//   OUTPUTS: { ReactElement - checkbox SVG }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: CheckboxIcon
 const CheckboxIcon: React.FC<{ checked: boolean }> = ({checked}) => {
   if (checked) {
     return (
@@ -24,6 +51,13 @@ const CheckboxIcon: React.FC<{ checked: boolean }> = ({checked}) => {
 };
 
 
+// START_CONTRACT: InviteFriendModal
+//   PURPOSE: Select friends and send an event invite
+//   INPUTS: { isOpen: boolean; event: AppEvent; onClose: () => void; onSend: () => void }
+//   OUTPUTS: { ReactElement - invite bottom sheet }
+//   SIDE_EFFECTS: fetches friends when opened
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI, M-FRONTEND-API
+// END_CONTRACT: InviteFriendModal
 const InviteFriendModal: React.FC<{
   isOpen: boolean;
   event: AppEvent;
@@ -34,6 +68,7 @@ const InviteFriendModal: React.FC<{
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFriends, setSelectedFriends] = useState<number[]>([]);
 
+  // START_BLOCK_LOAD_FRIENDS
   useEffect(() => {
     if (isOpen) {
       fetchFriends().then(setAllFriends);
@@ -44,6 +79,7 @@ const InviteFriendModal: React.FC<{
       }, MODAL_TRANSITION_DURATION);
     }
   }, [isOpen]);
+  // END_BLOCK_LOAD_FRIENDS
 
   const filteredFriends = useMemo(() => {
     if (!searchQuery) return allFriends;
@@ -70,6 +106,7 @@ const InviteFriendModal: React.FC<{
       aria-modal="true"
       aria-labelledby="invite-friend-title"
     >
+      {/* START_BLOCK_RENDER_INVITE_LIST */}
       <div
         className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
         style={{height: '85vh'}}
@@ -140,9 +177,9 @@ const InviteFriendModal: React.FC<{
           </button>
         </footer>
       </div>
+      {/* END_BLOCK_RENDER_INVITE_LIST */}
     </div>
   );
 };
 
 export default InviteFriendModal;
-

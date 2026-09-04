@@ -1,3 +1,22 @@
+// FILE: frontend/src/components/ui/Toast.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Transient toast feedback with optional undo.
+//   SCOPE: Auto-dismiss timer, success/info presentation, undo action
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI, export-Toast
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   Toast - timed bottom toast with optional undo
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect} from 'react';
 import {CheckCircle} from 'lucide-react';
 import {TOAST_DURATION} from '../../lib/constants';
@@ -11,6 +30,13 @@ interface ToastProps {
   onUndo?: () => void;
 }
 
+// START_CONTRACT: Toast
+//   PURPOSE: Show timed toast feedback and optional undo
+//   INPUTS: { message: string; show: boolean; onClose: () => void; duration?: number; type?: 'success' | 'info'; onUndo?: () => void }
+//   OUTPUTS: { ReactElement - toast overlay }
+//   SIDE_EFFECTS: schedules onClose after duration when shown
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI, export-Toast
+// END_CONTRACT: Toast
 const Toast: React.FC<ToastProps> = ({
                                        message,
                                        show,

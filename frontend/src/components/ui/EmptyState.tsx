@@ -1,3 +1,22 @@
+// FILE: frontend/src/components/ui/EmptyState.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Empty-list placeholder with optional call to action.
+//   SCOPE: Render illustration, title, subtitle, and primary or secondary action
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   EmptyState - centered empty-state illustration and optional action button
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 
 interface EmptyStateProps {
@@ -11,6 +30,13 @@ interface EmptyStateProps {
   };
 }
 
+// START_CONTRACT: EmptyState
+//   PURPOSE: Render an empty-state illustration and optional action
+//   INPUTS: { Icon: SVG component; title: string; subtitle: string; action?: { text, onClick, type } }
+//   OUTPUTS: { ReactElement - empty-state layout }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: EmptyState
 const EmptyState: React.FC<EmptyStateProps> = ({Icon, title, subtitle, action}) => {
   return (
     <div className="flex flex-col items-center justify-center text-center p-8 h-full">

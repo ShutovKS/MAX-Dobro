@@ -1,20 +1,43 @@
+// FILE: bot-max/src/index.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: MAX messenger bot that greets users and deep-links into the mini-app.
+//   SCOPE: Token check, inline keyboard, start/help/idea/authors handlers, health server
+//   DEPENDS: none
+//   LINKS: M-BOT-MAX, V-M-BOT-MAX
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   bot - MAX bot process with mini-app deep-link keyboard
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import 'dotenv/config';
 import http from 'http';
 import {Bot, Context, Keyboard} from '@maxhub/max-bot-api';
 
 const {MAX_BOT_TOKEN, MAX_BOT_NAME, PORT, MINI_APP_URL} = process.env;
 
+// START_BLOCK_CHECK_TOKEN
 if (!MAX_BOT_TOKEN || !MAX_BOT_NAME) {
   throw new Error('BOT_TOKEN and BOT_NAME must be provided');
 }
+// END_BLOCK_CHECK_TOKEN
 
 const bot = new Bot(MAX_BOT_TOKEN);
 
 const appLink = MINI_APP_URL || `https://max.ru/${MAX_BOT_NAME}?startapp`;
 
+// START_BLOCK_SETUP_KEYBOARD
 const mainKeyboard = Keyboard.inlineKeyboard([
   [Keyboard.button.link('🚀 Открыть MAX Добро', appLink)],
 ]);
+// END_BLOCK_SETUP_KEYBOARD
 
 const dailyDeeds = [
   '🌱 Идея на сегодня: Откажись от пластикового пакета в магазине.',
@@ -45,6 +68,7 @@ const authorsText = `👨‍💻 **Команда MAX Добро**
 Сделано с любовью к коду и людям ❤️`;
 
 
+// START_BLOCK_HANDLE_BOT_STARTED
 bot.on('bot_started', (ctx: Context) => {
   const userName = ctx.user?.name || 'Герой';
 
@@ -61,7 +85,9 @@ bot.on('bot_started', (ctx: Context) => {
 
   ctx.reply(welcomeText, {attachments: [mainKeyboard], format: 'markdown'});
 });
+// END_BLOCK_HANDLE_BOT_STARTED
 
+// START_BLOCK_REGISTER_HANDLERS
 bot.command('start', (ctx: Context) => {
   ctx.reply('Готов продолжить путь? Твоя карма ждет!', {attachments: [mainKeyboard]});
 });
@@ -104,6 +130,7 @@ bot.on('message_created', (ctx: Context) => {
     });
   }
 });
+// END_BLOCK_REGISTER_HANDLERS
 
 bot.api.setMyCommands([
   {name: 'start', description: '🚀 Главное меню'},

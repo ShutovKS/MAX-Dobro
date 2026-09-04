@@ -1,7 +1,33 @@
+// FILE: frontend/src/components/ui/icons/AnimalFriendIcon.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Animal-care volunteer category illustration icon.
+//   SCOPE: Render SVG icon from SVG props
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   AnimalFriendIcon - SVG icon for animal-care volunteer category
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import type { SVGProps } from 'react';
 type IconProps = SVGProps<SVGSVGElement>;
 
+// START_CONTRACT: AnimalFriendIcon
+//   PURPOSE: Render the animal-friend SVG icon
+//   INPUTS: { props: IconProps - SVG attributes }
+//   OUTPUTS: { ReactElement - SVG icon }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: AnimalFriendIcon
 const AnimalFriendIcon: React.FC<IconProps> = (props) => (
   <svg
     viewBox="0 0 50 50"

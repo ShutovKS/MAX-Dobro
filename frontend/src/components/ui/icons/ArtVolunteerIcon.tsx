@@ -1,6 +1,32 @@
+// FILE: frontend/src/components/ui/icons/ArtVolunteerIcon.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Art volunteer category illustration icon.
+//   SCOPE: Render SVG icon from IconProps
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   ArtVolunteerIcon - SVG icon for art volunteer category
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import type {IconProps} from './types';
 
+// START_CONTRACT: ArtVolunteerIcon
+//   PURPOSE: Render the art-volunteer SVG icon
+//   INPUTS: { props: IconProps - SVG attributes }
+//   OUTPUTS: { ReactElement - SVG icon }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: ArtVolunteerIcon
 const ArtVolunteerIcon: React.FC<IconProps> = (props) => (
   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" {...props}>
     <path d="M20,80 C40,90 60,90 80,80 C90,70 90,50 80,40 C70,30 50,20 40,30 C30,40 10,70 20,80 Z" fill="#a2d5f2"/>

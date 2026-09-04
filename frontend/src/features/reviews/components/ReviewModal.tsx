@@ -1,8 +1,34 @@
+// FILE: frontend/src/features/reviews/components/ReviewModal.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Bottom-sheet for rating a completed event.
+//   SCOPE: Star rating, quick tags, optional comment, and submit
+//   DEPENDS: M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   ReviewModal - event review bottom sheet
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React, {useEffect, useState} from 'react';
 import type {HistoryEvent} from '../../../lib/types';
 import {Star, X} from 'lucide-react';
 import {MODAL_TRANSITION_DURATION, REVIEW_QUICK_TAGS} from '../../../lib/constants';
 
+// START_CONTRACT: ReviewModal
+//   PURPOSE: Collect a star rating and optional comment for a past event
+//   INPUTS: { isOpen: boolean; event: HistoryEvent | null; onClose: () => void; onSubmit: (rating: number, text?: string) => void }
+//   OUTPUTS: { ReactElement | null - review bottom sheet when open }
+//   SIDE_EFFECTS: resets local form state after close animation
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: ReviewModal
 const ReviewModal: React.FC<{
   isOpen: boolean;
   event: HistoryEvent | null;
@@ -13,6 +39,7 @@ const ReviewModal: React.FC<{
   const [comment, setComment] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
+  // START_BLOCK_REVIEW_STATE
   const handleRating = (rate: number) => {
     setRating(rate);
   };
@@ -38,6 +65,7 @@ const ReviewModal: React.FC<{
       }, MODAL_TRANSITION_DURATION);
     }
   }, [isOpen]);
+  // END_BLOCK_REVIEW_STATE
 
   if (!isOpen || !event) return null;
 
@@ -49,6 +77,7 @@ const ReviewModal: React.FC<{
       aria-modal="true"
       aria-labelledby="review-title"
     >
+      {/* START_BLOCK_RENDER_REVIEW_FORM */}
       <div
         className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
         style={{height: '80vh', maxHeight: '700px'}}
@@ -124,6 +153,7 @@ const ReviewModal: React.FC<{
           </button>
         </footer>
       </div>
+      {/* END_BLOCK_RENDER_REVIEW_FORM */}
     </div>
   );
 };

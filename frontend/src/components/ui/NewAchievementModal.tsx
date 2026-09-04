@@ -1,6 +1,32 @@
+// FILE: frontend/src/components/ui/NewAchievementModal.tsx
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Celebrate a newly unlocked achievement.
+//   SCOPE: Show achievement icon and name, navigate to catalog, or dismiss
+//   DEPENDS: M-FRONTEND-TYPES
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   NewAchievementModal - newly unlocked achievement celebration dialog
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import React from 'react';
 import type {Achievement} from '../../lib/types';
 
+// START_CONTRACT: NewAchievementModal
+//   PURPOSE: Show a newly unlocked achievement and catalog navigation
+//   INPUTS: { achievement: Achievement | null; onClose: () => void; onNavigateToAchievements: () => void }
+//   OUTPUTS: { ReactElement | null - dialog when an achievement is present }
+//   SIDE_EFFECTS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+// END_CONTRACT: NewAchievementModal
 const NewAchievementModal: React.FC<{
   achievement: Achievement | null;
   onClose: () => void;
