@@ -1,3 +1,28 @@
+// FILE: backend/src/organizations/organizations.service.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Organization catalog, subscriptions, and organizer dashboard stats.
+//   SCOPE: list/get orgs with subscription flags, org events, dashboard tiles, subscribe/unsubscribe
+//   DEPENDS: M-PRISMA, M-AUTH
+//   LINKS: M-ORGANIZATIONS, V-M-ORGANIZATIONS, M-PRISMA
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   OrganizationsService - org catalog and dashboard stats
+//   findAll - paginated orgs with optional isSubscribed
+//   findOne - org by id with optional isSubscribed
+//   findEvents - paginated events for an organization
+//   findEventsForOrganizer - organizer event list with pending counts
+//   getDashboardStats - subscriber/event/rating/review tiles
+//   updateSubscription - create or delete UserOrganizationSubscription
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import {
   ConflictException,
   Injectable,
@@ -10,9 +35,17 @@ import { OrganizationEntity } from './entities/organization.entity';
 import { OrganizationStatEntity } from './entities/organization-stat.entity';
 
 @Injectable()
+// START_CONTRACT: OrganizationsService
+//   PURPOSE: Org catalog and dashboard stats
+//   INPUTS: { PrismaService, PaginationQueryDto, organizationId, userId }
+//   OUTPUTS: { OrganizationEntity, OrganizationStatEntity[], organizer event rows }
+//   SIDE_EFFECTS: Prisma reads Organization/Event/subscriptions; writes UserOrganizationSubscription
+//   LINKS: M-ORGANIZATIONS, V-M-ORGANIZATIONS, M-PRISMA
+// END_CONTRACT: OrganizationsService
 export class OrganizationsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // START_BLOCK_MAP_ORG
   private getOrgInclude() {
     return {
       _count: {
@@ -41,7 +74,16 @@ export class OrganizationsService {
 
     return entity;
   }
+  // END_BLOCK_MAP_ORG
 
+  // START_BLOCK_QUERY_ORGS
+  // START_CONTRACT: findAll
+  //   PURPOSE: Paginated organization catalog with optional viewer subscription flags
+  //   INPUTS: { pagination: PaginationQueryDto, userId?: number }
+  //   OUTPUTS: { OrganizationEntity[] }
+  //   SIDE_EFFECTS: Prisma Organization and UserOrganizationSubscription reads
+  //   LINKS: M-ORGANIZATIONS, V-M-ORGANIZATIONS, M-PRISMA
+  // END_CONTRACT: findAll
   async findAll(
     pagination: PaginationQueryDto,
     userId?: number,
@@ -78,6 +120,13 @@ export class OrganizationsService {
     );
   }
 
+  // START_CONTRACT: findOne
+  //   PURPOSE: Load one organization and optional viewer subscription
+  //   INPUTS: { id: number, userId?: number }
+  //   OUTPUTS: { OrganizationEntity }
+  //   SIDE_EFFECTS: Prisma Organization and UserOrganizationSubscription reads
+  //   LINKS: M-ORGANIZATIONS, V-M-ORGANIZATIONS, M-PRISMA
+  // END_CONTRACT: findOne
   async findOne(id: number, userId?: number): Promise<OrganizationEntity> {
     const organization = await this.prisma.organization.findUnique({
       where: { id },
@@ -99,7 +148,16 @@ export class OrganizationsService {
 
     return this.mapToEntity(organization, !!subscription);
   }
+  // END_BLOCK_QUERY_ORGS
 
+  // START_BLOCK_QUERY_ORG_EVENTS
+  // START_CONTRACT: findEvents
+  //   PURPOSE: Paginated events belonging to an organization
+  //   INPUTS: { organizationId: number, pagination: PaginationQueryDto }
+  //   OUTPUTS: { Event[] with participant _count }
+  //   SIDE_EFFECTS: Prisma Organization and Event reads
+  //   LINKS: M-ORGANIZATIONS, V-M-ORGANIZATIONS, M-PRISMA
+  // END_CONTRACT: findEvents
   async findEvents(organizationId: number, pagination: PaginationQueryDto) {
     const { page = 1, limit = 10 } = pagination;
     const skip = (page - 1) * limit;
@@ -126,6 +184,13 @@ export class OrganizationsService {
     });
   }
   
+  // START_CONTRACT: findEventsForOrganizer
+  //   PURPOSE: Organizer event list with mapped status, capacity, and pending applications
+  //   INPUTS: { organizationId: number }
+  //   OUTPUTS: { organizer event rows }
+  //   SIDE_EFFECTS: Prisma Event and EventParticipant groupBy reads
+  //   LINKS: M-ORGANIZATIONS, V-M-ORGANIZATIONS, M-PRISMA
+  // END_CONTRACT: findEventsForOrganizer
   async findEventsForOrganizer(organizationId: number) {
     const events = await this.prisma.event.findMany({
       where: { organizationId },
@@ -169,7 +234,16 @@ export class OrganizationsService {
       };
     });
   }
+  // END_BLOCK_QUERY_ORG_EVENTS
 
+  // START_CONTRACT: getDashboardStats
+  //   PURPOSE: Build organizer dashboard tiles from org aggregates
+  //   INPUTS: { organizationId: number }
+  //   OUTPUTS: { OrganizationStatEntity[] }
+  //   SIDE_EFFECTS: Prisma Organization read with subscriber/event counts
+  //   LINKS: M-ORGANIZATIONS, V-M-ORGANIZATIONS, BLOCK_DASHBOARD_STATS
+  // END_CONTRACT: getDashboardStats
+  // START_BLOCK_DASHBOARD_STATS
   async getDashboardStats(organizationId: number): Promise<OrganizationStatEntity[]> {
     const organization = await this.prisma.organization.findUnique({
       where: { id: organizationId },
@@ -215,7 +289,16 @@ export class OrganizationsService {
 
     return stats;
   }
+  // END_BLOCK_DASHBOARD_STATS
   
+  // START_CONTRACT: updateSubscription
+  //   PURPOSE: Subscribe or unsubscribe the current user to an organization
+  //   INPUTS: { organizationId: number, userId: number, isSubscribed: boolean }
+  //   OUTPUTS: { success: true }
+  //   SIDE_EFFECTS: creates or deletes UserOrganizationSubscription; ignores P2002 duplicates
+  //   LINKS: M-ORGANIZATIONS, V-M-ORGANIZATIONS, M-PRISMA
+  // END_CONTRACT: updateSubscription
+  // START_BLOCK_UPDATE_SUBSCRIPTION
   async updateSubscription(
     organizationId: number,
     userId: number,
@@ -243,4 +326,5 @@ export class OrganizationsService {
     }
     return { success: true };
   }
+  // END_BLOCK_UPDATE_SUBSCRIPTION
 }

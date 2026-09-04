@@ -1,3 +1,27 @@
+// FILE: backend/src/learning/learning.service.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Serve courses and persist lesson and quiz completion on the server.
+//   SCOPE: list/get shaped courses, score submitted quiz answers, mark lessons and issue certificates
+//   DEPENDS: M-PRISMA, M-AUTH
+//   LINKS: M-LEARNING, V-M-LEARNING, M-PRISMA
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   LearningService - courses, lessons, certificates
+//   PASS_THRESHOLD - 0.7 quiz pass ratio aligned with frontend
+//   findAll - shaped course catalog
+//   findOne - shaped course by id
+//   completeCourse - score submitted quiz answers without issuing a certificate
+//   markLessonComplete - persist lesson progress and issue certificate when all lessons done
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import {
   BadRequestException,
   Injectable,
@@ -11,9 +35,17 @@ import { CompleteCourseDto } from './dto/complete-course.dto';
 const PASS_THRESHOLD = 0.7;
 
 @Injectable()
+// START_CONTRACT: LearningService
+//   PURPOSE: Course progress persistence
+//   INPUTS: { PrismaService, courseId, lessonId, userId, CompleteCourseDto }
+//   OUTPUTS: { shaped Course, quiz score, lesson progress }
+//   SIDE_EFFECTS: reads Course/QuizAnswer; writes UserCourseProgress and UserCertificate
+//   LINKS: M-LEARNING, V-M-LEARNING, M-PRISMA
+// END_CONTRACT: LearningService
 export class LearningService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // START_BLOCK_SHAPE_COURSE
   // Включаем answers с isCorrect для вычисления isMultiple на сервере,
   // но НЕ отдаём isCorrect клиенту (иначе видны правильные ответы до отправки).
   private readonly courseInclude = {
@@ -45,7 +77,16 @@ export class LearningService {
       })),
     };
   }
+  // END_BLOCK_SHAPE_COURSE
 
+  // START_BLOCK_QUERY_COURSES
+  // START_CONTRACT: findAll
+  //   PURPOSE: List all courses with public quiz shape
+  //   INPUTS: { none }
+  //   OUTPUTS: { shaped Course[] }
+  //   SIDE_EFFECTS: Prisma Course findMany
+  //   LINKS: M-LEARNING, V-M-LEARNING, M-PRISMA
+  // END_CONTRACT: findAll
   async findAll() {
     const courses = await this.prisma.course.findMany({
       include: this.courseInclude,
@@ -53,6 +94,13 @@ export class LearningService {
     return courses.map((c) => this.shapeCourse(c));
   }
 
+  // START_CONTRACT: findOne
+  //   PURPOSE: Load one course with public quiz shape
+  //   INPUTS: { id: number }
+  //   OUTPUTS: { shaped Course }
+  //   SIDE_EFFECTS: Prisma Course findUnique
+  //   LINKS: M-LEARNING, V-M-LEARNING, M-PRISMA
+  // END_CONTRACT: findOne
   async findOne(id: number) {
     const course = await this.prisma.course.findUnique({
       where: { id },
@@ -65,10 +113,19 @@ export class LearningService {
 
     return this.shapeCourse(course);
   }
+  // END_BLOCK_QUERY_COURSES
 
   // Оценивает ОТПРАВЛЕННЫЕ ответы (квиз текущего урока). Сертификат здесь НЕ
   // выдаётся — выдача завязана на завершение всех уроков (markLessonComplete).
   // Возвращает correctAnswers (по отправленным вопросам) для подсветки ответов.
+  // START_CONTRACT: completeCourse
+  //   PURPOSE: Score submitted quiz answers against PASS_THRESHOLD without issuing a certificate
+  //   INPUTS: { userId: number, courseId: number, completionDto: CompleteCourseDto }
+  //   OUTPUTS: { isPassed, score, totalQuestions, correctAnswers }
+  //   SIDE_EFFECTS: Prisma Course and QuizAnswer reads
+  //   LINKS: M-LEARNING, V-M-LEARNING, M-PRISMA
+  // END_CONTRACT: completeCourse
+  // START_BLOCK_COMPLETE_COURSE
   async completeCourse(
     userId: number,
     courseId: number,
@@ -134,9 +191,18 @@ export class LearningService {
 
     return { isPassed, score, totalQuestions, correctAnswers };
   }
+  // END_BLOCK_COMPLETE_COURSE
 
   // Отмечает урок завершённым (серверный прогресс). Когда завершены ВСЕ уроки
   // курса — выдаёт сертификат. Возвращает прогресс и флаг завершения курса.
+  // START_CONTRACT: markLessonComplete
+  //   PURPOSE: Persist lesson completion and issue a certificate when all lessons are done
+  //   INPUTS: { userId: number, courseId: number, lessonId: number }
+  //   OUTPUTS: { completedLessonIds, totalLessons, courseCompleted }
+  //   SIDE_EFFECTS: transactional UserCourseProgress upsert and optional UserCertificate create
+  //   LINKS: M-LEARNING, V-M-LEARNING, BLOCK_COMPLETE_LESSON
+  // END_CONTRACT: markLessonComplete
+  // START_BLOCK_COMPLETE_LESSON
   async markLessonComplete(userId: number, courseId: number, lessonId: number) {
     return this.prisma.$transaction(async (tx) => {
       const course = await tx.course.findUnique({
@@ -179,4 +245,5 @@ export class LearningService {
       return { completedLessonIds: completedLessons, totalLessons, courseCompleted };
     });
   }
+  // END_BLOCK_COMPLETE_LESSON
 }

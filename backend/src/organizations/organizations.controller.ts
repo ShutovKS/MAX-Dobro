@@ -1,3 +1,30 @@
+// FILE: backend/src/organizations/organizations.controller.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: REST organizations catalog, subscriptions, and organizer dashboard routes.
+//   SCOPE: list/get orgs, reviews, subscribe, dashboard stats, organizer events and participants
+//   DEPENDS: M-AUTH, M-EVENTS, M-REVIEWS
+//   LINKS: M-ORGANIZATIONS, V-M-ORGANIZATIONS, M-AUTH
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   OrganizationsController - REST organizations and organizer routes
+//   findAll - GET /organizations
+//   findOne - GET /organizations/:id
+//   getReviews - GET /organizations/:id/reviews
+//   updateSubscription - POST /organizations/:id/subscription
+//   getDashboardStats - GET /organization/dashboard/stats
+//   findOrganizationEvents - GET /organization/events
+//   getEventParticipants - GET /organization/events/:eventId/participants
+//   getOrganizationDetails - GET /organization/details
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import {
   Body,
   Controller,
@@ -30,6 +57,13 @@ import { OrganizationsService } from './organizations.service';
 
 @ApiTags('Organizations')
 @Controller()
+// START_CONTRACT: OrganizationsController
+//   PURPOSE: HTTP adapter for org catalog, subscriptions, and organizer dashboard
+//   INPUTS: { OrganizationsService, ReviewsService, EventsService, User, PaginationQueryDto }
+//   OUTPUTS: { OrganizationEntity, OrganizationStatEntity, ReviewEntity[] }
+//   SIDE_EFFECTS: none beyond delegated service calls
+//   LINKS: M-ORGANIZATIONS, V-M-ORGANIZATIONS, M-AUTH, M-EVENTS, M-REVIEWS
+// END_CONTRACT: OrganizationsController
 export class OrganizationsController {
   constructor(
     private readonly organizationsService: OrganizationsService,
@@ -37,6 +71,7 @@ export class OrganizationsController {
     private readonly eventsService: EventsService,
   ) {}
 
+  // START_BLOCK_QUERY_ORGS
   @Get('organizations')
   @UseGuards(OptionalAuthGuard)
   @ApiBearerAuth()
@@ -67,7 +102,9 @@ export class OrganizationsController {
   ) {
     return this.reviewsService.findAllForOrganization(id, pagination);
   }
+  // END_BLOCK_QUERY_ORGS
 
+  // START_BLOCK_MUTATE_SUBSCRIPTION
   @Post('organizations/:id/subscription')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
@@ -84,7 +121,9 @@ export class OrganizationsController {
       body.isSubscribed,
     );
   }
+  // END_BLOCK_MUTATE_SUBSCRIPTION
 
+  // START_BLOCK_ORGANIZER_DASHBOARD
   @Get('organization/dashboard/stats')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
@@ -120,4 +159,5 @@ export class OrganizationsController {
     const organizationId = user.organizationId ?? 1;
     return this.organizationsService.findOne(organizationId, user.id);
   }
+  // END_BLOCK_ORGANIZER_DASHBOARD
 }

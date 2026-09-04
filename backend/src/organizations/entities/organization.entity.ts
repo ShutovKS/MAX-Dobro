@@ -1,3 +1,22 @@
+// FILE: backend/src/organizations/entities/organization.entity.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Swagger entity for an organization catalog card.
+//   SCOPE: identity, copy, media, rating, subscriber count, isSubscribed
+//   DEPENDS: none
+//   LINKS: M-ORGANIZATIONS, V-M-ORGANIZATIONS
+//   ROLE: TYPES
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   OrganizationEntity - OpenAPI organization with optional viewer subscription flag
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class OrganizationEntity {

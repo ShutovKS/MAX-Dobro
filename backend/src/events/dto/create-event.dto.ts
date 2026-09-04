@@ -1,3 +1,22 @@
+// FILE: backend/src/events/dto/create-event.dto.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Validated payload for creating a volunteer event.
+//   SCOPE: title, description, date, location, capacity, category, geo, rewards, recommended course
+//   DEPENDS: none
+//   LINKS: M-EVENTS, V-M-EVENTS
+//   ROLE: TYPES
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   CreateEventDto - class-validator DTO for POST /events; organizationId is not client-supplied
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,

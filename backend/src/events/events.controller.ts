@@ -1,3 +1,31 @@
+// FILE: backend/src/events/events.controller.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: REST /events boundary for event CRUD and participation.
+//   SCOPE: create, list, get, update, delete events; participate, cancel, list and patch participants
+//   DEPENDS: M-AUTH
+//   LINKS: M-EVENTS, V-M-EVENTS, M-AUTH
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   EventsController - REST /events routes
+//   create - POST /events as organizer
+//   findAll - GET /events paginated
+//   findOne - GET /events/:id with optional auth
+//   getParticipants - GET /events/:id/participants
+//   update - PATCH /events/:id
+//   remove - DELETE /events/:id
+//   participate - POST /events/:id/participate
+//   cancelParticipation - DELETE /events/:id/participate
+//   updateParticipantStatus - PATCH /events/:eventId/participants/:userId
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import {
   Body,
   Controller,
@@ -32,10 +60,17 @@ import { EventsService } from './events.service';
 
 @ApiTags('Events')
 @Controller('events')
+// START_CONTRACT: EventsController
+//   PURPOSE: HTTP adapter for event queries and participation
+//   INPUTS: { EventsService, CreateEventDto, UpdateEventDto, PaginationQueryDto, User }
+//   OUTPUTS: { EventEntity, EventParticipantEntity, PublicUserEntity[] }
+//   SIDE_EFFECTS: none beyond EventsService calls
+//   LINKS: M-EVENTS, V-M-EVENTS, M-AUTH
+// END_CONTRACT: EventsController
 export class EventsController {
-  /** <context:backend_events_controller> Events API boundary for route and permission context. </context:backend_events_controller> */
   constructor(private readonly eventsService: EventsService) {}
 
+  // START_BLOCK_MUTATE_CREATE
   @Post()
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
@@ -50,7 +85,9 @@ export class EventsController {
     // scope — фолбэк на единственную организацию (1), чтобы не ломать демо.
     return this.eventsService.create(createEventDto, user.organizationId ?? 1);
   }
+  // END_BLOCK_MUTATE_CREATE
 
+  // START_BLOCK_QUERY_EVENTS
   @Get()
   @ApiOperation({ summary: 'Get a list of all events with pagination' })
   @ApiResponse({
@@ -88,7 +125,9 @@ export class EventsController {
   getParticipants(@Param('id', ParseIntPipe) id: number) {
     return this.eventsService.getParticipants(id);
   }
+  // END_BLOCK_QUERY_EVENTS
 
+  // START_BLOCK_MUTATE_EVENTS
   @Patch(':id')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
@@ -119,7 +158,9 @@ export class EventsController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.eventsService.remove(id);
   }
+  // END_BLOCK_MUTATE_EVENTS
 
+  // START_BLOCK_PARTICIPATE
   @Post(':id/participate')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
@@ -177,4 +218,5 @@ export class EventsController {
       body.status,
     );
   }
+  // END_BLOCK_PARTICIPATE
 }

@@ -1,3 +1,28 @@
+// FILE: backend/src/stories/stories.controller.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: REST /stories feed, create, comments, and likes.
+//   SCOPE: list/get stories, create story, add comment, like, unlike
+//   DEPENDS: M-AUTH
+//   LINKS: M-STORIES, V-M-STORIES, M-AUTH
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   StoriesController - REST /stories
+//   findAll - GET /stories
+//   findOne - GET /stories/:id
+//   create - POST /stories
+//   addComment - POST /stories/:id/comments
+//   likeStory - POST /stories/:id/like
+//   unlikeStory - DELETE /stories/:id/like
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import {
   Body,
   Controller,
@@ -25,9 +50,17 @@ import { StoriesService } from './stories.service';
 
 @ApiTags('Stories')
 @Controller('stories')
+// START_CONTRACT: StoriesController
+//   PURPOSE: HTTP adapter for story feed, comments, and likes
+//   INPUTS: { StoriesService, User, eventId/text/imageUrl, comment text }
+//   OUTPUTS: { StoryEntity, comment, void for like/unlike }
+//   SIDE_EFFECTS: none beyond StoriesService calls
+//   LINKS: M-STORIES, V-M-STORIES, M-AUTH
+// END_CONTRACT: StoriesController
 export class StoriesController {
   constructor(private readonly storiesService: StoriesService) {}
 
+  // START_BLOCK_QUERY_STORIES
   @Get()
   @UseGuards(OptionalAuthGuard)
   @ApiBearerAuth()
@@ -46,7 +79,9 @@ export class StoriesController {
   findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: User) {
     return this.storiesService.findOne(id, user?.id);
   }
+  // END_BLOCK_QUERY_STORIES
 
+  // START_BLOCK_CREATE_STORY
   @Post()
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
@@ -58,7 +93,9 @@ export class StoriesController {
   ) {
     return this.storiesService.create(user.id, dto);
   }
+  // END_BLOCK_CREATE_STORY
 
+  // START_BLOCK_STORY_SOCIAL
   @Post(':id/comments')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
@@ -97,4 +134,5 @@ export class StoriesController {
   ) {
     return this.storiesService.unlikeStory(id, user.id);
   }
+  // END_BLOCK_STORY_SOCIAL
 }

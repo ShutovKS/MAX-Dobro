@@ -1,3 +1,26 @@
+// FILE: backend/src/learning/learning.controller.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: REST /courses boundary for catalog, quiz scoring, and lesson completion.
+//   SCOPE: list/get courses, complete quiz, mark lesson complete
+//   DEPENDS: M-AUTH
+//   LINKS: M-LEARNING, V-M-LEARNING, M-AUTH
+//   ROLE: RUNTIME
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   LearningController - REST /courses
+//   findAll - GET /courses
+//   findOne - GET /courses/:id
+//   completeCourse - POST /courses/:id/complete
+//   markLessonComplete - POST /courses/:id/lessons/:lessonId/complete
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import {
   Body,
   Controller,
@@ -22,9 +45,17 @@ import { LearningService } from './learning.service';
 
 @ApiTags('Learning')
 @Controller('courses')
+// START_CONTRACT: LearningController
+//   PURPOSE: HTTP adapter for courses, quiz scoring, and lesson progress
+//   INPUTS: { LearningService, CompleteCourseDto, User }
+//   OUTPUTS: { CourseEntity, quiz score, lesson progress }
+//   SIDE_EFFECTS: none beyond LearningService calls
+//   LINKS: M-LEARNING, V-M-LEARNING, M-AUTH
+// END_CONTRACT: LearningController
 export class LearningController {
   constructor(private readonly learningService: LearningService) {}
 
+  // START_BLOCK_QUERY_COURSES
   @Get()
   @ApiOperation({ summary: 'Get a list of all courses' })
   @ApiResponse({ status: 200, type: [CourseEntity] })
@@ -39,7 +70,9 @@ export class LearningController {
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.learningService.findOne(id);
   }
+  // END_BLOCK_QUERY_COURSES
 
+  // START_BLOCK_COMPLETE_COURSE
   @Post(':id/complete')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
@@ -54,7 +87,9 @@ export class LearningController {
   ) {
     return this.learningService.completeCourse(user.id, id, completionDto);
   }
+  // END_BLOCK_COMPLETE_COURSE
 
+  // START_BLOCK_COMPLETE_LESSON
   @Post(':id/lessons/:lessonId/complete')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
@@ -67,4 +102,5 @@ export class LearningController {
   ) {
     return this.learningService.markLessonComplete(user.id, id, lessonId);
   }
+  // END_BLOCK_COMPLETE_LESSON
 }

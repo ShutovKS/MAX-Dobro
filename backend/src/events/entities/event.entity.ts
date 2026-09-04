@@ -1,3 +1,24 @@
+// FILE: backend/src/events/entities/event.entity.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Swagger entity for an Event including optional friends and course hints.
+//   SCOPE: Prisma Event fields plus _count, recommendedCourse, friendsParticipating
+//   DEPENDS: none
+//   LINKS: M-EVENTS, V-M-EVENTS
+//   ROLE: TYPES
+//   MAP_MODE: EXPORTS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   EventEntity - OpenAPI Event with optional participation extras
+//   EventCount - nested participant count
+//   RecommendedCourseInfo - nested id/title for recommended course
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Course, Event } from '@prisma/client';
 import { PublicUserEntity } from '../../users/entities/public-user.entity';
