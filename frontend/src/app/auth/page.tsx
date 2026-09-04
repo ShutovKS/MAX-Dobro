@@ -205,11 +205,6 @@ const LoginView: React.FC<{
                 Открыть в Telegram
               </button>
             </a>
-            <a href="/pitch/" className="w-full">
-              <button className="w-full flex items-center justify-center bg-white text-[#007AFF] font-semibold py-3 px-4 rounded-xl border-2 border-[#007AFF]/30 hover:bg-blue-50 transition-all duration-200">
-                О проекте
-              </button>
-            </a>
           </div>
         ) : (
           <div className="w-full flex flex-col items-center space-y-4">
