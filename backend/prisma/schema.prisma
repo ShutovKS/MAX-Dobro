@@ -8,7 +8,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Модель пользователя
+/// <context:data_model_boundary> User and organization models define the shared backend data boundary. </context:data_model_boundary>
 model User {
   id                Int                  @id @default(autoincrement())
   email             String               @unique
@@ -36,15 +36,21 @@ model User {
   friendOf  Friendship[] @relation("FriendOf")
   challenges UserChallenge[]
   reviews    Review[]
+  courseProgress UserCourseProgress[]
+
+  // Организация, к которой относится пользователь-организатор (NULL у волонтёров).
+  organizationId Int?          @map("organization_id")
+  organization   Organization? @relation("OrgMembers", fields: [organizationId], references: [id])
 
   supabaseUserId String? @unique @map("supabase_user_id")
   maxUserId      String?   @unique @map("max_user_id")
+  telegramUserId String?   @unique @map("telegram_user_id")
 
   @@index([karmaPoints(sort: Desc)])
   @@map("users")
 }
 
-// Модель организации
+/// <context:data_model_boundary> Related models below stay aligned with the backend feature surface. </context:data_model_boundary>
 model Organization {
   id            Int      @id @default(autoincrement())
   name          String
@@ -63,6 +69,7 @@ model Organization {
   events        Event[]
   subscribers   UserOrganizationSubscription[]
   reviews       Review[]
+  members       User[]   @relation("OrgMembers")
 
   @@map("organizations")
 }
@@ -161,8 +168,23 @@ model Course {
   lessons      Lesson[]
   certificates UserCertificate[]
   events       Event[]           @relation("RecommendedCourseForEvent")
+  progress     UserCourseProgress[]
 
   @@map("courses")
+}
+
+// Прогресс пользователя по курсу (какие уроки завершены). Серверный источник
+// истины вместо localStorage — статус/прогресс/сертификат больше не «сбрасываются».
+model UserCourseProgress {
+  userId           Int
+  user             User     @relation(fields: [userId], references: [id])
+  courseId         Int
+  course           Course   @relation(fields: [courseId], references: [id])
+  completedLessons Int[]    @default([])
+  updatedAt        DateTime @updatedAt
+
+  @@id([userId, courseId])
+  @@map("user_course_progress")
 }
 
 // Модель урока

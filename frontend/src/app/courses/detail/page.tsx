@@ -13,11 +13,9 @@ import {
   User,
 } from 'lucide-react';
 import { iconMap } from '../../../lib/iconMap';
-
-const getLessonProgress = (courseId: number): number[] => {
-  const storageKey = `course_progress_${courseId}`;
-  return JSON.parse(localStorage.getItem(storageKey) || '[]');
-};
+import { buildDeepLink, tgShareUrl } from '../../../lib/telegram-sdk';
+import { useTelegramBackButton } from '../../../lib/useTelegramUI';
+import { HeroDetailSkeleton } from '../../../components/ui/Skeletons';
 
 const LessonRow: React.FC<{
   lesson: CourseLesson;
@@ -73,7 +71,7 @@ const CourseDetailPage: React.FC<{
       setLoading(true);
       const data = await fetchCourseById(id);
       if (data && data.program) {
-        const completedIds = getLessonProgress(id);
+        const completedIds = data.completedLessonIds || [];
         let isCurrentSet = false;
         const programWithStatus = data.program.map((lesson) => {
           if (completedIds.includes(lesson.id)) {
@@ -115,6 +113,7 @@ const CourseDetailPage: React.FC<{
   }, [id]);
 
   const onBack = () => navigate('/app/training');
+  useTelegramBackButton(onBack);
   const onSelectLesson = (courseId: number, lessonId: number) =>
     navigate(`/app/courses/${courseId}/lesson/${lessonId}`);
   const onViewCertificate = (courseId: number) =>
@@ -146,10 +145,14 @@ const CourseDetailPage: React.FC<{
     }
   };
 
-  if (loading || !course) {
+  if (loading) {
+    return <HeroDetailSkeleton />;
+  }
+
+  if (!course) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
-        Загрузка курса...
+      <div className="w-full h-screen flex items-center justify-center text-gray-500">
+        Курс не найден.
       </div>
     );
   }
@@ -165,6 +168,7 @@ const CourseDetailPage: React.FC<{
           <ArrowLeft className="w-6 h-6 text-white" />
         </button>
         <button
+          onClick={() => course && tgShareUrl(buildDeepLink('course', course.id), `Курс «${course.title}» в Добро Club`)}
           className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
           aria-label="Поделиться"
         >

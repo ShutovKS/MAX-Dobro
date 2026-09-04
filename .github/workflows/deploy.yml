@@ -1,0 +1,97 @@
+name: Deploy dobroclub.online
+
+# Авто-деплой при push в main:
+#   1) собираем фронт на раннере GitHub (не грузим слабый сервер),
+#   2) доставляем код и статику на сервер по SSH (rsync),
+#   3) на сервере сборка backend+bot идёт В ОТДЕЛЬНОЙ сессии (переживает обрыв SSH),
+#      CI опрашивает результат короткими keepalive-соединениями.
+#
+# Нужны GitHub secrets (Settings -> Secrets and variables -> Actions):
+#   SSH_HOST            = 2.26.100.135
+#   SSH_USER            = root
+#   SSH_KEY             = приватный ключ tgdeploy (всё содержимое ~/.ssh/tgdeploy)
+#   SUPABASE_ANON_KEY   = anon key проекта Supabase (для сборки фронта)
+#
+# Серверу доступ к GitHub НЕ нужен. Файлы backend/.env, bot-telegram/.env
+# на сервере не трогаются (rsync --exclude .env).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Сериализуем деплои: одновременные пуши не запускают параллельную сборку
+# на сервере (иначе гонка за /tmp/dobro-deploy.done и docker compose).
+concurrency:
+  group: deploy-dobroclub
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: https://dobroclub.online/api
+          VITE_API_MODE: real
+          VITE_SUPABASE_URL: https://pykfcxpfpdrtuxdnyjll.supabase.co
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          npm ci || npm install
+          npm run build
+
+      - name: Setup SSH (with keepalive)
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          {
+            echo "Host deploy"
+            echo "  HostName $SSH_HOST"
+            echo "  User $SSH_USER"
+            echo "  IdentityFile ~/.ssh/id_deploy"
+            echo "  StrictHostKeyChecking accept-new"
+            echo "  ServerAliveInterval 20"
+            echo "  ServerAliveCountMax 15"
+            echo "  TCPKeepAlive yes"
+          } > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
+      - name: Ship code + static
+        run: |
+          rsync -az --delete \
+            --exclude node_modules --exclude .git --exclude .env --exclude dist \
+            backend bot-telegram deploy docker-compose.prod.yml \
+            deploy:/opt/dobroclub/
+          rsync -az --delete frontend/dist/ deploy:/var/www/dobroclub/dist/
+
+      - name: Remote deploy (resilient to SSH drops)
+        run: |
+          set -e
+          # Запускаем сборку/перезапуск в отдельной сессии на сервере
+          ssh deploy 'bash /opt/dobroclub/deploy/ci-run.sh'
+          echo "Ожидаем завершения сборки на сервере..."
+          for i in $(seq 1 120); do
+            sleep 10
+            if ssh deploy 'test -f /tmp/dobro-deploy.done'; then
+              code=$(ssh deploy 'cat /tmp/dobro-deploy.done' || echo 1)
+              echo "=== remote deploy log (хвост) ==="
+              ssh deploy 'tail -n 60 /tmp/dobro-deploy.log' || true
+              echo "=== remote exit code: ${code} ==="
+              exit "${code:-1}"
+            fi
+            echo "...сборка идёт ($((i*10))s)"
+          done
+          echo "Тайм-аут ожидания деплоя"
+          ssh deploy 'tail -n 60 /tmp/dobro-deploy.log' || true
+          exit 1

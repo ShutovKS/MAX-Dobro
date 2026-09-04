@@ -77,7 +77,7 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
     loadData();
   }, []);
 
-  const isMockMode = true;
+  const isMockMode = import.meta.env.VITE_API_MODE !== 'real';
 
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
@@ -139,6 +139,15 @@ const OrganizationDashboardPage: React.FC<OrganizationDashboardPageProps> = ({
               </div>
             </button>
           </div>
+        </section>
+
+        <section>
+          <button
+            onClick={onSwitchToVolunteer}
+            className="w-full bg-white text-[#007AFF] font-semibold py-3 rounded-2xl shadow-sm hover:bg-gray-50 transition-colors"
+          >
+            Вернуться в волонтёрский режим
+          </button>
         </section>
 
         {isMockMode && (

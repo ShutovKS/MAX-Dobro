@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
+  /** <context:backend_prisma_service> Central database bridge and per-user session context switch. </context:backend_prisma_service> */
   async onModuleInit() {
     await this.$connect();
   }

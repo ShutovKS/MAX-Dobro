@@ -256,6 +256,8 @@ docker-compose exec backend npm run seed
 
 ## 👨‍💻 Developer guide
 
+<!-- <context:repo_docs> Root guidance lives in `AGENTS.md`; `.sisyphus/` stays ignored for plans, evidence, and notepads. </context:repo_docs> -->
+
 ### Project structure
 
 The project is divided into three main directories:

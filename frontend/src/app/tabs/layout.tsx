@@ -10,7 +10,8 @@ interface TabsLayoutProps {
 
 const TabsLayout: React.FC<TabsLayoutProps> = ({
                                                  user, onSwitchToOrganizationMode
-                                               }) => {
+}) => {
+  /** <context:frontend_tabs_layout> Shared tab scaffold for the main app navigation. </context:frontend_tabs_layout> */
   const navigate = useNavigate();
   const location = useLocation();
 

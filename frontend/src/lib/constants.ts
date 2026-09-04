@@ -1,9 +1,13 @@
 import {AnimalFriendIcon, ArtVolunteerIcon, ElderlyHelperIcon, NatureProtectorIcon} from '../components/ui/icons';
 import type {FilterDate, FilterFormat, OrganizationFilters} from './types';
 
-// App-wide constants
+// <context:frontend_constants> App-wide constants used by route and API markers. </context:frontend_constants>
 export const APP_VERSION = '1.0.0';
 export const CURRENT_USER_ID = 1;
+
+// Telegram-бот и прямая ссылка на запуск Mini App (для открытия из браузера)
+export const TELEGRAM_BOT_USERNAME = 'dobro_club_bot';
+export const TELEGRAM_APP_LINK = `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp`;
 export const TOAST_DURATION = 5000;
 export const MODAL_TRANSITION_DURATION = 300;
 
@@ -26,6 +30,14 @@ export const CERTIFICATE_DEFAULTS = {
 
 // Logic
 export const COURSE_PASS_THRESHOLD = 0.7;
+
+// Пресеты бонусов волонтёрам при создании события (кнопками, не текстом).
+export const EVENT_REWARD_PRESETS = {
+  karma: [10, 25, 50, 100],
+  hours: [1, 2, 3, 5, 8],
+};
+// Центр карты по умолчанию (Москва) для выбора точки события.
+export const DEFAULT_MAP_CENTER: [number, number] = [55.751244, 37.618423];
 
 // Calendar
 export const MONTH_NAMES = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];

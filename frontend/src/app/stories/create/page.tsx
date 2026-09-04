@@ -1,7 +1,8 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import type {HistoryEvent} from '../../../lib/types';
-import {fetchActivityHistoryEvents} from '../../../lib/api';
-import {Plus, X} from 'lucide-react';
+import {createStory, fetchActivityHistoryEvents} from '../../../lib/api';
+import {uploadImage} from '../../../lib/upload';
+import {Loader2, Plus, X} from 'lucide-react';
 import SelectEventModal from './SelectEventModal';
 
 interface CreateStoryPageProps {
@@ -15,6 +16,10 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
   const [photos, setPhotos] = useState<string[]>([]);
   const [text, setText] = useState('');
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (initialEventId) {
@@ -29,22 +34,41 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
 
   const isPublishEnabled = !!selectedEvent && text.trim().length > 0 && photos.length > 0;
 
-  const handleAddPhoto = () => {
-    const newPhoto = `https://picsum.photos/seed/${Date.now()}/600/400`;
-    setPhotos(prev => [...prev, newPhoto]);
+  const handleAddPhotoClick = () => {
+    setUploadError('');
+    fileInputRef.current?.click();
+  };
+
+  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = ''; // позволяем выбрать тот же файл повторно
+    if (files.length === 0) return;
+    setUploadError('');
+    setIsUploading(true);
+    try {
+      const urls = await Promise.all(files.map((file) => uploadImage(file)));
+      setPhotos(prev => [...prev, ...urls]);
+    } catch (err: any) {
+      setUploadError(err.message || 'Не удалось загрузить фото');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleRemovePhoto = (indexToRemove: number) => {
     setPhotos(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  const handlePublishClick = () => {
-    if (isPublishEnabled && selectedEvent) {
-      onPublish({
-        event: selectedEvent,
-        text,
-        photos,
-      });
+  const handlePublishClick = async () => {
+    if (isPublishEnabled && selectedEvent && !isPublishing) {
+      setIsPublishing(true);
+      try {
+        await createStory(selectedEvent.id, text, photos[0]);
+        onPublish({event: selectedEvent, text, photos});
+      } catch (err: any) {
+        setUploadError(err.message || 'Не удалось опубликовать историю');
+        setIsPublishing(false);
+      }
     }
   };
 
@@ -56,10 +80,10 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
           <h1 className="text-lg font-bold text-[#0C0D0E]">Новая история</h1>
           <button
             onClick={handlePublishClick}
-            disabled={!isPublishEnabled}
-            className={`text-lg font-bold ${isPublishEnabled ? 'text-[#007AFF]' : 'text-gray-400'}`}
+            disabled={!isPublishEnabled || isPublishing}
+            className={`text-lg font-bold ${isPublishEnabled && !isPublishing ? 'text-[#007AFF]' : 'text-gray-400'}`}
           >
-            Опубликовать
+            {isPublishing ? 'Публикация…' : 'Опубликовать'}
           </button>
         </header>
 
@@ -88,12 +112,27 @@ const CreateStoryPage: React.FC<CreateStoryPageProps> = ({onCancel, onPublish, i
                   </button>
                 </div>
               ))}
-              <button onClick={handleAddPhoto}
-                      className="flex-shrink-0 w-28 h-28 bg-gray-100 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors">
-                <Plus className="w-8 h-8" strokeWidth={3}/>
-                <span className="text-xs font-semibold mt-1">Добавить фото</span>
+              <button onClick={handleAddPhotoClick} disabled={isUploading}
+                      className="flex-shrink-0 w-28 h-28 bg-gray-100 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors disabled:opacity-60">
+                {isUploading ? (
+                  <Loader2 className="w-8 h-8 animate-spin"/>
+                ) : (
+                  <Plus className="w-8 h-8" strokeWidth={3}/>
+                )}
+                <span className="text-xs font-semibold mt-1">{isUploading ? 'Загрузка…' : 'Добавить фото'}</span>
               </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFilesSelected}
+              />
             </div>
+            {uploadError && (
+              <p className="text-red-600 text-sm mt-2">{uploadError}</p>
+            )}
           </section>
 
           <section className="flex-grow flex">

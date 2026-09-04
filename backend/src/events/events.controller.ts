@@ -33,6 +33,7 @@ import { EventsService } from './events.service';
 @ApiTags('Events')
 @Controller('events')
 export class EventsController {
+  /** <context:backend_events_controller> Events API boundary for route and permission context. </context:backend_events_controller> */
   constructor(private readonly eventsService: EventsService) {}
 
   @Post()
@@ -44,8 +45,10 @@ export class EventsController {
     description: 'The event has been successfully created.',
     type: () => EventEntity,
   })
-  create(@Body() createEventDto: CreateEventDto) {
-    return this.eventsService.create(createEventDto);
+  create(@Body() createEventDto: CreateEventDto, @CurrentUser() user: User) {
+    // organizationId берём из авторизованного организатора; пока мультиорг вне
+    // scope — фолбэк на единственную организацию (1), чтобы не ломать демо.
+    return this.eventsService.create(createEventDto, user.organizationId ?? 1);
   }
 
   @Get()

@@ -1,8 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router';
-import {fetchStoryById} from '../../../../lib/api';
+import {createStoryComment, fetchStoryById, likeStory, unlikeStory} from '../../../../lib/api';
 import type {Comment, Story} from '../../../../lib/types';
 import {ArrowLeft, Heart, MessageSquare, MoreHorizontal, Upload} from 'lucide-react';
+import {buildDeepLink, tgShareUrl} from '../../../../lib/telegram-sdk';
+import {ArticleSkeleton} from '../../../../components/ui/Skeletons';
 
 
 const CommentView: React.FC<{ comment: Comment }> = ({comment}) => (
@@ -29,6 +31,8 @@ const StoryDetailPage: React.FC<{
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState<Comment[]>([]);
+  const [likes, setLikes] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
     const loadStory = async () => {
@@ -37,6 +41,8 @@ const StoryDetailPage: React.FC<{
       if (data) {
         setStory(data);
         setComments(data.commentsData);
+        setLikes(data.likes);
+        setIsLiked(data.isLiked ?? false);
       }
       setLoading(false);
     };
@@ -46,20 +52,47 @@ const StoryDetailPage: React.FC<{
   const onBack = () => navigate('/app/stories');
   const onSelectEvent = (eventId: number) => navigate(`/app/events/${eventId}`);
 
-  const handlePostComment = () => {
-    if (!newComment.trim()) return;
-    const newCommentObj: Comment = {
+  const handleToggleLike = async () => {
+    if (!story) return;
+    const nextIsLiked = !isLiked;
+    setIsLiked(nextIsLiked);
+    setLikes(prev => Math.max(0, prev + (nextIsLiked ? 1 : -1)));
+    try {
+      if (nextIsLiked) {
+        await likeStory(story.id);
+      } else {
+        await unlikeStory(story.id);
+      }
+    } catch {
+      setIsLiked(!nextIsLiked);
+      setLikes(prev => Math.max(0, prev + (nextIsLiked ? -1 : 1)));
+    }
+  };
+
+  const handlePostComment = async () => {
+    if (!newComment.trim() || !story) return;
+    const text = newComment.trim();
+    setNewComment('');
+    // Оптимистично показываем, затем заменяем на серверный коммент (с реальным id).
+    const optimistic: Comment = {
       id: Date.now(),
       author: {name: 'Вы', avatarUrl: currentUserAvatar},
       timestamp: 'только что',
-      text: newComment,
+      text,
     };
-    setComments(prev => [...prev, newCommentObj]);
-    setNewComment('');
+    setComments(prev => [...prev, optimistic]);
+    try {
+      const saved = await createStoryComment(story.id, text);
+      setComments(prev => prev.map(c => (c.id === optimistic.id ? saved : c)));
+    } catch (e) {
+      console.error('Failed to post comment:', e);
+      setComments(prev => prev.filter(c => c.id !== optimistic.id));
+      setNewComment(text);
+    }
   };
 
   if (loading || !story) {
-    return <div className="w-full h-screen flex items-center justify-center">Загрузка истории...</div>;
+    return <ArticleSkeleton />;
   }
 
   return (
@@ -103,16 +136,17 @@ const StoryDetailPage: React.FC<{
 
         <div className="flex justify-between items-center text-[rgb(12,13,14,0.52)] p-4 border-y border-gray-100">
           <div className="flex items-center space-x-6">
-            <button className="flex items-center space-x-1.5 hover:text-[#FF303C]">
-              <Heart className="w-6 h-6"/>
-              <span className="font-semibold text-sm">{story.likes}</span>
+            <button onClick={handleToggleLike} className="flex items-center space-x-1.5 hover:text-[#FF303C]">
+              <Heart className={`w-6 h-6 ${isLiked ? 'fill-current text-[#FF303C]' : ''}`}/>
+              <span className="font-semibold text-sm">{likes}</span>
             </button>
             <div className="flex items-center space-x-1.5">
               <MessageSquare className="w-6 h-6"/>
               <span className="font-semibold text-sm">{comments.length}</span>
             </div>
           </div>
-          <button className="hover:text-[#007AFF]">
+          <button onClick={() => tgShareUrl(buildDeepLink('story', id), 'История из Добро Club')}
+                  className="hover:text-[#007AFF]">
             <Upload className="w-6 h-6"/>
           </button>
         </div>

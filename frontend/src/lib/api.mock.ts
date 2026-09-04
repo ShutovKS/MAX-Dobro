@@ -20,7 +20,11 @@ import {
 import type {
   Achievement,
   AppEvent,
+  Comment,
   Course,
+  CourseCompletionResult,
+  LessonCompletionResult,
+  EventCreatePayload,
   EventChatMessage,
   EventParticipant,
   Friend,
@@ -39,6 +43,7 @@ import type {
 import { CURRENT_USER_ID, COURSE_PASS_THRESHOLD } from './constants';
 
 const SIMULATED_DELAY = 500;
+const participatingEventIds = new Set<number>();
 
 const deepCopy = (inObject: any) => {
   let outObject: any, value: any, key: any;
@@ -79,6 +84,56 @@ export const fetchEventById = (
   const event = [...allEvents, ...activityHistoryEvents].find((e) => e.id === id);
   return simulateRequest(event);
 };
+
+export const participateInEvent = (eventId: number): Promise<void> => {
+  const eventExists = allEvents.some((event) => event.id === eventId);
+  if (!eventExists) {
+    return Promise.reject(new Error('Event not found'));
+  }
+
+  if (participatingEventIds.has(eventId)) {
+    return Promise.reject(new Error('You are already participating in this event'));
+  }
+
+  participatingEventIds.add(eventId);
+  return simulateRequest(undefined);
+};
+
+export const cancelEventParticipation = (eventId: number): Promise<void> => {
+  if (!participatingEventIds.has(eventId)) {
+    return Promise.reject(new Error('Participation record not found for this user and event'));
+  }
+
+  participatingEventIds.delete(eventId);
+  return simulateRequest(undefined);
+};
+
+export const createEvent = (payload: EventCreatePayload): Promise<AppEvent> => {
+  return simulateRequest({
+    id: Math.floor(Math.random() * 100000) + 1000,
+    ...payload,
+    participantCount: 0,
+    organizationName: 'Моя организация',
+  } as unknown as AppEvent);
+};
+
+export const updateEvent = (
+  id: number,
+  payload: Partial<EventCreatePayload>,
+): Promise<AppEvent> => {
+  return simulateRequest({ id, ...payload } as unknown as AppEvent);
+};
+
+export const createStoryComment = (
+  _storyId: number,
+  text: string,
+): Promise<Comment> =>
+  simulateRequest({
+    id: Math.floor(Math.random() * 100000) + 1000,
+    text,
+    timestamp: 'только что',
+    author: { name: 'Вы', avatarUrl: 'https://i.pravatar.cc/150?u=me' },
+  });
 
 export const fetchAllCourses = (): Promise<Course[]> => {
   return simulateRequest(allCourses);
@@ -162,12 +217,25 @@ export const fetchLeaderboardData = (
   return simulateRequest({ topUsers: data, currentUser });
 };
 
+export const updateProfile = (_data: {
+  firstName?: string;
+  lastName?: string;
+  about?: string;
+  avatarUrl?: string;
+}): Promise<void> => {
+  return Promise.resolve();
+};
+
 export const fetchAllAchievements = (): Promise<Achievement[]> => {
   return simulateRequest(allAchievements);
 };
 
 export const fetchUserAchievements = (): Promise<Achievement[]> => {
   return simulateRequest(allAchievements);
+};
+
+export const createEventReview = (): Promise<void> => {
+  return simulateRequest(undefined);
 };
 
 export const fetchMyChats = (): Promise<MyChatItem[]> => {
@@ -183,8 +251,68 @@ export const fetchStoryById = (id: number): Promise<Story | undefined> => {
   return simulateRequest(story);
 };
 
+export const createStory = (
+  eventId: number,
+  text: string,
+  imageUrl: string,
+): Promise<Story> => {
+  const story: Story = {
+    id: Date.now(),
+    author: { name: 'Вы', avatarUrl: 'https://i.pravatar.cc/48?img=1' },
+    timestamp: 'только что',
+    event: { id: eventId, name: allEvents.find((event) => event.id === eventId)?.title ?? 'Событие' },
+    text,
+    imageUrl,
+    likes: 0,
+    comments: 0,
+    commentsData: [],
+    isLiked: false,
+  };
+  allStories.unshift(story);
+  return simulateRequest(story);
+};
+
+export const likeStory = (storyId: number): Promise<void> => {
+  const story = allStories.find((item) => item.id === storyId);
+  if (story && !story.isLiked) {
+    story.likes += 1;
+    story.isLiked = true;
+  }
+  return simulateRequest(undefined);
+};
+
+export const unlikeStory = (storyId: number): Promise<void> => {
+  const story = allStories.find((item) => item.id === storyId);
+  if (story?.isLiked) {
+    story.likes = Math.max(0, story.likes - 1);
+    story.isLiked = false;
+  }
+  return simulateRequest(undefined);
+};
+
 export const fetchRewards = (): Promise<RewardItem[]> => {
   return simulateRequest(allRewards);
+};
+
+export const purchaseReward = (rewardId: number): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const reward = allRewards.find((item) => item.id === rewardId);
+
+      if (!reward) {
+        reject(new Error('Reward not found'));
+        return;
+      }
+
+      if (reward.isPurchased) {
+        resolve();
+        return;
+      }
+
+      reward.isPurchased = true;
+      resolve();
+    }, SIMULATED_DELAY);
+  });
 };
 
 export const fetchMapMarkers = (): Promise<MapMarker[]> => {
@@ -199,6 +327,40 @@ export const fetchEventChatMessages = (
   eventId: number,
 ): Promise<EventChatMessage[]> => {
   return simulateRequest(mockEventChatMessages);
+};
+
+export const postEventChatMessage = (
+  eventId: number,
+  text: string,
+): Promise<EventChatMessage> => {
+  const message: EventChatMessage = {
+    id: Date.now(),
+    author: { id: CURRENT_USER_ID, name: 'Вы', avatarUrl: 'https://i.pravatar.cc/48?img=1' },
+    text,
+    timestamp: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+  };
+  mockEventChatMessages.push(message);
+  return simulateRequest(message);
+};
+
+export const fetchAssistantChatMessages = (): Promise<[]> => {
+  return simulateRequest([]);
+};
+
+export const postAssistantMessage = (text: string) => {
+  const processed = text.toLowerCase();
+  const responseText = processed.includes('событи')
+    ? 'Могу помочь подобрать событие. Откройте ленту событий и уточните интересующую категорию.'
+    : processed.includes('курс')
+      ? 'В разделе обучения есть курсы для новичков и тематические материалы.'
+      : 'Я пока не понял запрос. Может, вас интересуют события или курсы?';
+  return simulateRequest({
+    id: Date.now(),
+    sender: 'assistant' as const,
+    type: 'text' as const,
+    text: responseText,
+    timestamp: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+  });
 };
 
 export const fetchOrganizationDashboardStats = (): Promise<OrganizationStat[]> => {
@@ -216,7 +378,7 @@ export const fetchWeeklyChallenge = (): Promise<WeeklyChallenge> => {
 export const completeCourse = (
   courseId: number,
   answers: { questionId: number; answerId: number }[],
-): Promise<{ isPassed: boolean; score: number; totalQuestions: number }> => {
+): Promise<CourseCompletionResult> => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       const course = allCourses.find((c) => c.id === courseId);
@@ -232,9 +394,15 @@ export const completeCourse = (
         .filter((q) => submittedQuestionIds.includes(q.id));
 
       const totalQuestions = questionsInSubmission.length;
+      const correctAnswers: Record<string, number[]> = {};
+      questionsInSubmission.forEach((q) => {
+        correctAnswers[q.id] = q.answers
+          .filter((a) => a.isCorrect)
+          .map((a) => a.id);
+      });
 
       if (totalQuestions === 0) {
-        return resolve({ isPassed: true, score: 0, totalQuestions: 0 });
+        return resolve({ isPassed: true, score: 0, totalQuestions: 0, correctAnswers });
       }
 
       const userAnswersMap = new Map<string, Set<number>>();
@@ -248,27 +416,35 @@ export const completeCourse = (
 
       let score = 0;
       for (const question of questionsInSubmission) {
-        const correctAnswers = new Set<number>();
-        question.answers.forEach((ans) => {
-          if (ans.isCorrect) {
-            correctAnswers.add(ans.id);
-          }
-        });
-
+        const correct = new Set<number>(correctAnswers[question.id]);
         const userAnswers = userAnswersMap.get(question.id) || new Set();
-
         if (
-          correctAnswers.size > 0 &&
-          correctAnswers.size === userAnswers.size &&
-          [...correctAnswers].every((id) => userAnswers.has(id))
+          correct.size > 0 &&
+          correct.size === userAnswers.size &&
+          [...correct].every((id) => userAnswers.has(id))
         ) {
           score++;
         }
       }
 
-      const isPassed = score >= totalQuestions;
+      const isPassed = score / totalQuestions >= 0.7;
 
-      resolve({ isPassed, score, totalQuestions });
+      resolve({ isPassed, score, totalQuestions, correctAnswers });
     }, SIMULATED_DELAY);
   });
+};
+
+export const markLessonComplete = (
+  courseId: number,
+  lessonId: number,
+): Promise<LessonCompletionResult> => {
+  const course = allCourses.find((c) => c.id === courseId);
+  const totalLessons = course?.program?.length ?? 0;
+  const lessonIndex =
+    course?.program?.findIndex((l) => l.id === lessonId) ?? -1;
+  const courseCompleted = totalLessons > 0 && lessonIndex === totalLessons - 1;
+  const completedLessonIds = course?.program
+    ? course.program.slice(0, lessonIndex + 1).map((l) => l.id)
+    : [lessonId];
+  return simulateRequest({ completedLessonIds, totalLessons, courseCompleted });
 };

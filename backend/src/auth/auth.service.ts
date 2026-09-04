@@ -9,6 +9,8 @@ import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { MaxAuthDto } from './dto/max-auth.dto';
+import { TelegramAuthDto } from './dto/telegram-auth.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 interface SupabaseUserPayload {
   id: string;
@@ -109,6 +111,18 @@ export class AuthService {
     }
   }
 
+  async updateProfile(userId: number, dto: UpdateProfileDto) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.firstName !== undefined ? { firstName: dto.firstName } : {}),
+        ...(dto.lastName !== undefined ? { lastName: dto.lastName } : {}),
+        ...(dto.about !== undefined ? { about: dto.about } : {}),
+        ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl } : {}),
+      },
+    });
+  }
+
   async getUserEvents(userId: number) {
     const participations = await this.prisma.eventParticipant.findMany({
       where: { userId },
@@ -164,16 +178,16 @@ export class AuthService {
   }
 
   async getUserCourses(userId: number) {
-    const [allCourses, userCertificates] = await Promise.all([
+    const [allCourses, userCertificates, progressRows] = await Promise.all([
       this.prisma.course.findMany({
         include: {
           lessons: {
             include: {
               questions: {
                 include: {
-                  answers: {
-                    select: { id: true, answer: true },
-                  },
+                  // isCorrect нужен серверу для вычисления isMultiple, но
+                  // клиенту не отдаётся (вырезаем ниже).
+                  answers: { select: { id: true, answer: true, isCorrect: true } },
                 },
               },
             },
@@ -184,29 +198,52 @@ export class AuthService {
         where: { userId },
         select: { courseId: true },
       }),
+      this.prisma.userCourseProgress.findMany({
+        where: { userId },
+        select: { courseId: true, completedLessons: true },
+      }),
     ]);
 
     const completedCourseIds = new Set(
       userCertificates.map((cert) => cert.courseId),
     );
+    const progressByCourse = new Map(
+      progressRows.map((p) => [p.courseId, p.completedLessons]),
+    );
 
     return allCourses.map((course) => {
-      const isCompleted = completedCourseIds.has(course.id);
-      const status = isCompleted ? 'completed' : 'not-started';
-      const progress = isCompleted ? 1 : 0;
+      const completedLessonIds = progressByCourse.get(course.id) ?? [];
+      const totalLessons = course.lessons.length;
+      const isCompleted =
+        completedCourseIds.has(course.id) ||
+        (totalLessons > 0 && completedLessonIds.length >= totalLessons);
+      const status = isCompleted
+        ? 'completed'
+        : completedLessonIds.length > 0
+          ? 'in-progress'
+          : 'not-started';
+      const progress = totalLessons
+        ? Math.min(1, completedLessonIds.length / totalLessons)
+        : isCompleted
+          ? 1
+          : 0;
       const { lessons, ...courseData } = course;
-      lessons.forEach((lesson) => {
-        lesson.questions.forEach((question) => {
-          // @ts-expect-error
-          question.id = question.id.toString();
-        });
-      });
+      const program = lessons.map((lesson) => ({
+        ...lesson,
+        questions: lesson.questions.map((q) => ({
+          id: q.id.toString(),
+          question: q.question,
+          isMultiple: q.answers.filter((a) => a.isCorrect).length > 1,
+          answers: q.answers.map((a) => ({ id: a.id, answer: a.answer })),
+        })),
+      }));
       return {
         ...courseData,
         hasCertificate: true,
         status,
         progress,
-        program: lessons,
+        completedLessonIds,
+        program,
       };
     });
   }
@@ -310,31 +347,65 @@ export class AuthService {
     });
   }
 
-  private isValidMaxHash(initData: string): boolean {
+  /** data-check-string: key=value по всем полям кроме `exclude`, отсортировано. */
+  private buildDataCheckString(
+    params: URLSearchParams,
+    exclude: string[],
+  ): string {
+    const arr: string[] = [];
+    params.forEach((value, key) => {
+      if (!exclude.includes(key)) arr.push(`${key}=${value}`);
+    });
+    arr.sort();
+    return arr.join('\n');
+  }
+
+  private hmacHex(dataCheckString: string, botToken: string): string {
+    const secretKey = crypto
+      .createHmac('sha256', 'WebAppData')
+      .update(botToken)
+      .digest();
+    return crypto
+      .createHmac('sha256', secretKey)
+      .update(dataCheckString)
+      .digest('hex');
+  }
+
+  /**
+   * Проверяет подпись `initData` от WebApp (HMAC-SHA256 с ключом из `WebAppData`+токен).
+   * Существует неоднозначность: должна ли `signature` (Ed25519, добавлена в новых
+   * клиентах) входить в data-check-string при проверке HMAC. Проверяем ОБА варианта
+   * (исключая hash+signature и исключая только hash) и принимаем, если совпал любой —
+   * оба требуют секрет бота, подделать нельзя. Логируем, какой совпал (диагностика).
+   */
+  private verifyWebAppInitData(initData: string, botToken: string): boolean {
     const params = new URLSearchParams(initData);
     const hash = params.get('hash');
     if (!hash) {
       return false;
     }
-    const dataToCheck: string[] = [];
-    params.forEach((value, key) => {
-      if (key !== 'hash') {
-        dataToCheck.push(`${key}=${value}`);
-      }
-    });
-    dataToCheck.sort();
-    const dataCheckString = dataToCheck.join('\n');
+
+    const dcsExclBoth = this.buildDataCheckString(params, ['hash', 'signature']);
+    const dcsExclHashOnly = this.buildDataCheckString(params, ['hash']);
+    const hExclBoth = this.hmacHex(dcsExclBoth, botToken);
+    const hExclHashOnly = this.hmacHex(dcsExclHashOnly, botToken);
+
+    const safeEq = (a: string, b: string) =>
+      a.length === b.length &&
+      crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+
+    // Реальные Telegram-клиенты (проверено на iOS) подписывают строку,
+    // ВКЛЮЧАЯ signature (исключается только hash). Старые клиенты без signature
+    // совпадают с обоими вариантами. Принимаем любой из них — оба требуют секрет
+    // бота, подделать нельзя; это надёжно и снимает неоднозначность доки.
+    const matchExclBoth = safeEq(hExclBoth, hash);
+    const matchExclHashOnly = safeEq(hExclHashOnly, hash);
+    return matchExclBoth || matchExclHashOnly;
+  }
+
+  private isValidMaxHash(initData: string): boolean {
     const botToken = this.configService.getOrThrow<string>('MAX_BOT_TOKEN');
-    const secretKey = crypto
-      .createHmac('sha256', 'WebAppData')
-      .update(botToken)
-      .digest();
-    const hmac = crypto.createHmac('sha256', secretKey);
-    const calculatedHash = hmac.update(dataCheckString).digest('hex');
-    return crypto.timingSafeEqual(
-      Buffer.from(calculatedHash),
-      Buffer.from(hash),
-    );
+    return this.verifyWebAppInitData(initData, botToken);
   }
 
   async loginWithMax(dto: MaxAuthDto) {
@@ -361,6 +432,40 @@ export class AuthService {
         firstName: maxUserData.first_name || null,
         lastName: maxUserData.last_name || null,
         avatarUrl: maxUserData.photo_url || null,
+        role: 'volunteer',
+      },
+    });
+    const payload = { sub: user.id, type: 'internal' };
+    const accessToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });
+    return { accessToken };
+  }
+
+  async loginWithTelegram(dto: TelegramAuthDto) {
+    const botToken =
+      this.configService.getOrThrow<string>('TELEGRAM_BOT_TOKEN');
+    if (!this.verifyWebAppInitData(dto.initData, botToken)) {
+      throw new UnauthorizedException('Invalid hash from Telegram');
+    }
+    const params = new URLSearchParams(dto.initData);
+    const userParam = params.get('user');
+    if (!userParam) {
+      throw new UnauthorizedException('User data is missing in initData');
+    }
+    const tgUserData = JSON.parse(userParam);
+    const telegramUserId = String(tgUserData.id);
+    const user = await this.prisma.user.upsert({
+      where: { telegramUserId },
+      update: {
+        firstName: tgUserData.first_name || null,
+        lastName: tgUserData.last_name || null,
+        avatarUrl: tgUserData.photo_url || null,
+      },
+      create: {
+        telegramUserId,
+        email: `${telegramUserId}@telegram.placeholder.com`,
+        firstName: tgUserData.first_name || null,
+        lastName: tgUserData.last_name || null,
+        avatarUrl: tgUserData.photo_url || null,
         role: 'volunteer',
       },
     });

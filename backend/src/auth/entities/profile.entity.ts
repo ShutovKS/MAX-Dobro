@@ -5,7 +5,15 @@ import { User } from '@prisma/client';
 import { UserAchievementEntity } from './user-achievement.entity';
 
 export class ProfileEntity
-  implements Omit<User, 'supabaseUserId' | 'maxUserId' | 'firstName' | 'lastName'>
+  implements
+    Omit<
+      User,
+      | 'supabaseUserId'
+      | 'maxUserId'
+      | 'telegramUserId'
+      | 'firstName'
+      | 'lastName'
+    >
 {
   @ApiProperty()
   id: number;
@@ -39,6 +47,9 @@ export class ProfileEntity
 
   @ApiProperty({ default: 0 })
   karmaPoints: number;
+
+  @ApiProperty({ required: false, nullable: true })
+  organizationId: number | null;
 
   @ApiProperty({ type: [UserAchievementEntity] })
   achievements: UserAchievementEntity[];

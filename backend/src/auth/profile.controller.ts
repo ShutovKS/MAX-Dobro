@@ -1,4 +1,11 @@
-import { Controller, Get, NotFoundException, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -8,6 +15,7 @@ import {
 import type { User } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileEntity } from './entities/profile.entity';
 import { UserAchievementEntity } from './entities/user-achievement.entity';
 import { UserCertificateEntity } from './entities/user-certificate.entity';
@@ -53,6 +61,18 @@ export class ProfileController {
       nextLevel: levelInfo.nextLevel,
       stats,
     };
+  }
+
+  @Patch('me')
+  @ApiOperation({ summary: 'Update current user profile' })
+  @ApiResponse({ status: 200, type: ProfileEntity })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  async updateMe(
+    @CurrentUser() user: User,
+    @Body() dto: UpdateProfileDto,
+  ): Promise<any> {
+    await this.authService.updateProfile(user.id, dto);
+    return this.getMe(user);
   }
 
   @Get('me/events')

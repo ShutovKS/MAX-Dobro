@@ -14,6 +14,7 @@ import {
   Users,
 } from 'lucide-react';
 import React from 'react';
+import { getIconComponent } from './iconMap';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 if (!API_BASE_URL) {
@@ -29,39 +30,35 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const iconMap: { [key: string]: React.FC<any> } = {
-  'hand-heart': HandHeart,
-  dog: Dog,
-  leaf: Leaf,
-  users: Users,
-  palette: Palette,
-  trophy: Trophy,
-  clock: Clock,
-  star: Star,
-  'graduation-cap': GraduationCap,
-  list: List,
-  default: Star,
+const getIcon = (iconName?: string | null): React.FC<any> =>
+  getIconComponent(iconName);
+
+const profileStatIdMap: Record<string, string> = {
+  '1': 'hours',
+  '2': 'karma',
 };
 
-const getIcon = (iconName: string): React.FC<any> => {
-  return iconMap[iconName] || iconMap['default'];
-};
+// Бэкенд не присылает иконки для статов — назначаем по метрике.
+const STAT_ICONS: Record<string, string> = { hours: 'Clock', karma: 'Sparkles' };
 
 const mapBackendProfileToAppUser = (backendProfile: any): User => {
-  const stats = (backendProfile.stats || []).map((stat: any) => ({
-    ...stat,
-    Icon: getIcon(stat.icon || 'default'),
-  }));
+  const stats = (backendProfile.stats || []).map((stat: any) => {
+    const mappedId = profileStatIdMap[stat.id] || stat.id;
+    const iconName = stat.icon || STAT_ICONS[mappedId] || 'Star';
+    return { ...stat, id: mappedId, icon: iconName, Icon: getIcon(iconName) };
+  });
 
   const achievements = (backendProfile.achievements || [])
     .slice(0, 5)
     .map((userAchievement: any) => ({
       id: userAchievement.achievement.id,
       name: userAchievement.achievement.name,
-      Icon: getIcon(userAchievement.achievement.icon || 'default'),
+      icon: userAchievement.achievement.icon ?? 'Award',
+      Icon: getIcon(userAchievement.achievement.icon ?? 'Award'),
     }));
 
   return {
+    id: backendProfile.id,
     firstName: backendProfile.firstName || 'Пользователь',
     lastName: backendProfile.lastName || '',
     avatarUrl:
@@ -177,21 +174,28 @@ export const getCurrentSession = async (): Promise<{
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (!profileResponse.ok) {
-      // Если токен невалидный (неважно, наш или Supabase), чистим все
+    if (profileResponse.ok) {
+      const backendProfile = await profileResponse.json();
+      return {
+        user: mapBackendProfileToAppUser(backendProfile),
+        token: token,
+      };
+    }
+
+    // Разлогиниваем ТОЛЬКО при реальной невалидности токена (401/403).
+    if (profileResponse.status === 401 || profileResponse.status === 403) {
       await logout();
       return null;
     }
 
-    const backendProfile = await profileResponse.json();
-
-    return {
-      user: mapBackendProfileToAppUser(backendProfile),
-      token: token,
-    };
+    // Прочие ошибки (5xx, бэкенд перезапускается при деплое, и т.п.) — НЕ
+    // сбрасываем токен. Бросаем ошибку, чтобы показать экран «повторить»,
+    // а не окно входа; сессия восстановится после возврата бэкенда.
+    throw new Error(`Проверка сессии не удалась (${profileResponse.status})`);
   } catch (e) {
-    console.error('Error during session check:', e);
-    return null;
+    // Сетевые/транзиентные ошибки — токен сохраняем, пробрасываем выше.
+    console.error('Error during session check (token kept):', e);
+    throw e;
   }
 };
 

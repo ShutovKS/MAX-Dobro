@@ -3,7 +3,7 @@ import 'dotenv/config';
 import http from 'http';
 
 const token = process.env.TG_BOT_TOKEN;
-const rawUrl = process.env.MINI_APP_URL || 'https://max-dobro.vercel.app';
+const rawUrl = process.env.MINI_APP_URL || 'https://dobroclub.online';
 const webAppUrl = rawUrl.startsWith('https://') ? rawUrl : rawUrl.replace('http://', 'https://');
 const PORT = process.env.PORT || 10000;
 

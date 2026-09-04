@@ -20,10 +20,15 @@ export type AppEvent = {
   date: string;
   location: string;
   icon: string;
+  imageUrl?: string;
   pos: { top: string; left: string };
   requirements?: string[];
   participantCount?: number;
   rewards?: { hours: number; karma: number };
+  isParticipating?: boolean;
+  participationStatus?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 export type HistoryEvent = AppEvent & {
@@ -44,7 +49,9 @@ export interface Filters {
 export type QuizAnswer = {
   id: number;
   answer: string;
-  isCorrect: boolean;
+  // Сервер не отдаёт isCorrect до отправки теста (правильность приходит в
+  // ответе completeCourse). В мок-данных поле присутствует.
+  isCorrect?: boolean;
 };
 
 export type QuizQuestion = {
@@ -76,6 +83,35 @@ export type Course = {
   progress: number;
   level: 'Для новичков' | 'Средний' | 'Продвинутый';
   program?: CourseLesson[];
+  completedLessonIds?: number[];
+};
+
+export type CourseCompletionResult = {
+  isPassed: boolean;
+  score: number;
+  totalQuestions: number;
+  correctAnswers: Record<string, number[]>;
+};
+
+export type LessonCompletionResult = {
+  completedLessonIds: number[];
+  totalLessons: number;
+  courseCompleted: boolean;
+};
+
+export type EventCreatePayload = {
+  title: string;
+  description: string;
+  date: string; // ISO
+  location?: string;
+  maxParticipants?: number;
+  category?: string;
+  requirements?: string;
+  latitude?: number;
+  longitude?: number;
+  durationHours?: number;
+  karmaPoints?: number;
+  recommendedCourseId?: number;
 };
 
 export type Tab = 'home' | 'training' | 'organizations' | 'stories' | 'profile';
@@ -166,6 +202,7 @@ export type LeaderboardUser = {
 };
 
 export type User = {
+  id?: number;
   firstName: string;
   lastName: string;
   avatarUrl: string;
@@ -220,14 +257,16 @@ export type Story = {
   likes: number;
   comments: number;
   commentsData: Comment[];
+  isLiked?: boolean;
 };
 
 export type ChatMessage = {
   id: number;
   sender: 'user' | 'assistant';
-  type: 'text' | 'event-card' | 'suggestion-chips' | 'loading';
+  type: 'text' | 'event-card' | 'course-card' | 'suggestion-chips' | 'loading';
   text?: string;
   event?: AppEvent;
+  course?: Course;
   suggestions?: string[];
   actions?: { label: string; route: string }[];
   variant?: 'default' | 'tip' | 'system';

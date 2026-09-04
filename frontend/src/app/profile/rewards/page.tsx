@@ -19,7 +19,8 @@ const RewardCard: React.FC<{ reward: RewardItem; onSelect: () => void; }> = ({re
     <button onClick={onSelect}
             className="bg-white rounded-2xl shadow-sm p-3 text-left w-full transition-transform active:scale-95">
       <div className="relative aspect-square mb-2">
-        <img src={reward.imageUrl} alt={reward.name} className="w-full h-full object-cover rounded-xl"/>
+        <img src={reward.imageUrl} alt={reward.name} className="w-full h-full object-cover rounded-xl"
+             onError={(e) => { const t = e.currentTarget as HTMLImageElement; t.onerror = null; t.src = 'https://placehold.co/300?text=%F0%9F%8E%81'; }}/>
         {reward.isPurchased && (
           <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
             <CheckCircle className="w-12 h-12 text-white/80"/>

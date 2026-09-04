@@ -2,20 +2,23 @@ import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router';
 import type {Achievement, AppEvent, Friend, MapMarker, Organization, ProfileSubScreen} from '../../../lib/types';
 import {
+  cancelEventParticipation,
   fetchAllAchievements,
   fetchEventById,
   fetchFriends,
   fetchMapMarkers,
-  fetchOrganizationById
+  fetchOrganizationById,
+  participateInEvent,
 } from '../../../lib/api';
 import {ArrowLeft, Calendar, Check, Clock, List, MapPin, MessageSquare, Share2, Star, Trophy} from 'lucide-react';
-import InviteFriendModal from '../../../features/invites/components/InviteFriendModal';
 import Toast from '../../../components/ui/Toast';
 import NewAchievementModal from '../../../components/ui/NewAchievementModal';
 import CancelModal from '../../../components/ui/CancelModal';
 import InteractiveMap from '../../../components/ui/InteractiveMap';
 import {FIRST_STEP_ACHIEVEMENT_ID, MESSAGES, MODAL_TRANSITION_DURATION} from '../../../lib/constants';
 import {iconMap} from '../../../lib/iconMap';
+import {buildDeepLink, tgHaptic, tgShareUrl} from '../../../lib/telegram-sdk';
+import {useTelegramBackButton} from '../../../lib/useTelegramUI';
 
 const ConfirmationModal: React.FC<{
   isOpen: boolean;
@@ -124,6 +127,26 @@ const SuccessModal: React.FC<{
   );
 };
 
+const EventDetailSkeleton: React.FC = () => (
+  <div className="w-full h-screen bg-white overflow-hidden animate-pulse">
+    <div className="h-[40vh] w-full bg-gray-200" />
+    <div className="relative bg-white rounded-t-2xl -mt-6 p-6 space-y-5">
+      <div className="h-6 w-24 bg-gray-200 rounded-full" />
+      <div className="space-y-2">
+        <div className="h-7 w-3/4 bg-gray-200 rounded" />
+        <div className="h-7 w-1/2 bg-gray-200 rounded" />
+      </div>
+      <div className="space-y-2 pt-2">
+        <div className="h-4 w-1/2 bg-gray-100 rounded" />
+        <div className="h-4 w-2/3 bg-gray-100 rounded" />
+      </div>
+      <div className="h-14 w-full bg-gray-100 rounded-2xl" />
+      <div className="h-16 w-full bg-gray-100 rounded-2xl" />
+      <div className="h-24 w-full bg-gray-100 rounded-2xl" />
+    </div>
+  </div>
+);
+
 export const EventDetailPage: React.FC = () => {
   const {id} = useParams();
   const navigate = useNavigate();
@@ -137,7 +160,6 @@ export const EventDetailPage: React.FC = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [showInviteModal, setShowInviteModal] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; message: string; onUndo?: () => void }>({
     show: false,
     message: ''
@@ -160,6 +182,8 @@ export const EventDetailPage: React.FC = () => {
         if (eventData) {
           const typedEventData = eventData as AppEvent;
           setEvent(typedEventData);
+          // Участие берём с сервера — не сбрасывается при возврате из чата.
+          setIsSignedUp(!!typedEventData.isParticipating);
           const orgData = await fetchOrganizationById(typedEventData.organizationId);
           if (orgData) setOrganization(orgData);
 
@@ -174,16 +198,28 @@ export const EventDetailPage: React.FC = () => {
     loadData();
   }, [id]);
 
-  const onBack = () => navigate('/app/events');
+  const onBack = () => navigate(-1);
   const onNavigateProfile = (screen: ProfileSubScreen) => navigate(`/app/profile/${screen}`);
   const onSelectOrganization = (orgId: number) => navigate(`/app/organizations/${orgId}`);
   const onOpenChat = (evt: AppEvent) => navigate(`/app/events/${evt.id}/chat`);
 
   const handleSignUpClick = () => setShowConfirmation(true);
-  const handleConfirmSignUp = () => {
+  const handleConfirmSignUp = async () => {
+    if (!event) return;
+
     setShowConfirmation(false);
-    setIsSignedUp(true);
-    setTimeout(() => setShowSuccess(true), MODAL_TRANSITION_DURATION);
+
+    try {
+      await participateInEvent(event.id);
+      setIsSignedUp(true);
+      tgHaptic.notification('success');
+      setTimeout(() => setShowSuccess(true), MODAL_TRANSITION_DURATION);
+    } catch (error) {
+      setToast({
+        show: true,
+        message: error instanceof Error ? error.message : 'Не удалось записаться на событие.',
+      });
+    }
   };
   const handleCancelSignUp = () => setShowConfirmation(false);
   const handleCloseSuccessModal = () => {
@@ -196,25 +232,46 @@ export const EventDetailPage: React.FC = () => {
     onNavigateProfile('allAchievements');
   }
   const handleOpenCancelModal = () => setShowCancelConfirm(true);
-  const handleConfirmCancel = () => {
+  const handleConfirmCancel = async () => {
+    if (!event) return;
+
     setShowCancelConfirm(false);
-    setIsSignedUp(false);
-    setToast({show: true, message: MESSAGES.TOASTS.SIGNUP_CANCELLED, onUndo: () => setIsSignedUp(true)});
+
+    try {
+      await cancelEventParticipation(event.id);
+      setIsSignedUp(false);
+      setToast({show: true, message: MESSAGES.TOASTS.SIGNUP_CANCELLED});
+    } catch (error) {
+      setToast({
+        show: true,
+        message: error instanceof Error ? error.message : 'Не удалось отменить участие.',
+      });
+    }
   };
   const handleCloseCancelModal = () => setShowCancelConfirm(false);
+  const shareEvent = () => {
+    if (!event) return;
+    tgShareUrl(
+      buildDeepLink('event', event.id),
+      `Присоединяйся к «${event.title}» в Добро Club!`,
+    );
+  };
   const handleInvite = () => {
     setShowSuccess(false);
-    setShowInviteModal(true);
-  };
-  const handleSendInvites = () => {
-    setShowInviteModal(false);
-    setToast({show: true, message: MESSAGES.TOASTS.INVITES_SENT});
+    // Открываем нативный выбор чата Telegram. НЕ показываем «приглашения
+    // отправлены» — мы лишь открыли окно, факт отправки нам неизвестен.
+    shareEvent();
   };
 
   const mainButtonAction = isSignedUp ? handleOpenCancelModal : handleSignUpClick;
 
+  // Нативная кнопка «Назад» Telegram. CTA оставляем внутренней кнопкой (белый
+  // футер) — нативная MainButton рисуется в сером системном баре и не совпадает
+  // с белым оформлением приложения.
+  useTelegramBackButton(onBack);
+
   if (loading) {
-    return <div className="w-full h-screen flex items-center justify-center">Загрузка события...</div>;
+    return <EventDetailSkeleton />;
   }
 
   if (!event) {
@@ -232,7 +289,7 @@ export const EventDetailPage: React.FC = () => {
         <header className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4">
           <button onClick={onBack} className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
                   aria-label="Назад"><ArrowLeft className="w-6 h-6 text-white"/></button>
-          <button className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
+          <button onClick={shareEvent} className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
                   aria-label="Поделиться"><Share2 className="w-5 h-5 text-white"/></button>
         </header>
         <div
@@ -261,8 +318,6 @@ export const EventDetailPage: React.FC = () => {
                       className="w-full flex items-center justify-center space-x-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors relative">
                 <MessageSquare className="w-6 h-6 text-[#007AFF]"/>
                 <span className="font-semibold text-lg text-[#0C0D0E]">Чат мероприятия</span>
-                <span
-                  className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">3</span>
               </button>
             ) : (
               <div
@@ -354,7 +409,7 @@ export const EventDetailPage: React.FC = () => {
           </section>
         </div>
         <div className="h-28"></div>
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-gray-100 z-30">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-30">
           <button onClick={mainButtonAction}
                   className={`w-full py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg ${isSignedUp ? 'bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300' : 'bg-[linear-gradient(157deg,#08D7F3_6.38%,#5398FF_85%)] text-white font-bold hover:opacity-90'}`}>
             {isSignedUp ? (<><Check className="w-5 h-5 mr-2"/>Вы участвуете</>) : ('Я помогу!')}
@@ -365,8 +420,6 @@ export const EventDetailPage: React.FC = () => {
                          onCancel={handleCancelSignUp}/>
       <SuccessModal isOpen={showSuccess} event={event} onClose={handleCloseSuccessModal} onInvite={handleInvite}/>
       <CancelModal isOpen={showCancelConfirm} onConfirm={handleConfirmCancel} onCancel={handleCloseCancelModal}/>
-      <InviteFriendModal isOpen={showInviteModal} event={event} onClose={() => setShowInviteModal(false)}
-                         onSend={handleSendInvites}/>
       <NewAchievementModal achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)}
                            onNavigateToAchievements={handleNavigateToAchievements}/>
     </>

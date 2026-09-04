@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
@@ -44,6 +45,32 @@ export class StoriesController {
   @ApiResponse({ status: 404, description: 'Story not found.' })
   findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: User) {
     return this.storiesService.findOne(id, user?.id);
+  }
+
+  @Post()
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a story for a completed event' })
+  @ApiResponse({ status: 201, type: StoryEntity })
+  create(
+    @CurrentUser() user: User,
+    @Body() dto: { eventId: number; text: string; imageUrl: string },
+  ) {
+    return this.storiesService.create(user.id, dto);
+  }
+
+  @Post(':id/comments')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Add a comment to a story' })
+  @ApiResponse({ status: 201, description: 'Comment created.' })
+  @ApiResponse({ status: 404, description: 'Story not found.' })
+  addComment(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: User,
+    @Body() dto: { text: string },
+  ) {
+    return this.storiesService.addComment(id, user.id, dto.text);
   }
 
   @Post(':id/like')

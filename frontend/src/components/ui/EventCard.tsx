@@ -6,8 +6,13 @@ const EventCard: React.FC<{ event: AppEvent }> = React.memo(({event}) => {
   const IconComponent = iconMap[event.icon] || React.Fragment;
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 flex items-center space-x-4 w-full">
-      <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-xl flex items-center justify-center">
-        <IconComponent className="w-12 h-12"/>
+      <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
+        {event.imageUrl ? (
+          <img loading="lazy" src={event.imageUrl} alt={event.title}
+               className="w-full h-full object-cover"/>
+        ) : (
+          <IconComponent className="w-12 h-12"/>
+        )}
       </div>
       <div className="text-left">
         <h3 className="font-bold text-md text-[#0C0D0E]">{event.title}</h3>

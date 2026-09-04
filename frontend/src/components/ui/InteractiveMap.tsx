@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {MapContainer, Marker, Popup, TileLayer, useMap} from 'react-leaflet';
+import {MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents} from 'react-leaflet';
 import L from 'leaflet';
 import type {MapMarker} from '../../lib/types';
 
@@ -23,13 +23,30 @@ interface InteractiveMapProps {
   onMarkerClick: (id: number) => void;
   center?: [number, number];
   zoom?: number;
+  // Режим выбора точки: клик/перетаскивание маркера возвращает координаты.
+  onMapClick?: (lat: number, lng: number) => void;
+  pickedPosition?: [number, number] | null;
 }
+
+// Обрабатывает клик по карте в режиме выбора точки.
+const MapClickHandler: React.FC<{ onMapClick: (lat: number, lng: number) => void }> = ({
+  onMapClick,
+}) => {
+  useMapEvents({
+    click(e) {
+      onMapClick(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+};
 
 const InteractiveMap: React.FC<InteractiveMapProps> = ({
                                                          markers,
                                                          onMarkerClick,
                                                          center = [55.751244, 37.618423],
                                                          zoom = 10,
+                                                         onMapClick,
+                                                         pickedPosition,
                                                        }) => {
   return (
     <MapContainer attributionControl={false} center={center} zoom={zoom} scrollWheelZoom={true}
@@ -38,6 +55,20 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      {onMapClick && <MapClickHandler onMapClick={onMapClick} />}
+      {onMapClick && pickedPosition && (
+        <Marker
+          position={pickedPosition}
+          draggable={true}
+          eventHandlers={{
+            dragend: (e) => {
+              const m = e.target as L.Marker;
+              const { lat, lng } = m.getLatLng();
+              onMapClick(lat, lng);
+            },
+          }}
+        />
+      )}
       {markers.map((marker) => (
         <Marker
           key={marker.id}

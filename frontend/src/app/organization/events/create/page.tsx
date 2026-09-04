@@ -1,9 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import type {OrganizationEvent, User} from '../../../../lib/types';
-import {fetchOrganizationEvents} from '../../../../lib/api';
+import type {Course, EventCreatePayload, OrganizationEvent, User} from '../../../../lib/types';
+import {fetchAllCourses, fetchOrganizationEvents} from '../../../../lib/api';
 import {parseRuDateToDateTimeLocal} from '../../../../lib/dateUtils';
-import {ArrowLeft, Camera, MapPin, Users} from 'lucide-react';
-import {EVENT_CATEGORIES} from '../../../../lib/constants';
+import {ArrowLeft, Camera, MapPin, Sparkles, Clock, Users} from 'lucide-react';
+import {DEFAULT_MAP_CENTER, EVENT_CATEGORIES, EVENT_REWARD_PRESETS} from '../../../../lib/constants';
+import InteractiveMap from '../../../../components/ui/InteractiveMap';
+import {tgHaptic} from '../../../../lib/telegram-sdk';
 
 const FormSection: React.FC<{ title: string; children: React.ReactNode }> = ({title, children}) => (
   <section className="bg-white rounded-2xl shadow-sm">
@@ -44,7 +46,7 @@ interface CreateEventPageProps {
   user: User;
   event?: OrganizationEvent | null;
   onBack: () => void;
-  onPublish: (data: any) => void;
+  onPublish: (data: EventCreatePayload) => void;
 }
 
 const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, onPublish}) => {
@@ -55,15 +57,22 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, o
   const [endDate, setEndDate] = useState('');
   const [format, setFormat] = useState<'Офлайн' | 'Онлайн'>('Офлайн');
   const [address, setAddress] = useState('');
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [volunteerCount, setVolunteerCount] = useState(event?.capacity ? event.capacity.toString() : '10');
   const [requirements, setRequirements] = useState('');
-  const [rewards, setRewards] = useState('');
+  // Бонусы — кнопками (наша интеграция), а не свободным текстом.
+  const [karmaPoints, setKarmaPoints] = useState<number>(50);
+  const [durationHours, setDurationHours] = useState<number>(3);
+  const [recommendedCourseId, setRecommendedCourseId] = useState<number | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+
+  useEffect(() => {
+    fetchAllCourses().then(setCourses).catch(() => setCourses([]));
+  }, []);
 
   useEffect(() => {
     if (event?.id) {
       const loadEventData = async () => {
-        // FIX: fetchOrganizationEvents was called with an argument, but it expects none.
-        // The organization is identified by the authentication token.
         const allOrgEvents = await fetchOrganizationEvents();
         const existingEvent = allOrgEvents.find(e => e.id === event.id);
         if (existingEvent) {
@@ -76,24 +85,57 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, o
     }
   }, [event]);
 
+  const handlePickPoint = (lat: number, lng: number) => {
+    setCoords({lat, lng});
+    if (!address) setAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    tgHaptic.selection();
+  };
+
   const isFormValid = title && category && description && startDate && (format === 'Онлайн' || address);
 
   const handlePublish = () => {
-    if (isFormValid) {
-      onPublish({
-        title,
-        category,
-        description,
-        startDate,
-        endDate,
-        format,
-        address,
-        volunteerCount,
-        requirements,
-        rewards
-      });
-    }
-  }
+    if (!isFormValid) return;
+    const payload: EventCreatePayload = {
+      title,
+      description,
+      date: new Date(startDate).toISOString(),
+      location: format === 'Онлайн' ? 'Онлайн' : address,
+      maxParticipants: volunteerCount ? parseInt(volunteerCount, 10) : undefined,
+      category: category || undefined,
+      requirements: requirements || undefined,
+      latitude: format === 'Офлайн' ? coords?.lat : undefined,
+      longitude: format === 'Офлайн' ? coords?.lng : undefined,
+      karmaPoints,
+      durationHours,
+      recommendedCourseId: recommendedCourseId ?? undefined,
+    };
+    onPublish(payload);
+  };
+
+  const PresetGroup: React.FC<{
+    label: string;
+    Icon: React.FC<any>;
+    options: number[];
+    value: number;
+    onChange: (v: number) => void;
+    suffix?: string;
+  }> = ({label, Icon, options, value, onChange, suffix}) => (
+    <InputField label={label}>
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => { onChange(opt); tgHaptic.selection(); }}
+            className={`flex items-center gap-1 px-4 py-2 text-sm font-semibold rounded-full border-2 transition-colors ${value === opt ? 'bg-[#007AFF] text-white border-transparent' : 'bg-white text-[#007AFF] border-[#007AFF]/50'}`}
+          >
+            <Icon className="w-4 h-4" />
+            {opt}{suffix ? ` ${suffix}` : ''}
+          </button>
+        ))}
+      </div>
+    </InputField>
+  );
 
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
@@ -156,14 +198,29 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, o
             <ToggleSwitch options={['Офлайн', 'Онлайн']} selected={format} onChange={val => setFormat(val as any)}/>
           </InputField>
           {format === 'Офлайн' && (
-            <InputField label="Адрес*">
+            <InputField label="Адрес* — отметьте точку на карте">
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><MapPin
                   className="w-5 h-5 text-gray-400"/></span>
                 <input type="text" value={address} onChange={e => setAddress(e.target.value)}
-                       placeholder="Укажите место на карте"
+                       placeholder="Нажмите на карту или введите адрес"
                        className="w-full p-3 pl-10 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"/>
               </div>
+              <div className="mt-2 h-56 rounded-xl overflow-hidden border border-gray-200">
+                <InteractiveMap
+                  markers={[]}
+                  onMarkerClick={() => {}}
+                  center={coords ? [coords.lat, coords.lng] : DEFAULT_MAP_CENTER}
+                  zoom={coords ? 14 : 10}
+                  onMapClick={handlePickPoint}
+                  pickedPosition={coords ? [coords.lat, coords.lng] : null}
+                />
+              </div>
+              {coords && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Координаты: {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                </p>
+              )}
             </InputField>
           )}
         </FormSection>
@@ -183,10 +240,35 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({user, event, onBack, o
                       placeholder="Например: возраст 18+, удобная одежда"
                       className="w-full p-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"/>
           </InputField>
-          <InputField label="Что получат волонтеры">
-            <textarea value={rewards} onChange={e => setRewards(e.target.value)} rows={3}
-                      placeholder="Например: +50 кармы, +3 часа добра"
-                      className="w-full p-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"/>
+        </FormSection>
+
+        <FormSection title="Что получат волонтеры">
+          <PresetGroup
+            label="Карма за участие"
+            Icon={Sparkles}
+            options={EVENT_REWARD_PRESETS.karma}
+            value={karmaPoints}
+            onChange={setKarmaPoints}
+          />
+          <PresetGroup
+            label="Часы добра"
+            Icon={Clock}
+            options={EVENT_REWARD_PRESETS.hours}
+            value={durationHours}
+            onChange={setDurationHours}
+            suffix="ч"
+          />
+          <InputField label="Сертификат курса по завершении (необязательно)">
+            <select
+              value={recommendedCourseId ?? ''}
+              onChange={(e) => setRecommendedCourseId(e.target.value ? parseInt(e.target.value, 10) : null)}
+              className="w-full p-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Без сертификата</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>{c.title}</option>
+              ))}
+            </select>
           </InputField>
         </FormSection>
       </main>

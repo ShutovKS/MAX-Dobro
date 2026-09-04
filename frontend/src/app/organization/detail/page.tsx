@@ -9,6 +9,8 @@ import SkeletonCard from '../../../components/ui/SkeletonCard';
 import EventCard from '../../../components/ui/EventCard';
 import EmptyState from '../../../components/ui/EmptyState';
 import {MESSAGES} from '../../../lib/constants';
+import {buildDeepLink, tgShareUrl} from '../../../lib/telegram-sdk';
+import {HeroDetailSkeleton} from '../../../components/ui/Skeletons';
 
 const OrganizationProfilePage: React.FC<{
   id: number;
@@ -83,8 +85,11 @@ const OrganizationProfilePage: React.FC<{
     });
   };
 
-  if (loading || !organization) {
-    return <div className="w-full h-screen flex items-center justify-center">Загрузка организации...</div>;
+  if (loading) {
+    return <HeroDetailSkeleton />;
+  }
+  if (!organization) {
+    return <div className="w-full h-screen flex items-center justify-center text-gray-500">Организация не найдена.</div>;
   }
 
   return (
@@ -95,7 +100,8 @@ const OrganizationProfilePage: React.FC<{
                   aria-label="Назад">
             <ArrowLeft className="w-6 h-6 text-white"/>
           </button>
-          <button className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
+          <button onClick={() => organization && tgShareUrl(buildDeepLink('org', organization.id), `Организация «${organization.name}» в Добро Club`)}
+                  className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center"
                   aria-label="Поделиться">
             <Share2 className="w-5 h-5 text-white"/>
           </button>

@@ -4,3 +4,7 @@ all_sources.md
 
 */.env
 !.env.example
+/.sisyphus
+/.playwright-mcp
+/.playwright-mcp
+/.sisyphus

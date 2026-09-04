@@ -1,8 +1,11 @@
-import React from 'react';
+import React, {useRef} from 'react';
+import {toPng} from 'html-to-image';
 import type {Course, User} from '../../../lib/types';
 import {ArrowLeft, Download, Share2} from 'lucide-react';
 import {HeartHandIcon} from '../../../components/ui/icons';
 import {CERTIFICATE_DEFAULTS} from '../../../lib/constants';
+import {buildDeepLink, tgDownloadFile, tgHaptic, tgShareUrl} from '../../../lib/telegram-sdk';
+import {useTelegramBackButton} from '../../../lib/useTelegramUI';
 
 const CertificatePage: React.FC<{
   courseId: number;
@@ -10,6 +13,8 @@ const CertificatePage: React.FC<{
   user: User;
   onBack: () => void;
 }> = ({courseId, allCourses, user, onBack}) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  useTelegramBackButton(onBack);
 
   const course = allCourses.find(c => c.id === courseId);
 
@@ -20,6 +25,24 @@ const CertificatePage: React.FC<{
   const userName = `${user.firstName} ${user.lastName}`;
   const issueDate = new Date().toLocaleDateString('ru-RU');
   const certificateId = `${CERTIFICATE_DEFAULTS.ID_PREFIX}${String(course.id).padStart(CERTIFICATE_DEFAULTS.ID_PADDING, CERTIFICATE_DEFAULTS.ID_PAD_CHAR)}-${new Date().getFullYear()}`;
+
+  const handleShare = () => {
+    tgShareUrl(
+      buildDeepLink('course', course.id),
+      `Я прошёл(ла) курс «${course.title}» в Добро Club! 🎓`,
+    );
+  };
+
+  const handleDownload = async () => {
+    if (!cardRef.current) return;
+    try {
+      const dataUrl = await toPng(cardRef.current, { pixelRatio: 2, cacheBust: true });
+      tgDownloadFile({ url: dataUrl, file_name: `certificate-${certificateId}.png` });
+      tgHaptic.notification('success');
+    } catch (e) {
+      console.error('Failed to export certificate:', e);
+    }
+  };
 
   return (
     <div className="w-full h-screen font-sans antialiased bg-gray-100 flex flex-col">
@@ -36,6 +59,7 @@ const CertificatePage: React.FC<{
 
       <main className="flex-grow flex flex-col items-center justify-center p-4">
         <div
+          ref={cardRef}
           className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 border-2 border-blue-200 aspect-[5/7] flex flex-col relative overflow-hidden">
           <HeartHandIcon className="absolute -bottom-10 -right-10 w-48 h-48 text-gray-100/50 transform rotate-12"/>
 
@@ -62,14 +86,16 @@ const CertificatePage: React.FC<{
 
         <div className="mt-8 w-full max-w-sm flex space-x-4">
           <button
+            onClick={handleShare}
             className="flex-1 flex items-center justify-center space-x-2 bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-colors">
             <Share2 className="w-5 h-5"/>
             <span>Поделиться</span>
           </button>
           <button
+            onClick={handleDownload}
             className="flex-1 flex items-center justify-center space-x-2 bg-white border-2 border-[#007AFF] text-[#007AFF] font-semibold py-3 px-4 rounded-xl hover:bg-blue-50 transition-colors">
             <Download className="w-5 h-5"/>
-            <span>Сохранить в PDF</span>
+            <span>Сохранить</span>
           </button>
         </div>
       </main>

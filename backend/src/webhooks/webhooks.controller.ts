@@ -10,6 +10,7 @@ import { WebhookGuard } from '../auth/guards/webhook.guard';
 @ApiTags('Webhooks')
 @Controller('webhooks')
 export class WebhooksController {
+  /** <context:backend_webhooks_controller> Webhook boundary for Supabase user provisioning events. </context:backend_webhooks_controller> */
   private readonly logger = new Logger(WebhooksController.name);
 
   constructor(private readonly authService: AuthService) {}

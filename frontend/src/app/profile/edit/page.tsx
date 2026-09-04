@@ -1,7 +1,7 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import type {User} from '../../../lib/types';
-import {Camera} from 'lucide-react';
-import {AVATAR_DEFAULTS} from '../../../lib/constants';
+import {Camera, Loader2} from 'lucide-react';
+import {uploadImage} from '../../../lib/upload';
 
 const EditProfilePage: React.FC<{
   user: User;
@@ -15,6 +15,9 @@ const EditProfilePage: React.FC<{
   });
   const [avatar, setAvatar] = useState(user.avatarUrl);
   const [isChanged, setIsChanged] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const hasChanged = formData.firstName !== user.firstName ||
@@ -35,10 +38,26 @@ const EditProfilePage: React.FC<{
     }
   };
 
-  const handleChangePhoto = () => {
-    const newImgId = Math.floor(Math.random() * AVATAR_DEFAULTS.MAX_PRAVATAR_ID);
-    setAvatar(`https://i.pravatar.cc/${AVATAR_DEFAULTS.SIZE}?img=${newImgId}`);
-  }
+  const handleChangePhotoClick = () => {
+    setUploadError('');
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadError('');
+    setIsUploading(true);
+    try {
+      const url = await uploadImage(file);
+      setAvatar(url);
+    } catch (err: any) {
+      setUploadError(err.message || 'Не удалось загрузить фото');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
@@ -58,13 +77,28 @@ const EditProfilePage: React.FC<{
       <main className="flex-grow overflow-y-auto pt-8 space-y-8 pb-8">
         <section className="flex flex-col items-center">
           <div className="relative mb-2">
-            <img src={avatar} alt="User Avatar" className="w-28 h-28 rounded-full shadow-lg"/>
+            <img src={avatar} alt="User Avatar" className="w-28 h-28 rounded-full shadow-lg object-cover"/>
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+                <Loader2 className="w-8 h-8 text-white animate-spin"/>
+              </div>
+            )}
           </div>
-          <button onClick={handleChangePhoto}
-                  className="flex items-center space-x-2 text-lg font-medium text-[#007AFF]">
+          <button onClick={handleChangePhotoClick} disabled={isUploading}
+                  className="flex items-center space-x-2 text-lg font-medium text-[#007AFF] disabled:opacity-60">
             <Camera className="w-5 h-5"/>
-            <span>Изменить фото</span>
+            <span>{isUploading ? 'Загрузка…' : 'Изменить фото'}</span>
           </button>
+          {uploadError && (
+            <p className="text-red-600 text-sm mt-2">{uploadError}</p>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileSelected}
+          />
         </section>
 
         <section>

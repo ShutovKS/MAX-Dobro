@@ -1,8 +1,8 @@
 import React, {useEffect, useRef, useState} from 'react';
 import type {AppEvent, EventChatMessage, User} from '../../../lib/types';
-import {fetchEventById, fetchEventChatMessages} from '../../../lib/api';
+import {fetchEventById, fetchEventChatMessages, postEventChatMessage} from '../../../lib/api';
 import {ArrowLeft, MoreHorizontal, Paperclip, Pin, Send, X} from 'lucide-react';
-import {CURRENT_USER_ID} from '../../../lib/constants';
+import {ChatSkeleton} from '../../../components/ui/Skeletons';
 
 const MessageBubble: React.FC<{ message: EventChatMessage; isOutgoing: boolean; showAuthor: boolean }> = ({
                                                                                                             message,
@@ -70,18 +70,23 @@ const EventChatPage: React.FC<{
     messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
   }, [messages]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleSend = async () => {
+    const textToSend = input.trim();
+    if (!textToSend) return;
 
-    const newMessage: EventChatMessage = {
-      id: Date.now(),
-      author: {id: CURRENT_USER_ID, name: `${user.firstName} ${user.lastName}`, avatarUrl: user.avatarUrl},
-      text: input,
-      timestamp: new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}),
-    };
-
-    setMessages(prev => [...prev, newMessage]);
     setInput('');
+    try {
+      const postedMessage = await postEventChatMessage(eventId, textToSend);
+      setMessages(prev => [...prev, postedMessage]);
+    } catch {
+      const fallbackMessage: EventChatMessage = {
+        id: Date.now(),
+        author: {id: user.id, name: `${user.firstName} ${user.lastName}`, avatarUrl: user.avatarUrl},
+        text: textToSend,
+        timestamp: new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}),
+      };
+      setMessages(prev => [...prev, fallbackMessage]);
+    }
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -90,7 +95,7 @@ const EventChatPage: React.FC<{
   };
 
   if (loading || !event) {
-    return <div className="w-full h-screen flex items-center justify-center">Загрузка чата...</div>
+    return <ChatSkeleton />;
   }
 
   return (
@@ -121,7 +126,7 @@ const EventChatPage: React.FC<{
           const prevMessage = messages[index - 1];
           const showAuthor = !prevMessage || prevMessage.author.id !== msg.author.id;
           return (
-            <MessageBubble key={msg.id} message={msg} isOutgoing={msg.author.id === CURRENT_USER_ID}
+            <MessageBubble key={msg.id} message={msg} isOutgoing={msg.author.id === user.id}
                            showAuthor={showAuthor}/>
           );
         })}

@@ -256,6 +256,8 @@ docker-compose exec backend npm run seed
 
 ## 👨‍💻 Руководство для разработчиков
 
+<!-- <context:repo_docs> Root guidance lives in `AGENTS.md`; `.sisyphus/` stays ignored for plans, evidence, and notepads. </context:repo_docs> -->
+
 ### Структура проекта
 
 Проект разделен на три основных каталога:

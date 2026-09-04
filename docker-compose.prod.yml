@@ -1,0 +1,24 @@
+# Прод-композ для сервера dobroclub.online.
+# Поднимает только backend (NestJS) и Telegram-бота.
+# Фронтенд — статика, её отдаёт host-nginx из /var/www/dobroclub/dist.
+# БД — внешняя (Supabase), свой postgres/redis НЕ поднимаем.
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: dobro-backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    # Только на localhost — наружу проксирует host-nginx через /api/
+    ports:
+      - "127.0.0.1:3001:3001"
+
+  bot:
+    build:
+      context: ./bot-telegram
+    container_name: dobro-bot
+    restart: always
+    env_file:
+      - ./bot-telegram/.env

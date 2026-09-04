@@ -1,10 +1,40 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PaginationQueryDto } from '../events/dto/pagination-query.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class EventChatsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  // Доступ к чату события — только участникам (читать и писать). Раньше любой
+  // авторизованный мог читать/писать в любой чат (инверсия UI-гейта).
+  private async assertParticipant(eventId: number, userId: number) {
+    const participation = await this.prisma.eventParticipant.findUnique({
+      where: { userId_eventId: { userId, eventId } },
+    });
+    if (!participation) {
+      throw new ForbiddenException(
+        'You must join the event to access its chat',
+      );
+    }
+  }
+
+  private mapMessage(message: any) {
+    const { firstName, lastName, ...authorRest } = message.author;
+    return {
+      id: message.id,
+      author: {
+        ...authorRest,
+        name: `${firstName || ''} ${lastName || ''}`.trim(),
+      },
+      text: message.text,
+      timestamp: message.createdAt.toISOString(),
+    };
+  }
 
   async findUserChats(userId: number) {
     const participations = await this.prisma.eventParticipant.findMany({
@@ -67,28 +97,48 @@ export class EventChatsService {
       },
     });
 
-    return messages.map((m) => {
-      const { firstName, lastName, ...authorRest } = m.author;
-      return {
-        id: m.id,
-        author: {
-          ...authorRest,
-          name: `${firstName || ''} ${lastName || ''}`.trim(),
-        },
-        text: m.text,
-        timestamp: m.createdAt.toISOString(),
-      };
-    });
+    return messages.map((message) => this.mapMessage(message));
   }
 
-  async findChatMessagesByEventId(eventId: number, pagination: PaginationQueryDto) {
+  async findChatMessagesByEventId(
+    eventId: number,
+    userId: number,
+    pagination: PaginationQueryDto,
+  ) {
+    await this.assertParticipant(eventId, userId);
     const chat = await this.prisma.eventChat.findUnique({
       where: { eventId },
     });
 
     if (!chat) {
-      throw new NotFoundException(`Chat for event with ID ${eventId} not found.`);
+      // Чат ещё не создан (нет сообщений) — для участника это пустой чат.
+      return [];
     }
     return this.findChatMessages(chat.id, pagination);
+  }
+
+  async createMessageByEventId(eventId: number, authorId: number, text: string) {
+    const eventExists = await this.prisma.event.count({ where: { id: eventId } });
+    if (!eventExists) {
+      throw new NotFoundException(`Event with ID ${eventId} not found.`);
+    }
+    await this.assertParticipant(eventId, authorId);
+
+    const chat = await this.prisma.eventChat.upsert({
+      where: { eventId },
+      update: {},
+      create: { eventId },
+    });
+
+    const message = await this.prisma.eventChatMessage.create({
+      data: { chatId: chat.id, authorId, text },
+      include: {
+        author: {
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+        },
+      },
+    });
+
+    return this.mapMessage(message);
   }
 }

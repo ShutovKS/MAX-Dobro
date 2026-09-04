@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Navigate,
   useLocation,
@@ -43,7 +43,7 @@ import CreateEventPage from './organization/events/create/page';
 import EventParticipantsPage from './organization/events/participants/page';
 import OrganizationSettingsPage from './organization/settings/page';
 import type { Course, OrganizationEvent, RewardItem, User } from '../lib/types';
-import { fetchAllCourses, fetchRewards } from '../lib/api';
+import { createEvent, fetchAllCourses, fetchRewards, purchaseReward, updateEvent, updateProfile } from '../lib/api';
 import {
   getCurrentSession,
   isOnboardingComplete,
@@ -51,8 +51,29 @@ import {
   setOnboardingComplete,
 } from '../lib/auth';
 import { MESSAGES, ROUTES } from '../lib/constants';
+import { initTelegram, isTelegramClient, telegramLogin, tgGetStartParam, waitForTelegramInitData } from '../lib/telegram-sdk';
+
+// Telegram deep-link `?startapp=kind_id` -> маршрут сущности (или null).
+const routeFromStartParam = (): string | null => {
+  const param = tgGetStartParam();
+  if (!param) return null;
+  const sep = param.indexOf('_');
+  if (sep < 0) return null;
+  const kind = param.slice(0, sep);
+  const id = parseInt(param.slice(sep + 1), 10);
+  if (!Number.isFinite(id)) return null;
+  const map: Record<string, string> = {
+    event: ROUTES.EVENT_DETAIL(id),
+    course: ROUTES.COURSE_DETAIL(id),
+    org: ROUTES.ORGANIZATION_DETAIL(id),
+    story: ROUTES.STORY_DETAIL(id),
+    reward: ROUTES.REWARD_DETAIL(id),
+  };
+  return map[kind] ?? null;
+};
 
 const App: React.FC = () => {
+  /** <context:frontend_app_shell> Route shell for auth, onboarding, and tab switching. </context:frontend_app_shell> */
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<'network' | 'server' | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
@@ -70,6 +91,7 @@ const App: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAuthenticated = !!userData;
+  const deepLinkConsumed = useRef(false);
 
   const getRedirectPath = (user: User) => {
     return user.role === 'organization'
@@ -79,9 +101,24 @@ const App: React.FC = () => {
 
   const initializeApp = async () => {
     setError(null);
+    initTelegram();
     let sessionFound = false;
     try {
-      const session = await getCurrentSession();
+      let session = await getCurrentSession();
+
+      // Авто-логин через Telegram: если активной сессии нет, но приложение
+      // открыто из Telegram-клиента — дожидаемся initData и входим без формы.
+      if (
+        !session &&
+        import.meta.env.VITE_API_MODE === 'real' &&
+        isTelegramClient()
+      ) {
+        await waitForTelegramInitData();
+        const ok = await telegramLogin();
+        if (ok) {
+          session = await getCurrentSession();
+        }
+      }
 
       if (session) {
         sessionFound = true;
@@ -95,8 +132,14 @@ const App: React.FC = () => {
         setAllCourses(courses);
 
         const onboardingComplete = isOnboardingComplete();
+        // Deep-link (?startapp=kind_id) имеет приоритет над редиректом на
+        // главную — иначе navigate сюда перетирал переход на сущность.
+        const deepRoute = deepLinkConsumed.current ? null : routeFromStartParam();
         if (!onboardingComplete) {
           navigate(ROUTES.ONBOARDING);
+        } else if (deepRoute) {
+          deepLinkConsumed.current = true;
+          navigate(deepRoute);
         } else if (['', '/', '#/', ROUTES.AUTH].includes(location.pathname)) {
           navigate(getRedirectPath(session.user));
         }
@@ -106,8 +149,14 @@ const App: React.FC = () => {
       setError('network');
     } finally {
       setIsInitialized(true);
-      window.WebApp?.ready();
-      if (!sessionFound && ![ROUTES.AUTH, ROUTES.ONBOARDING].includes(location.pathname)) {
+      // На экран входа уводим ТОЛЬКО если входить реально нечем (нет токена).
+      // При наличии токена транзиентная ошибка покажет экран «повторить», а не вход.
+      const hasToken = !!localStorage.getItem('internal_jwt');
+      if (
+        !sessionFound &&
+        !hasToken &&
+        ![ROUTES.AUTH, ROUTES.ONBOARDING].includes(location.pathname)
+      ) {
         navigate(ROUTES.AUTH);
       }
     }
@@ -116,7 +165,20 @@ const App: React.FC = () => {
   useEffect(() => {
     initializeApp();
   }, []);
-  
+
+  // Подстраховка для deep-link: срабатывает ПОСЛЕ полной инициализации
+  // (isInitialized=true ставится в finally, уже после возможного navigate на
+  // главную) — поэтому переход на сущность не перетирается.
+  useEffect(() => {
+    if (!isInitialized || !isAuthenticated || deepLinkConsumed.current) return;
+    const route = routeFromStartParam();
+    if (route) {
+      deepLinkConsumed.current = true;
+      navigate(route);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, isAuthenticated]);
+
   const handleAuthSuccess = (session: { user: User; token: string }) => {
     setUserData(session.user);
     initializeApp(); // Переинициализируем приложение, чтобы загрузить все данные
@@ -137,7 +199,26 @@ const App: React.FC = () => {
     navigate(ROUTES.AUTH);
   };
 
-  const handleSaveProfile = (updatedUser: User) => {
+  // Возврат из кабинета организатора в волонтёрский режим.
+  // Вход в кабинет — чисто клиентская навигация (токен и личность не меняются),
+  // поэтому сессия уже валидна: просто возвращаемся на главную БЕЗ сброса токена
+  // и повторного логина. Иначе мелькало бы окно входа (а в браузере без initData
+  // повторный автологин не пройдёт вовсе).
+  const handleSwitchToVolunteer = () => {
+    navigate(ROUTES.HOME);
+  };
+
+  const handleSaveProfile = async (updatedUser: User) => {
+    try {
+      await updateProfile({
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        about: updatedUser.about,
+        avatarUrl: updatedUser.avatarUrl,
+      });
+    } catch (e) {
+      console.error('Failed to persist profile changes:', e);
+    }
     setUserData(updatedUser);
     navigate(ROUTES.PROFILE_SETTINGS);
   };
@@ -158,7 +239,7 @@ const App: React.FC = () => {
 
   const EventChatPageWrapper = () => {
     const { id } = useParams();
-    return <EventChatPage eventId={parseInt(id || '0', 10)} user={userData!} onBack={() => navigate(ROUTES.EVENT_DETAIL(id!))} />;
+    return <EventChatPage eventId={parseInt(id || '0', 10)} user={userData!} onBack={() => navigate(-1)} />;
   };
 
   const CourseDetailPageWrapper = () => {
@@ -202,8 +283,16 @@ const App: React.FC = () => {
   const RewardsDetailPageWrapper = () => {
     const { id } = useParams();
     const rewardId = parseInt(id || '0', 10);
-    return <RewardsDetailPage rewardId={rewardId} allRewards={allRewards} user={userData!} onPurchase={(rId) => {
+    return <RewardsDetailPage rewardId={rewardId} allRewards={allRewards} user={userData!} onPurchase={async (rId) => {
+      await purchaseReward(rId);
       setAllRewards(prev => prev.map(r => r.id === rId ? { ...r, isPurchased: true } : r));
+      // Бэкенд списал карму — обновляем профиль, иначе баланс/карма устаревают до перезагрузки.
+      try {
+        const refreshed = await getCurrentSession();
+        if (refreshed) setUserData(refreshed.user);
+      } catch (e) {
+        console.error('Failed to refresh profile after purchase:', e);
+      }
       showToast(MESSAGES.TOASTS.REWARD_PURCHASED, 'success');
       navigate(ROUTES.PROFILE_REWARDS);
     }} />;
@@ -216,15 +305,28 @@ const App: React.FC = () => {
   const RewardsStorePageWrapper = () => <RewardsStorePage user={userData!} rewards={allRewards} onBack={() => navigate(ROUTES.PROFILE)} />;
 
   const EventManagementPageWrapper = () => <EventManagementPage user={userData!} onBack={() => navigate(ROUTES.ORGANIZATION_DASHBOARD)} onCreateEvent={() => navigate(ROUTES.ORGANIZATION_EVENTS_CREATE)} onEditEvent={(e) => navigate(ROUTES.ORGANIZATION_EVENTS_EDIT(e.id))} onManageParticipants={(e) => navigate(ROUTES.ORGANIZATION_EVENTS_PARTICIPANTS(e.id))} />;
-  const CreateEventPageWrapper = () => <CreateEventPage user={userData!} onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onPublish={() => {
-    showToast(MESSAGES.TOASTS.EVENT_PUBLISHED, 'success');
-    navigate(ROUTES.ORGANIZATION_EVENTS);
+  const CreateEventPageWrapper = () => <CreateEventPage user={userData!} onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onPublish={async (data) => {
+    try {
+      await createEvent(data);
+      showToast(MESSAGES.TOASTS.EVENT_PUBLISHED, 'success');
+      navigate(ROUTES.ORGANIZATION_EVENTS);
+    } catch (e) {
+      console.error('Failed to create event:', e);
+      showToast('Не удалось опубликовать событие', 'info');
+    }
   }} />;
   const EditEventPageWrapper = () => {
     const { eventId } = useParams<{ eventId: string }>();
-    return <CreateEventPage user={userData!} event={{ id: parseInt(eventId!, 10) } as OrganizationEvent} onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onPublish={() => {
-      showToast(MESSAGES.TOASTS.EVENT_SAVED, 'success');
-      navigate(ROUTES.ORGANIZATION_EVENTS);
+    const id = parseInt(eventId!, 10);
+    return <CreateEventPage user={userData!} event={{ id } as OrganizationEvent} onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onPublish={async (data) => {
+      try {
+        await updateEvent(id, data);
+        showToast(MESSAGES.TOASTS.EVENT_SAVED, 'success');
+        navigate(ROUTES.ORGANIZATION_EVENTS);
+      } catch (e) {
+        console.error('Failed to update event:', e);
+        showToast('Не удалось сохранить событие', 'info');
+      }
     }} />;
   };
   const EventParticipantsPageWrapper = () => <EventParticipantsPage user={userData!} onBack={() => navigate(ROUTES.ORGANIZATION_EVENTS)} />;
@@ -264,7 +366,7 @@ const App: React.FC = () => {
         { path: ROUTES.PROFILE_CERTIFICATES, element: <MyCertificatesPageWrapper /> },
         { path: ROUTES.PROFILE_CHATS, element: <MyChatsPage /> },
         { path: ROUTES.PROFILE_REWARDS, element: <RewardsStorePageWrapper /> },
-        { path: ROUTES.ORGANIZATION_DASHBOARD, element: <OrganizationDashboardPage user={userData} onSwitchToVolunteer={() => navigate(ROUTES.HOME)} onManageEvents={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onCreateEvent={() => navigate(ROUTES.ORGANIZATION_EVENTS_CREATE)} onNavigateToSettings={() => navigate(ROUTES.ORGANIZATION_SETTINGS)} /> },
+        { path: ROUTES.ORGANIZATION_DASHBOARD, element: <OrganizationDashboardPage user={userData} onSwitchToVolunteer={handleSwitchToVolunteer} onManageEvents={() => navigate(ROUTES.ORGANIZATION_EVENTS)} onCreateEvent={() => navigate(ROUTES.ORGANIZATION_EVENTS_CREATE)} onNavigateToSettings={() => navigate(ROUTES.ORGANIZATION_SETTINGS)} /> },
         { path: ROUTES.ORGANIZATION_EVENTS, element: <EventManagementPageWrapper /> },
         { path: ROUTES.ORGANIZATION_EVENTS_CREATE, element: <CreateEventPageWrapper /> },
         { path: ROUTES.ORGANIZATION_EVENTS_EDIT(':eventId'), element: <EditEventPageWrapper /> },
@@ -284,13 +386,17 @@ const App: React.FC = () => {
   if (!isInitialized) {
     return <SplashPage />;
   }
-  
-  if (isAuthenticated && (!userData || allCourses.length === 0)) {
-    return <SplashPage />;
-  }
 
+  // Ошибку показываем РАНЬШЕ сплэш-гварда по курсам — иначе при сбое загрузки
+  // курсов экран навсегда застревает на сплэше без возможности повторить.
   if (error) {
     return <ErrorPage type={error} onRetry={initializeApp} />;
+  }
+
+  // Сплэш держим, пока нет userData. Пустой список курсов — валидное состояние
+  // (не зацикливаемся на сплэше, если курсов просто нет).
+  if (isAuthenticated && !userData) {
+    return <SplashPage />;
   }
 
   return (

@@ -4,13 +4,15 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  /** <context:backend_startup> Backend entrypoint for startup and API surface context. </context:backend_startup> */
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
     origin: [
+      'https://dobroclub.online',
       'https://max-dobro.vercel.app',
-      'http://localhost:3000',
-      'https://mvqcvuhuhngolsewmlob.supabase.co',
+      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
+      'https://pykfcxpfpdrtuxdnyjll.supabase.co',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,

@@ -2,7 +2,12 @@ import { supabase } from './auth.real';
 import type {
   Achievement,
   AppEvent,
+  ChatMessage,
+  Comment,
   Course,
+  CourseCompletionResult,
+  LessonCompletionResult,
+  EventCreatePayload,
   EventChatMessage,
   EventParticipant,
   Friend,
@@ -32,27 +37,14 @@ import {
   Users,
 } from 'lucide-react';
 import React from 'react';
+import { formatEventDate, formatTimestamp } from './dateUtils';
+import { getIconComponent } from './iconMap';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const iconMap: { [key: string]: React.FC<any> } = {
-  'hand-heart': HandHeart,
-  dog: Dog,
-  leaf: Leaf,
-  users: Users,
-  palette: Palette,
-  trophy: Trophy,
-  clock: Clock,
-  star: Star,
-  'graduation-cap': GraduationCap,
-  list: List,
-  default: Star,
-};
-
-const getIcon = (iconName?: string | null): React.FC<any> => {
-  if (!iconName) return iconMap['default'];
-  return iconMap[iconName] || iconMap['default'];
-};
+// Единый резолвер иконок (тот же, что используют компоненты через iconMap).
+const getIcon = (iconName?: string | null): React.FC<any> =>
+  getIconComponent(iconName);
 
 const categoryIconMap: { [key: string]: React.FC<any> } = {
   Экология: Leaf,
@@ -115,11 +107,16 @@ async function apiFetch<T>(
   return undefined as T;
 }
 
+// Сохраняем строку icon (компоненты читают iconMap[item.icon]) И добавляем
+// готовый компонент Icon. Раньше icon вырезался → иконки падали в заглушку.
 const mapIcon = <T extends { icon?: string | null }>(
   item: T,
-): Omit<T, 'icon'> & { Icon: React.FC<any> } => {
-  const { icon, ...rest } = item;
-  return { ...rest, Icon: getIcon(icon) };
+): T & { Icon: React.FC<any> } => {
+  return {
+    ...item,
+    icon: item.icon ?? 'default',
+    Icon: getIcon(item.icon),
+  } as T & { Icon: React.FC<any> };
 };
 
 const mapEventData = (event: any): AppEvent => ({
@@ -127,6 +124,9 @@ const mapEventData = (event: any): AppEvent => ({
   Icon: getIconForCategory(event.category),
   participantCount: event._count?.participants ?? 0,
   organizationName: event.organization?.name ?? 'Организация',
+  date: formatEventDate(event.date),
+  imageUrl:
+    event.imageUrl ?? `https://picsum.photos/seed/dobro-event-${event.id}/400/300`,
   pos: { top: '0', left: '0' },
 });
 
@@ -141,32 +141,35 @@ const mapCourseData = (courseData: any): Course => {
       status: 'locked',
       contentTitle: lesson.title,
       content: lesson.content,
-      quiz: (lesson.questions || []).map((q: any) => {
-        const correctAnswersCount = q.answers.filter(
-          (a: any) => a.isCorrect,
-        ).length;
-        return {
-          id: q.id.toString(),
-          question: q.question,
-          type: correctAnswersCount > 1 ? 'multiple' : 'single',
-          answers: q.answers,
-        };
-      }),
+      quiz: (lesson.questions || []).map((q: any) => ({
+        id: q.id.toString(),
+        question: q.question,
+        // Тип вопроса приходит готовым с сервера (isMultiple); раньше выводился
+        // из isCorrect, который API не отдаёт → все вопросы были single.
+        type: q.isMultiple ? 'multiple' : 'single',
+        answers: q.answers,
+      })),
     };
   });
 
-  let isCurrentSet = false;
-  if (courseStatus === 'completed') {
-    mappedProgram.forEach((l) => (l.status = 'completed'));
-  } else {
+  // Статусы уроков: пройденные — из серверного completedLessonIds; первый
+  // непройденный — текущий; остальные — заблокированы. Фолбэк на статус курса,
+  // если прогресс по урокам не пришёл.
+  const completedLessonIds: number[] = courseData.completedLessonIds || [];
+  if (completedLessonIds.length > 0 || courseStatus !== 'completed') {
+    let currentSet = false;
     mappedProgram.forEach((l) => {
-      if (!isCurrentSet) {
+      if (completedLessonIds.includes(l.id)) {
+        l.status = 'completed';
+      } else if (!currentSet) {
         l.status = 'current';
-        isCurrentSet = true;
+        currentSet = true;
       } else {
         l.status = 'locked';
       }
     });
+  } else {
+    mappedProgram.forEach((l) => (l.status = 'completed'));
   }
 
   return {
@@ -181,11 +184,40 @@ const mapCourseData = (courseData: any): Course => {
     progress: courseData.progress || 0,
     level: courseData.level || 'Для новичков',
     program: mappedProgram,
+    completedLessonIds,
   };
 };
 
+const mapStoryData = (story: any): Story => ({
+  ...story,
+  timestamp: formatTimestamp(story.timestamp ?? story.createdAt),
+  event: {
+    id: story.event.id,
+    name: story.event.name ?? story.event.title,
+  },
+  likes: story.likes ?? story.likesCount ?? 0,
+  comments: story.comments ?? story.commentsCount ?? story.commentsData?.length ?? 0,
+  commentsData: (story.commentsData ?? []).map((c: any) => ({
+    ...c,
+    timestamp: formatTimestamp(c.timestamp ?? c.createdAt),
+  })),
+});
+
+const mapAssistantMessage = (message: any): ChatMessage => ({
+  id: message.id,
+  sender: message.sender,
+  type: message.type,
+  text: message.text,
+  event: message.event ? mapEventData(message.event) : undefined,
+  course: message.course ? mapCourseData(message.course) : undefined,
+  suggestions: message.suggestions,
+  timestamp: formatTimestamp(message.createdAt),
+});
+
 export const fetchAllEvents = async (): Promise<AppEvent[]> => {
-  const events = await apiFetch<any[]>('/events');
+  // limit=100: бэкенд по умолчанию отдаёт 10 — лента/карта/поиск видели только
+  // первые 10 событий. Пагинация/бесконечная прокрутка — отдельной задачей.
+  const events = await apiFetch<any[]>('/events?limit=100');
   return events.map(mapEventData);
 };
 
@@ -195,6 +227,37 @@ export const fetchEventById = async (
   const event = await apiFetch<any>(`/events/${id}`);
   return mapEventData(event);
 };
+
+export const createEvent = async (
+  payload: EventCreatePayload,
+): Promise<AppEvent> => {
+  const event = await apiFetch<any>('/events', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return mapEventData(event);
+};
+
+export const updateEvent = async (
+  id: number,
+  payload: Partial<EventCreatePayload>,
+): Promise<AppEvent> => {
+  const event = await apiFetch<any>(`/events/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+  return mapEventData(event);
+};
+
+export const participateInEvent = (eventId: number): Promise<void> =>
+  apiFetch(`/events/${eventId}/participate`, {
+    method: 'POST',
+  });
+
+export const cancelEventParticipation = (eventId: number): Promise<void> =>
+  apiFetch(`/events/${eventId}/participate`, {
+    method: 'DELETE',
+  });
 
 export const fetchAllCourses = async (): Promise<Course[]> => {
   const coursesData = await apiFetch<any[]>('/profile/me/courses');
@@ -211,15 +274,23 @@ export const fetchCourseById = async (
 export const completeCourse = async (
   courseId: number,
   answers: { questionId: number; answerId: number }[],
-): Promise<{ isPassed: boolean; score: number; totalQuestions: number }> => {
+): Promise<CourseCompletionResult> => {
   return await apiFetch(`/courses/${courseId}/complete`, {
     method: 'POST',
     body: JSON.stringify({ answers }),
   });
 };
+export const markLessonComplete = async (
+  courseId: number,
+  lessonId: number,
+): Promise<LessonCompletionResult> => {
+  return await apiFetch(`/courses/${courseId}/lessons/${lessonId}/complete`, {
+    method: 'POST',
+  });
+};
 
 export const fetchAllOrganizations = (): Promise<Organization[]> =>
-  apiFetch('/organizations');
+  apiFetch('/organizations?limit=100');
 export const fetchOrganizationById = (id: number): Promise<Organization> =>
   apiFetch(`/organizations/${id}`);
 export const updateOrganizationSubscription = (
@@ -237,8 +308,18 @@ export const fetchEventParticipants = (
   eventId: number,
 ): Promise<EventParticipant[]> =>
   apiFetch(`/organization/events/${eventId}/participants`);
-export const fetchOrganizationDashboardStats = (): Promise<OrganizationStat[]> =>
-  apiFetch(`/organization/dashboard/stats`);
+export const fetchOrganizationDashboardStats = async (): Promise<
+  OrganizationStat[]
+> => {
+  const stats = await apiFetch<any[]>(`/organization/dashboard/stats`);
+  const iconByStatId: { [key: string]: React.FC<any> } = {
+    subscribers: Users,
+    events_total: List,
+    rating: Star,
+    reviews: Trophy,
+  };
+  return stats.map((s) => ({ ...s, Icon: iconByStatId[s.id] ?? Star }));
+};
 export const fetchOrganizationDetails = (): Promise<OrganizationDetails> =>
   apiFetch(`/organization/details`);
 export const fetchActivityHistoryEvents = async (): Promise<HistoryEvent[]> => {
@@ -252,6 +333,16 @@ export const fetchLeaderboardData = (
   period: 'week' | 'month' | 'allTime',
 ): Promise<{ topUsers: LeaderboardUser[]; currentUser: LeaderboardUser | null }> =>
   apiFetch(`/leaderboard?period=${period}`);
+export const updateProfile = (data: {
+  firstName?: string;
+  lastName?: string;
+  about?: string;
+  avatarUrl?: string;
+}): Promise<void> =>
+  apiFetch('/profile/me', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
 export const fetchAllAchievements = async (): Promise<Achievement[]> => {
   const achievements = await apiFetch<
     (Omit<Achievement, 'Icon'> & { icon?: string | null })[]
@@ -260,34 +351,120 @@ export const fetchAllAchievements = async (): Promise<Achievement[]> => {
 };
 export const fetchUserAchievements = async (): Promise<Achievement[]> => {
   const achievements = await apiFetch<any[]>('/profile/me/achievements');
-  return achievements.map((ach) => {
-    const { icon, ...baseAchievement } = ach;
-    return {
-      ...baseAchievement,
-      Icon: getIcon(icon),
-    };
-  });
+  return achievements.map((ach) => ({
+    ...ach,
+    icon: ach.icon ?? 'Award',
+    Icon: getIcon(ach.icon ?? 'Award'),
+  }));
 };
 export const fetchMyChats = async (): Promise<MyChatItem[]> => {
   const chats = await apiFetch<any[]>('/profile/chats');
   return chats.map((chat) => ({
     ...chat,
-    Icon: getIconForCategory(chat.category),
+    icon: chat.icon ?? 'Users',
+    timestamp: formatTimestamp(chat.timestamp),
   }));
 };
-export const fetchAllStories = (): Promise<Story[]> => apiFetch('/stories');
-export const fetchStoryById = (id: number): Promise<Story> =>
-  apiFetch(`/stories/${id}`);
-export const fetchRewards = (): Promise<RewardItem[]> => apiFetch('/rewards');
+export const createEventReview = (
+  eventId: number,
+  rating: number,
+  text?: string,
+): Promise<void> =>
+  apiFetch(`/events/${eventId}/reviews`, {
+    method: 'POST',
+    body: JSON.stringify({ rating, ...(text?.trim() ? { text: text.trim() } : {}) }),
+  });
+export const fetchAllStories = async (): Promise<Story[]> => {
+  const stories = await apiFetch<any[]>('/stories');
+  return stories.map(mapStoryData);
+};
+export const fetchStoryById = async (id: number): Promise<Story> => {
+  const story = await apiFetch<any>(`/stories/${id}`);
+  return mapStoryData(story);
+};
+export const createStory = (
+  eventId: number,
+  text: string,
+  imageUrl: string,
+): Promise<Story> =>
+  apiFetch('/stories', {
+    method: 'POST',
+    body: JSON.stringify({ eventId, text, imageUrl }),
+  });
+export const createStoryComment = async (
+  storyId: number,
+  text: string,
+): Promise<Comment> => {
+  const c = await apiFetch<any>(`/stories/${storyId}/comments`, {
+    method: 'POST',
+    body: JSON.stringify({ text }),
+  });
+  return { ...c, timestamp: formatTimestamp(c.timestamp ?? c.createdAt) };
+};
+export const likeStory = (storyId: number): Promise<void> =>
+  apiFetch(`/stories/${storyId}/like`, { method: 'POST' });
+export const unlikeStory = (storyId: number): Promise<void> =>
+  apiFetch(`/stories/${storyId}/like`, { method: 'DELETE' });
+const REWARD_IMAGE_FALLBACK = (id: number | string) =>
+  `https://picsum.photos/seed/dobro-reward-${id}/300`;
+const mapRewardData = (r: any): RewardItem => ({
+  ...r,
+  // Сиды/БД могут не содержать imageUrl (колонка nullable) — подставляем
+  // плейсхолдер, иначе <img> с пустым src даёт битую картинку.
+  imageUrl: r.imageUrl || REWARD_IMAGE_FALLBACK(r.id),
+  isPurchased: r.isPurchased ?? false,
+});
+export const fetchRewards = async (): Promise<RewardItem[]> => {
+  const rewards = await apiFetch<any[]>('/rewards');
+  return rewards.map(mapRewardData);
+};
+export const purchaseReward = (rewardId: number): Promise<void> =>
+  apiFetch(`/rewards/${rewardId}/purchase`, {
+    method: 'POST',
+  });
 export const fetchMapMarkers = (): Promise<MapMarker[]> =>
   apiFetch('/map-markers');
 export const fetchFriends = (): Promise<Friend[]> => apiFetch('/friends');
-export const fetchEventChatMessages = (
+export const fetchEventChatMessages = async (
   eventId: number,
-): Promise<EventChatMessage[]> => apiFetch(`/events/${eventId}/messages`);
-export const fetchWeeklyChallenge = async (): Promise<WeeklyChallenge> => {
+): Promise<EventChatMessage[]> => {
+  const messages = await apiFetch<any[]>(`/events/${eventId}/messages`);
+  // Бэкенд отдаёт сообщения в порядке createdAt desc (новые сверху) — для
+  // ленты чата разворачиваем в хронологический порядок (старые сверху),
+  // как и в ассистент-чате.
+  return messages
+    .map((m) => ({
+      ...m,
+      timestamp: formatTimestamp(m.timestamp ?? m.createdAt),
+    }))
+    .reverse();
+};
+export const postEventChatMessage = async (
+  eventId: number,
+  text: string,
+): Promise<EventChatMessage> => {
+  const m = await apiFetch<any>(`/events/${eventId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ text }),
+  });
+  return { ...m, timestamp: formatTimestamp(m.timestamp ?? m.createdAt) };
+};
+export const fetchAssistantChatMessages = async (): Promise<ChatMessage[]> => {
+  const messages = await apiFetch<any[]>('/assistant-chat/messages');
+  return messages.map(mapAssistantMessage).reverse();
+};
+export const postAssistantMessage = async (text: string): Promise<ChatMessage> => {
+  const message = await apiFetch<any>('/assistant-chat/messages', {
+    method: 'POST',
+    body: JSON.stringify({ text }),
+  });
+  return mapAssistantMessage(message);
+};
+export const fetchWeeklyChallenge = async (): Promise<WeeklyChallenge | null> => {
   const challenge = await apiFetch<
-    Omit<WeeklyChallenge, 'Icon'> & { icon?: string | null }
+    (Omit<WeeklyChallenge, 'Icon'> & { icon?: string | null }) | null
   >('/challenge/weekly');
-  return mapIcon(challenge);
+  // Нет активного челленджа — возвращаем null (раньше mapIcon(null) падал).
+  if (!challenge) return null;
+  return mapIcon({ ...challenge, icon: challenge.icon ?? 'Target' });
 };

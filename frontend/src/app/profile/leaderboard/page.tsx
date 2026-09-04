@@ -1,6 +1,5 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {fetchLeaderboardData} from '../../../lib/api';
-import {CURRENT_USER_ID} from '../../../lib/constants';
 import type {LeaderboardUser, User} from '../../../lib/types';
 import {ArrowLeft, Star} from 'lucide-react';
 import {BronzeMedalIcon, GoldMedalIcon, SilverMedalIcon} from '../../../components/ui/icons';
@@ -44,7 +43,7 @@ const LeaderboardRow: React.FC<{ user: LeaderboardUser; isCurrentUser: boolean; 
                                                                                                    isCurrentUser
                                                                                                  }) => (
   <div className={`flex items-center p-4 rounded-xl ${isCurrentUser ? 'bg-blue-100' : ''}`}>
-    <span className="font-bold text-lg text-gray-500 w-8">{user.rank}</span>
+    <span className="font-bold text-lg text-gray-500 w-8">{user.rank > 0 ? user.rank : '—'}</span>
     <img loading="lazy" src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full mx-4"/>
     <span className="font-semibold text-md text-[#0C0D0E] flex-1">{user.name}</span>
     <div className="flex items-center space-x-1">
@@ -107,23 +106,35 @@ const LeaderboardPage: React.FC<{ user: User; onBack: () => void; }> = ({user, o
   const [activeTab, setActiveTab] = useState<Period>('month');
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<LeaderboardUser[]>([]);
+  const [currentUser, setCurrentUser] = useState<LeaderboardUser | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       const leaderboardData = await fetchLeaderboardData(activeTab);
-      const updatedData = leaderboardData.topUsers.map(u =>
-        u.id === CURRENT_USER_ID ? {...u, name: `${user.firstName} ${user.lastName}`} : u
-      );
-      setData(updatedData);
+      setData(leaderboardData.topUsers ?? []);
+      setCurrentUser(leaderboardData.currentUser ?? null);
       setLoading(false);
     };
     loadData();
-  }, [activeTab, user]);
+  }, [activeTab]);
 
   const topThree = useMemo(() => data.slice(0, 3), [data]);
   const listData = useMemo(() => data.slice(3, 100), [data]);
-  const currentUserData = useMemo(() => data.find(u => u.id === CURRENT_USER_ID), [data]);
+
+  // Реальный текущий пользователь из ответа API; если за период активности нет —
+  // показываем его же с реальной кармой (0) и аватаркой, чтобы данные были консистентны.
+  const currentUserData = useMemo<LeaderboardUser | undefined>(() => {
+    if (currentUser) return currentUser;
+    if (user.id == null) return undefined;
+    return {
+      id: user.id,
+      name: `${user.firstName} ${user.lastName}`.trim(),
+      avatarUrl: user.avatarUrl,
+      karma: Number(user.stats?.find((s) => s.label === 'Карма')?.value ?? 0),
+      rank: 0,
+    };
+  }, [currentUser, user]);
 
   return (
     <div className="w-full h-screen font-sans antialiased bg-[#F0F0F0] flex flex-col">
@@ -170,7 +181,7 @@ const LeaderboardPage: React.FC<{ user: User; onBack: () => void; }> = ({user, o
             <Podium users={topThree}/>
             <div className="bg-white rounded-2xl shadow-sm p-2">
               {listData.map(user => (
-                <LeaderboardRow key={user.id} user={user} isCurrentUser={user.id === CURRENT_USER_ID}/>
+                <LeaderboardRow key={user.id} user={user} isCurrentUser={currentUserData?.id === user.id}/>
               ))}
             </div>
           </>

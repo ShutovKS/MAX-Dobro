@@ -6,17 +6,20 @@ const isReal = import.meta.env.VITE_API_MODE === 'real';
 
 const api = isReal ? realApi : mockApi;
 
-export const fetchOrganizationDashboardStats = mockApi.fetchOrganizationDashboardStats;
-export const fetchOrganizationDetails = mockApi.fetchOrganizationDetails;
-export const fetchOrganizationEvents = mockApi.fetchOrganizationEvents;
-export const fetchEventParticipants = mockApi.fetchEventParticipants;
+/** <context:frontend_api_adapter> Keeps mock and real API surfaces aligned for the app shell. </context:frontend_api_adapter> */
 
-export const fetchAllStories = mockApi.fetchAllStories;
-export const fetchStoryById = mockApi.fetchStoryById;
+export const fetchOrganizationDashboardStats = organizerApi.fetchOrganizationDashboardStats;
+export const fetchOrganizationDetails = organizerApi.fetchOrganizationDetails;
+export const fetchOrganizationEvents = organizerApi.fetchOrganizationEvents;
+export const fetchEventParticipants = organizerApi.fetchEventParticipants;
 
 export const {
   fetchAllEvents,
   fetchEventById,
+  createEvent,
+  updateEvent,
+  participateInEvent,
+  cancelEventParticipation,
   fetchAllCourses,
   fetchCourseById,
   fetchAllOrganizations,
@@ -26,11 +29,24 @@ export const {
   fetchLeaderboardData,
   fetchAllAchievements,
   fetchUserAchievements,
+  createEventReview,
+  fetchAllStories,
+  fetchStoryById,
+  createStory,
+  createStoryComment,
+  likeStory,
+  unlikeStory,
+  fetchAssistantChatMessages,
+  postAssistantMessage,
   fetchMyChats,
   fetchRewards,
+  purchaseReward,
   fetchMapMarkers,
   fetchFriends,
   fetchEventChatMessages,
+  postEventChatMessage,
   fetchWeeklyChallenge,
   completeCourse,
+  markLessonComplete,
+  updateProfile,
 } = api;
