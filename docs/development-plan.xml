@@ -1071,11 +1071,11 @@
       <step-3 module="M-STORIES" status="done" verification="V-M-STORIES">Stories</step-3>
       <step-4 module="M-LEADERBOARD" status="done" verification="V-M-LEADERBOARD">Leaderboard</step-4>
     </Phase-3>
-    <Phase-4 name="GraceOverlay" status="in-progress">
+    <Phase-4 name="GraceOverlay" status="done">
       <goal>Apply GRACE docs and semantic markup across governed source files without runtime changes.</goal>
-      <step-1 module="M-BACKEND-APP" status="in-progress" verification="V-M-BACKEND-APP">Markup backend modules</step-1>
-      <step-2 module="M-FRONTEND-APP" status="in-progress" verification="V-M-FRONTEND-APP">Markup frontend modules</step-2>
-      <step-3 module="M-BOT-MAX" status="in-progress" verification="V-M-BOT-MAX">Markup bots</step-3>
+      <step-1 module="M-BACKEND-APP" status="done" verification="V-M-BACKEND-APP">Markup backend modules</step-1>
+      <step-2 module="M-FRONTEND-APP" status="done" verification="V-M-FRONTEND-APP">Markup frontend modules</step-2>
+      <step-3 module="M-BOT-MAX" status="done" verification="V-M-BOT-MAX">Markup bots</step-3>
     </Phase-4>
   </ImplementationOrder>
 

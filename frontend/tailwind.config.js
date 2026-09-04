@@ -1,3 +1,17 @@
+// FILE: frontend/tailwind.config.js
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: Tailwind theme tokens for the mini-app.
+//   SCOPE: content globs, color and font extensions
+//   DEPENDS: none
+//   LINKS: M-FRONTEND-UI, V-M-FRONTEND-UI
+//   ROLE: CONFIG
+//   MAP_MODE: NONE
+// END_MODULE_CONTRACT
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 const {fontFamily} = require('tailwindcss/defaultTheme');
 
 /** @type {import('tailwindcss').Config} */
