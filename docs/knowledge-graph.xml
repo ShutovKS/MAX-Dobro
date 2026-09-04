@@ -1,0 +1,420 @@
+<KnowledgeGraph>
+  <Project NAME="MAX Dobro" VERSION="1.0.0">
+    <keywords>volunteer, charity, karma, events, courses, stories, organizer, NestJS, React, Prisma, Supabase, MAX, Telegram</keywords>
+    <annotation>Volunteer platform: NestJS API, React mini-app, MAX and Telegram bots, PostgreSQL via Prisma/Supabase.</annotation>
+
+    <M-BACKEND-BOOTSTRAP NAME="BackendBootstrap" TYPE="ENTRY_POINT" STATUS="implemented">
+      <purpose>Start the NestJS HTTP API with CORS, validation, and Swagger</purpose>
+      <path>backend/src/main.ts</path>
+      <depends>M-BACKEND-APP</depends>
+      <verification-ref>V-M-BACKEND-BOOTSTRAP</verification-ref>
+      <annotations>
+        <fn-bootstrap PURPOSE="Create the Nest app and listen" />
+      </annotations>
+      <CrossLink from="M-BACKEND-BOOTSTRAP" to="M-BACKEND-APP" relation="boots" />
+    </M-BACKEND-BOOTSTRAP>
+
+    <M-BACKEND-APP NAME="BackendApp" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Wire Nest feature modules and the root health controller</purpose>
+      <path>backend/src/app.module.ts</path>
+      <depends>M-PRISMA, M-SUPABASE, M-AUTH, M-USERS, M-EVENTS, M-ORGANIZATIONS, M-LEARNING, M-ACHIEVEMENTS, M-REWARDS, M-STORIES, M-ASSISTANT-CHAT, M-LEADERBOARD, M-EVENT-CHATS, M-FRIENDS, M-CHALLENGES, M-MAP, M-REVIEWS, M-WEBHOOKS, M-TASKS</depends>
+      <verification-ref>V-M-BACKEND-APP</verification-ref>
+      <annotations>
+        <class-AppModule PURPOSE="Root Nest module" />
+        <class-AppController PURPOSE="Root HTTP probe" />
+      </annotations>
+      <CrossLink from="M-BACKEND-APP" to="M-PRISMA" relation="imports" />
+      <CrossLink from="M-BACKEND-APP" to="M-AUTH" relation="imports" />
+      <CrossLink from="M-BACKEND-APP" to="M-EVENTS" relation="imports" />
+    </M-BACKEND-APP>
+
+    <M-PRISMA NAME="Prisma" TYPE="DATA_LAYER" STATUS="implemented">
+      <purpose>Injectable PrismaClient for all Nest data access</purpose>
+      <path>backend/src/prisma/prisma.service.ts</path>
+      <depends>none</depends>
+      <verification-ref>V-M-PRISMA</verification-ref>
+      <annotations>
+        <class-PrismaService PURPOSE="PrismaClient lifecycle wrapper" />
+        <class-PrismaModule PURPOSE="Global Prisma module" />
+      </annotations>
+    </M-PRISMA>
+
+    <M-SCHEMA NAME="DataModel" TYPE="DATA_LAYER" STATUS="implemented">
+      <purpose>PostgreSQL models for users, orgs, events, learning, and social features</purpose>
+      <path>backend/prisma/schema.prisma</path>
+      <depends>none</depends>
+      <verification-ref>V-M-SCHEMA</verification-ref>
+      <annotations>
+        <type-User PURPOSE="Volunteer or organizer account" />
+        <type-Organization PURPOSE="Charity organization" />
+        <type-Event PURPOSE="Volunteer event" />
+        <type-Course PURPOSE="Learning course" />
+      </annotations>
+    </M-SCHEMA>
+
+    <M-SEED NAME="Seed" TYPE="UTILITY" STATUS="implemented">
+      <purpose>Seed demo catalog and users for local and e2e databases</purpose>
+      <path>backend/prisma/seed.ts</path>
+      <depends>M-SCHEMA</depends>
+      <verification-ref>V-M-SEED</verification-ref>
+      <annotations>
+        <fn-main PURPOSE="Run Prisma seed" />
+      </annotations>
+      <CrossLink from="M-SEED" to="M-SCHEMA" relation="writes-models" />
+    </M-SEED>
+
+    <M-SUPABASE NAME="Supabase" TYPE="INTEGRATION" STATUS="implemented">
+      <purpose>Server Supabase client for auth-aligned identity</purpose>
+      <path>backend/src/supabase/supabase.service.ts</path>
+      <depends>none</depends>
+      <verification-ref>V-M-SUPABASE</verification-ref>
+      <annotations>
+        <class-SupabaseService PURPOSE="Supabase JS client wrapper" />
+      </annotations>
+    </M-SUPABASE>
+
+    <M-AUTH NAME="Authentication" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>MAX, Telegram, and demo login plus volunteer profile HTTP</purpose>
+      <path>backend/src/auth/</path>
+      <depends>M-PRISMA, M-SUPABASE</depends>
+      <verification-ref>V-M-AUTH</verification-ref>
+      <annotations>
+        <class-AuthService PURPOSE="Verify providers and issue JWT" />
+        <class-AuthController PURPOSE="Login HTTP" />
+        <class-ProfileController PURPOSE="Current user profile HTTP" />
+        <class-AuthGuard PURPOSE="Require Bearer JWT" />
+        <fn-calculateLevel PURPOSE="Map karmaPoints to volunteer level" />
+      </annotations>
+      <CrossLink from="M-AUTH" to="M-PRISMA" relation="queries-db" />
+      <CrossLink from="M-AUTH" to="M-SUPABASE" relation="calls-api" />
+    </M-AUTH>
+
+    <M-USERS NAME="Users" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Public user projection shared by Nest modules</purpose>
+      <path>backend/src/users/</path>
+      <depends>M-PRISMA</depends>
+      <verification-ref>V-M-USERS</verification-ref>
+      <annotations>
+        <type-PublicUser PURPOSE="Safe user DTO" />
+      </annotations>
+      <CrossLink from="M-USERS" to="M-PRISMA" relation="queries-db" />
+    </M-USERS>
+
+    <M-EVENTS NAME="Events" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Event CRUD and participation lifecycle</purpose>
+      <path>backend/src/events/</path>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <verification-ref>V-M-EVENTS</verification-ref>
+      <annotations>
+        <class-EventsService PURPOSE="Event queries and participation" />
+        <class-EventsController PURPOSE="REST /events" />
+      </annotations>
+      <CrossLink from="M-EVENTS" to="M-PRISMA" relation="queries-db" />
+      <CrossLink from="M-EVENTS" to="M-AUTH" relation="requires-auth" />
+    </M-EVENTS>
+
+    <M-ORGANIZATIONS NAME="Organizations" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Organization catalog, subscriptions, and organizer dashboard</purpose>
+      <path>backend/src/organizations/</path>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <verification-ref>V-M-ORGANIZATIONS</verification-ref>
+      <annotations>
+        <class-OrganizationsService PURPOSE="Org catalog and dashboard stats" />
+        <class-OrganizationsController PURPOSE="REST organizations and organizer routes" />
+      </annotations>
+      <CrossLink from="M-ORGANIZATIONS" to="M-PRISMA" relation="queries-db" />
+      <CrossLink from="M-ORGANIZATIONS" to="M-AUTH" relation="requires-auth" />
+    </M-ORGANIZATIONS>
+
+    <M-LEARNING NAME="Learning" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Courses, lesson completion, and certificates</purpose>
+      <path>backend/src/learning/</path>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <verification-ref>V-M-LEARNING</verification-ref>
+      <annotations>
+        <class-LearningService PURPOSE="Course progress persistence" />
+        <class-LearningController PURPOSE="REST /courses" />
+      </annotations>
+      <CrossLink from="M-LEARNING" to="M-PRISMA" relation="queries-db" />
+      <CrossLink from="M-LEARNING" to="M-AUTH" relation="requires-auth" />
+    </M-LEARNING>
+
+    <M-ACHIEVEMENTS NAME="Achievements" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Achievement catalog listing</purpose>
+      <path>backend/src/achievements/</path>
+      <depends>M-PRISMA</depends>
+      <verification-ref>V-M-ACHIEVEMENTS</verification-ref>
+      <annotations>
+        <class-AchievementsService PURPOSE="List achievements" />
+      </annotations>
+      <CrossLink from="M-ACHIEVEMENTS" to="M-PRISMA" relation="queries-db" />
+    </M-ACHIEVEMENTS>
+
+    <M-REWARDS NAME="Rewards" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Karma shop catalog and purchases</purpose>
+      <path>backend/src/rewards/</path>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <verification-ref>V-M-REWARDS</verification-ref>
+      <annotations>
+        <class-RewardsService PURPOSE="List and purchase rewards" />
+      </annotations>
+      <CrossLink from="M-REWARDS" to="M-PRISMA" relation="queries-db" />
+      <CrossLink from="M-REWARDS" to="M-AUTH" relation="requires-auth" />
+    </M-REWARDS>
+
+    <M-STORIES NAME="Stories" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Stories feed, comments, and likes</purpose>
+      <path>backend/src/stories/</path>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <verification-ref>V-M-STORIES</verification-ref>
+      <annotations>
+        <class-StoriesService PURPOSE="Story CRUD and social actions" />
+      </annotations>
+      <CrossLink from="M-STORIES" to="M-PRISMA" relation="queries-db" />
+      <CrossLink from="M-STORIES" to="M-AUTH" relation="requires-auth" />
+    </M-STORIES>
+
+    <M-ASSISTANT-CHAT NAME="AssistantChat" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>In-app assistant conversation history</purpose>
+      <path>backend/src/assistant-chat/</path>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <verification-ref>V-M-ASSISTANT-CHAT</verification-ref>
+      <annotations>
+        <class-AssistantChatService PURPOSE="Store and reply to assistant messages" />
+      </annotations>
+      <CrossLink from="M-ASSISTANT-CHAT" to="M-PRISMA" relation="queries-db" />
+      <CrossLink from="M-ASSISTANT-CHAT" to="M-AUTH" relation="requires-auth" />
+    </M-ASSISTANT-CHAT>
+
+    <M-LEADERBOARD NAME="Leaderboard" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Rank volunteers by karma or hours</purpose>
+      <path>backend/src/leaderboard/</path>
+      <depends>M-PRISMA</depends>
+      <verification-ref>V-M-LEADERBOARD</verification-ref>
+      <annotations>
+        <class-LeaderboardService PURPOSE="Ranked volunteer lists" />
+      </annotations>
+      <CrossLink from="M-LEADERBOARD" to="M-PRISMA" relation="queries-db" />
+    </M-LEADERBOARD>
+
+    <M-EVENT-CHATS NAME="EventChats" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Event-scoped chat rooms and messages</purpose>
+      <path>backend/src/event-chats/</path>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <verification-ref>V-M-EVENT-CHATS</verification-ref>
+      <annotations>
+        <class-EventChatsService PURPOSE="Event chat listing and posting" />
+      </annotations>
+      <CrossLink from="M-EVENT-CHATS" to="M-PRISMA" relation="queries-db" />
+      <CrossLink from="M-EVENT-CHATS" to="M-AUTH" relation="requires-auth" />
+    </M-EVENT-CHATS>
+
+    <M-FRIENDS NAME="Friends" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Current-user friendship listing</purpose>
+      <path>backend/src/friends/</path>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <verification-ref>V-M-FRIENDS</verification-ref>
+      <annotations>
+        <class-FriendsService PURPOSE="List friends" />
+      </annotations>
+      <CrossLink from="M-FRIENDS" to="M-PRISMA" relation="queries-db" />
+      <CrossLink from="M-FRIENDS" to="M-AUTH" relation="requires-auth" />
+    </M-FRIENDS>
+
+    <M-CHALLENGES NAME="Challenges" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Weekly challenge payload for the home surface</purpose>
+      <path>backend/src/challenges/</path>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <verification-ref>V-M-CHALLENGES</verification-ref>
+      <annotations>
+        <class-ChallengesService PURPOSE="Weekly challenge query" />
+      </annotations>
+      <CrossLink from="M-CHALLENGES" to="M-PRISMA" relation="queries-db" />
+      <CrossLink from="M-CHALLENGES" to="M-AUTH" relation="requires-auth" />
+    </M-CHALLENGES>
+
+    <M-MAP NAME="Map" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Event map markers with coordinates</purpose>
+      <path>backend/src/map/</path>
+      <depends>M-PRISMA</depends>
+      <verification-ref>V-M-MAP</verification-ref>
+      <annotations>
+        <class-MapService PURPOSE="List map markers" />
+      </annotations>
+      <CrossLink from="M-MAP" to="M-PRISMA" relation="queries-db" />
+    </M-MAP>
+
+    <M-REVIEWS NAME="Reviews" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Event reviews that feed organization ratings</purpose>
+      <path>backend/src/reviews/</path>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <verification-ref>V-M-REVIEWS</verification-ref>
+      <annotations>
+        <class-ReviewsService PURPOSE="List and create event reviews" />
+      </annotations>
+      <CrossLink from="M-REVIEWS" to="M-PRISMA" relation="queries-db" />
+      <CrossLink from="M-REVIEWS" to="M-AUTH" relation="requires-auth" />
+    </M-REVIEWS>
+
+    <M-WEBHOOKS NAME="Webhooks" TYPE="INTEGRATION" STATUS="implemented">
+      <purpose>Supabase auth webhook user upsert</purpose>
+      <path>backend/src/webhooks/</path>
+      <depends>M-PRISMA, M-SUPABASE</depends>
+      <verification-ref>V-M-WEBHOOKS</verification-ref>
+      <annotations>
+        <class-WebhooksController PURPOSE="POST /webhooks/supabase-auth" />
+      </annotations>
+      <CrossLink from="M-WEBHOOKS" to="M-PRISMA" relation="queries-db" />
+      <CrossLink from="M-WEBHOOKS" to="M-SUPABASE" relation="validates-webhook" />
+    </M-WEBHOOKS>
+
+    <M-TASKS NAME="Tasks" TYPE="CORE_LOGIC" STATUS="implemented">
+      <purpose>Scheduled Nest jobs</purpose>
+      <path>backend/src/tasks/</path>
+      <depends>M-PRISMA</depends>
+      <verification-ref>V-M-TASKS</verification-ref>
+      <annotations>
+        <class-TasksService PURPOSE="Cron-driven jobs" />
+      </annotations>
+      <CrossLink from="M-TASKS" to="M-PRISMA" relation="queries-db" />
+    </M-TASKS>
+
+    <M-FRONTEND-ENTRY NAME="FrontendEntry" TYPE="ENTRY_POINT" STATUS="implemented">
+      <purpose>Mount the React mini-app in HashRouter</purpose>
+      <path>frontend/index.tsx</path>
+      <depends>M-FRONTEND-APP</depends>
+      <verification-ref>V-M-FRONTEND-ENTRY</verification-ref>
+      <annotations>
+        <fn-root PURPOSE="Create React root and render App" />
+      </annotations>
+      <CrossLink from="M-FRONTEND-ENTRY" to="M-FRONTEND-APP" relation="renders-component" />
+    </M-FRONTEND-ENTRY>
+
+    <M-FRONTEND-APP NAME="FrontendApp" TYPE="ENTRY_POINT" STATUS="implemented">
+      <purpose>Route shell, session restore, onboarding, and tab switching</purpose>
+      <path>frontend/src/app/page.tsx</path>
+      <depends>M-FRONTEND-API, M-FRONTEND-AUTH, M-FRONTEND-TELEGRAM, M-FRONTEND-SCREENS</depends>
+      <verification-ref>V-M-FRONTEND-APP</verification-ref>
+      <annotations>
+        <fn-App PURPOSE="Compose routes and session gate" />
+        <fn-routeFromStartParam PURPOSE="Map Telegram startapp param to a route" />
+      </annotations>
+      <CrossLink from="M-FRONTEND-APP" to="M-FRONTEND-API" relation="calls-api" />
+      <CrossLink from="M-FRONTEND-APP" to="M-FRONTEND-AUTH" relation="reads-session" />
+      <CrossLink from="M-FRONTEND-APP" to="M-FRONTEND-TELEGRAM" relation="reads-init-data" />
+    </M-FRONTEND-APP>
+
+    <M-FRONTEND-API NAME="FrontendApi" TYPE="INTEGRATION" STATUS="implemented">
+      <purpose>Mock or real HTTP adapter selected by VITE_API_MODE</purpose>
+      <path>frontend/src/lib/api.ts</path>
+      <depends>M-FRONTEND-AUTH, M-FRONTEND-TYPES</depends>
+      <verification-ref>V-M-FRONTEND-API</verification-ref>
+      <annotations>
+        <export-fetchAllEvents PURPOSE="Event catalog" />
+        <export-participateInEvent PURPOSE="Join event" />
+        <export-completeCourse PURPOSE="Finish course" />
+        <export-purchaseReward PURPOSE="Spend karma" />
+      </annotations>
+      <CrossLink from="M-FRONTEND-API" to="M-FRONTEND-AUTH" relation="sends-token" />
+      <CrossLink from="M-FRONTEND-API" to="M-FRONTEND-TYPES" relation="uses-types" />
+    </M-FRONTEND-API>
+
+    <M-FRONTEND-AUTH NAME="FrontendAuth" TYPE="INTEGRATION" STATUS="implemented">
+      <purpose>Mock or real login, register, logout, and session restore</purpose>
+      <path>frontend/src/lib/auth.ts</path>
+      <depends>M-FRONTEND-TYPES</depends>
+      <verification-ref>V-M-FRONTEND-AUTH</verification-ref>
+      <annotations>
+        <export-login PURPOSE="Email login" />
+        <export-register PURPOSE="Email register" />
+        <export-getCurrentSession PURPOSE="Restore session" />
+        <export-logout PURPOSE="Clear session" />
+      </annotations>
+      <CrossLink from="M-FRONTEND-AUTH" to="M-FRONTEND-TYPES" relation="uses-types" />
+    </M-FRONTEND-AUTH>
+
+    <M-FRONTEND-TYPES NAME="FrontendTypes" TYPE="UTILITY" STATUS="implemented">
+      <purpose>Shared client domain types</purpose>
+      <path>frontend/src/lib/types.ts</path>
+      <depends>none</depends>
+      <verification-ref>V-M-FRONTEND-TYPES</verification-ref>
+      <annotations>
+        <type-User PURPOSE="Client user" />
+        <type-AppEvent PURPOSE="Client event" />
+        <type-Course PURPOSE="Client course" />
+      </annotations>
+    </M-FRONTEND-TYPES>
+
+    <M-FRONTEND-TELEGRAM NAME="TelegramSdk" TYPE="INTEGRATION" STATUS="implemented">
+      <purpose>Telegram Mini App init data and native helpers</purpose>
+      <path>frontend/src/lib/telegram-sdk.ts</path>
+      <depends>M-FRONTEND-AUTH</depends>
+      <verification-ref>V-M-FRONTEND-TELEGRAM</verification-ref>
+      <annotations>
+        <fn-initTelegram PURPOSE="Initialize Telegram WebApp" />
+        <fn-telegramLogin PURPOSE="Exchange init data for a session" />
+        <fn-tgGetStartParam PURPOSE="Read startapp deep-link param" />
+      </annotations>
+      <CrossLink from="M-FRONTEND-TELEGRAM" to="M-FRONTEND-AUTH" relation="calls-api" />
+    </M-FRONTEND-TELEGRAM>
+
+    <M-FRONTEND-MAX NAME="MaxSdk" TYPE="INTEGRATION" STATUS="implemented">
+      <purpose>MAX mini-app init data reader</purpose>
+      <path>frontend/src/lib/max-sdk.ts</path>
+      <depends>none</depends>
+      <verification-ref>V-M-FRONTEND-MAX</verification-ref>
+      <annotations>
+        <fn-getMaxInitData PURPOSE="Read MAX init payload" />
+      </annotations>
+    </M-FRONTEND-MAX>
+
+    <M-FRONTEND-UI NAME="FrontendUi" TYPE="UI_COMPONENT" STATUS="implemented">
+      <purpose>Shared cards, modals, map, toasts, and icons</purpose>
+      <path>frontend/src/components/</path>
+      <depends>M-FRONTEND-TYPES</depends>
+      <verification-ref>V-M-FRONTEND-UI</verification-ref>
+      <annotations>
+        <export-EventCard PURPOSE="Event summary card" />
+        <export-Toast PURPOSE="Transient feedback" />
+        <export-InteractiveMap PURPOSE="Leaflet map" />
+        <export-TabBar PURPOSE="Primary tab navigation" />
+      </annotations>
+      <CrossLink from="M-FRONTEND-UI" to="M-FRONTEND-TYPES" relation="uses-types" />
+    </M-FRONTEND-UI>
+
+    <M-FRONTEND-SCREENS NAME="FrontendScreens" TYPE="UI_COMPONENT" STATUS="implemented">
+      <purpose>Volunteer and organizer pages composed by the route shell</purpose>
+      <path>frontend/src/app/</path>
+      <depends>M-FRONTEND-API, M-FRONTEND-AUTH, M-FRONTEND-UI</depends>
+      <verification-ref>V-M-FRONTEND-SCREENS</verification-ref>
+      <annotations>
+        <export-AuthPage PURPOSE="Login and register" />
+        <export-HomePage PURPOSE="Event feed" />
+        <export-EventDetailPage PURPOSE="Event details and participate" />
+      </annotations>
+      <CrossLink from="M-FRONTEND-SCREENS" to="M-FRONTEND-API" relation="calls-api" />
+      <CrossLink from="M-FRONTEND-SCREENS" to="M-FRONTEND-AUTH" relation="reads-session" />
+      <CrossLink from="M-FRONTEND-SCREENS" to="M-FRONTEND-UI" relation="renders-component" />
+    </M-FRONTEND-SCREENS>
+
+    <M-BOT-MAX NAME="MaxBot" TYPE="ENTRY_POINT" STATUS="implemented">
+      <purpose>MAX messenger bot that deep-links into the mini-app</purpose>
+      <path>bot-max/src/index.ts</path>
+      <depends>none</depends>
+      <verification-ref>V-M-BOT-MAX</verification-ref>
+      <annotations>
+        <export-bot PURPOSE="MAX bot process" />
+      </annotations>
+    </M-BOT-MAX>
+
+    <M-BOT-TELEGRAM NAME="TelegramBot" TYPE="ENTRY_POINT" STATUS="implemented">
+      <purpose>Telegram bot that launches the web app</purpose>
+      <path>bot-telegram/src/index.ts</path>
+      <depends>none</depends>
+      <verification-ref>V-M-BOT-TELEGRAM</verification-ref>
+      <annotations>
+        <export-bot PURPOSE="Telegram bot process" />
+      </annotations>
+    </M-BOT-TELEGRAM>
+  </Project>
+</KnowledgeGraph>

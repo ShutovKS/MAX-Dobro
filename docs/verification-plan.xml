@@ -1,0 +1,735 @@
+<VerificationPlan VERSION="1.0.0">
+  <GlobalPolicy>
+    <log-format>[Module][function][BLOCK_NAME] message</log-format>
+    <deterministic-first>true</deterministic-first>
+    <module-level-focus>Jest unit tests next to Nest services and controllers.</module-level-focus>
+    <wave-level-focus>backend/test e2e specs for the HTTP surfaces touched by a change.</wave-level-focus>
+    <phase-level-focus>backend build plus frontend build; e2e when the database is available.</phase-level-focus>
+    <autonomy-gate>Critical backend modules need commands, success/failure scenarios, and existing tests before long autonomous execution. Frontend currently has no automated tests; UI changes need mock-mode manual or browser checks.</autonomy-gate>
+    <redaction>Never log secrets, credentials, raw tokens, MAX/Telegram init data, or webhook secrets.</redaction>
+  </GlobalPolicy>
+
+  <CriticalFlows>
+    <VF-001 NAME="AuthenticateAndLoadProfile" USE_CASES="UC-003" DATA_FLOW="DF-AUTH" PRIORITY="high">
+      <scenario>Valid login yields a session; GET /profile/me returns the same user.</scenario>
+      <expected-outcome>HTTP success with token and profile fields; unauthorized without token.</expected-outcome>
+      <required-signals>
+        <log-marker>[Auth][loginWithMax][BLOCK_ISSUE_JWT]</log-marker>
+        <trace-sequence>BLOCK_VALIDATE_INIT_DATA -&gt; BLOCK_UPSERT_USER -&gt; BLOCK_ISSUE_JWT</trace-sequence>
+      </required-signals>
+    </VF-001>
+    <VF-002 NAME="DiscoverAndJoinEvent" USE_CASES="UC-001" DATA_FLOW="DF-EVENT-DISCOVERY,DF-EVENT-PARTICIPATE" PRIORITY="high">
+      <scenario>Volunteer lists events and participates.</scenario>
+      <expected-outcome>GET /events returns items; participate creates EventParticipant.</expected-outcome>
+      <required-signals>
+        <log-marker>[Events][participate][BLOCK_PARTICIPATE]</log-marker>
+      </required-signals>
+    </VF-002>
+    <VF-003 NAME="OrganizerManagesParticipants" USE_CASES="UC-002" DATA_FLOW="DF-ORG-MANAGE-EVENT" PRIORITY="high">
+      <scenario>Organizer creates or updates an event and patches participant status.</scenario>
+      <expected-outcome>Only organizer-bound users succeed; volunteer gets 403 on organizer routes.</expected-outcome>
+      <required-signals>
+        <log-marker>[Events][updateParticipant][BLOCK_UPDATE_STATUS]</log-marker>
+      </required-signals>
+    </VF-003>
+    <VF-004 NAME="CompleteCourseProgress" USE_CASES="UC-004" DATA_FLOW="DF-LEARNING" PRIORITY="high">
+      <scenario>Lesson and course completion persist on the server.</scenario>
+      <expected-outcome>Progress arrays and certificate records survive a new session.</expected-outcome>
+      <required-signals>
+        <log-marker>[Learning][completeLesson][BLOCK_COMPLETE_LESSON]</log-marker>
+      </required-signals>
+    </VF-004>
+    <VF-005 NAME="MockThenRealFrontend" USE_CASES="UC-001,UC-003" DATA_FLOW="DF-EVENT-DISCOVERY" PRIORITY="medium">
+      <scenario>Frontend route shell works in VITE_API_MODE=mock, then real when API is up.</scenario>
+      <expected-outcome>Auth and home routes render; adapter switch does not change export names.</expected-outcome>
+      <required-signals>
+        <log-marker>[FrontendApi][selectAdapter][BLOCK_SELECT_ADAPTER]</log-marker>
+      </required-signals>
+    </VF-005>
+  </CriticalFlows>
+
+  <ModuleVerification>
+    <V-M-BACKEND-BOOTSTRAP MODULE="M-BACKEND-BOOTSTRAP" PRIORITY="medium">
+      <test-files>
+        <file>backend/test/general.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Process listens on PORT and serves Swagger at /api/docs when running.</scenario-1>
+        <scenario-2 kind="failure">Missing AppModule import fails compilation.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[BackendBootstrap][bootstrap][BLOCK_LISTEN]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>general e2e health check</wave-follow-up>
+      <phase-follow-up>backend build</phase-follow-up>
+    </V-M-BACKEND-BOOTSTRAP>
+
+    <V-M-BACKEND-APP MODULE="M-BACKEND-APP" PRIORITY="medium">
+      <test-files>
+        <file>backend/src/app.controller.spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test -- app.controller.spec.ts</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Root controller returns the expected probe payload.</scenario-1>
+        <scenario-2 kind="failure">Missing feature module fails Nest compilation.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[BackendApp][AppModule][BLOCK_WIRE_MODULES]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>backend unit tests</wave-follow-up>
+      <phase-follow-up>backend build</phase-follow-up>
+    </V-M-BACKEND-APP>
+
+    <V-M-PRISMA MODULE="M-PRISMA" PRIORITY="high">
+      <test-files>
+        <file>backend/src/prisma/prisma.service.spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test -- prisma.service.spec.ts</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">PrismaService is constructable in the testing module.</scenario-1>
+        <scenario-2 kind="failure">Invalid DATABASE_URL fails connect in real env.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Prisma][onModuleInit][BLOCK_CONNECT]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>any e2e that hits the database</wave-follow-up>
+      <phase-follow-up>backend e2e suite</phase-follow-up>
+    </V-M-PRISMA>
+
+    <V-M-SCHEMA MODULE="M-SCHEMA" PRIORITY="high">
+      <test-files>
+        <file>backend/prisma/schema.prisma</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npx prisma validate</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">schema.prisma validates and generate succeeds.</scenario-1>
+        <scenario-2 kind="failure">Model rename without migration breaks client generate.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[DataModel][schema][BLOCK_USER_ORG_BOUNDARY]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>prisma generate</wave-follow-up>
+      <phase-follow-up>seed plus e2e</phase-follow-up>
+    </V-M-SCHEMA>
+
+    <V-M-SEED MODULE="M-SEED" PRIORITY="medium">
+      <test-files>
+        <file>backend/prisma/seed.ts</file>
+        <file>backend/test/global-setup.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run seed</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Seed completes against a migrated database.</scenario-1>
+        <scenario-2 kind="failure">Unique constraint errors are handled or avoided on re-seed.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Seed][main][BLOCK_SEED_CORE_DATA]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>e2e global setup</wave-follow-up>
+      <phase-follow-up>full e2e</phase-follow-up>
+    </V-M-SEED>
+
+    <V-M-SUPABASE MODULE="M-SUPABASE" PRIORITY="medium">
+      <test-files>
+        <file>backend/test/auth.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">SupabaseService constructs when env is present.</scenario-1>
+        <scenario-2 kind="failure">Missing SUPABASE_URL fails getOrThrow at boot.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Supabase][constructor][BLOCK_CREATE_CLIENT]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>auth e2e</wave-follow-up>
+      <phase-follow-up>backend build</phase-follow-up>
+    </V-M-SUPABASE>
+
+    <V-M-AUTH MODULE="M-AUTH" PRIORITY="high">
+      <test-files>
+        <file>backend/src/auth/auth.service.spec.ts</file>
+        <file>backend/test/auth.e2e-spec.ts</file>
+        <file>backend/test/profile.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test -- auth.service.spec.ts</check-1>
+        <check-2>cd backend &amp;&amp; npm run test:e2e -- auth.e2e-spec.ts</check-2>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Valid provider payload issues a JWT and profile/me succeeds.</scenario-1>
+        <scenario-2 kind="failure">Invalid init data or missing token is rejected.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Auth][loginWithMax][BLOCK_VALIDATE_INIT_DATA]</marker-1>
+        <marker-2>[Auth][loginWithMax][BLOCK_ISSUE_JWT]</marker-2>
+      </required-log-markers>
+      <required-trace-assertions>
+        <assertion-1>Failure path must not emit BLOCK_ISSUE_JWT.</assertion-1>
+      </required-trace-assertions>
+      <wave-follow-up>profile e2e</wave-follow-up>
+      <phase-follow-up>backend unit plus e2e</phase-follow-up>
+    </V-M-AUTH>
+
+    <V-M-USERS MODULE="M-USERS" PRIORITY="low">
+      <test-files>
+        <file>backend/test/profile.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Public user projection compiles and is consumed by profile.</scenario-1>
+        <scenario-2 kind="failure">Missing user id yields not found on profile routes.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Users][PublicUser][BLOCK_PUBLIC_USER]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>profile e2e</wave-follow-up>
+      <phase-follow-up>backend build</phase-follow-up>
+    </V-M-USERS>
+
+    <V-M-EVENTS MODULE="M-EVENTS" PRIORITY="high">
+      <test-files>
+        <file>backend/test/events.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test:e2e -- events.e2e-spec.ts</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">List, get by id, and participate succeed for a volunteer.</scenario-1>
+        <scenario-2 kind="failure">Organizer-only writes are forbidden for volunteers.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Events][participate][BLOCK_PARTICIPATE]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>organizations e2e for organizer event paths</wave-follow-up>
+      <phase-follow-up>full e2e</phase-follow-up>
+    </V-M-EVENTS>
+
+    <V-M-ORGANIZATIONS MODULE="M-ORGANIZATIONS" PRIORITY="high">
+      <test-files>
+        <file>backend/src/organizations/organizations.service.spec.ts</file>
+        <file>backend/src/organizations/organizations.controller.spec.ts</file>
+        <file>backend/test/organizations.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test -- organizations</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Catalog and dashboard stats return for authorized organizer.</scenario-1>
+        <scenario-2 kind="failure">Volunteer cannot read organizer dashboard.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Organizations][getDashboardStats][BLOCK_DASHBOARD_STATS]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>organizations e2e</wave-follow-up>
+      <phase-follow-up>full e2e</phase-follow-up>
+    </V-M-ORGANIZATIONS>
+
+    <V-M-LEARNING MODULE="M-LEARNING" PRIORITY="high">
+      <test-files>
+        <file>backend/test/learning.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test:e2e -- learning.e2e-spec.ts</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Course list, lesson complete, and course complete persist progress.</scenario-1>
+        <scenario-2 kind="failure">Unknown course id is not found.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Learning][completeLesson][BLOCK_COMPLETE_LESSON]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>learning e2e</wave-follow-up>
+      <phase-follow-up>full e2e</phase-follow-up>
+    </V-M-LEARNING>
+
+    <V-M-ACHIEVEMENTS MODULE="M-ACHIEVEMENTS" PRIORITY="medium">
+      <test-files>
+        <file>backend/src/achievements/achievements.service.spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test -- achievements.service.spec.ts</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Catalog list returns seeded achievements.</scenario-1>
+        <scenario-2 kind="failure">Service errors if Prisma is unavailable.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Achievements][findAll][BLOCK_LIST_ACHIEVEMENTS]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>profile e2e achievements</wave-follow-up>
+      <phase-follow-up>backend unit tests</phase-follow-up>
+    </V-M-ACHIEVEMENTS>
+
+    <V-M-REWARDS MODULE="M-REWARDS" PRIORITY="medium">
+      <test-files>
+        <file>backend/test/rewards.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test:e2e -- rewards.e2e-spec.ts</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Purchase deducts karma when the user can afford the reward.</scenario-1>
+        <scenario-2 kind="failure">Insufficient karma is rejected.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Rewards][purchase][BLOCK_PURCHASE_REWARD]</marker-1>
+      </required-log-markers>
+      <required-trace-assertions>
+        <assertion-1>Failure path must not persist UserReward.</assertion-1>
+      </required-trace-assertions>
+      <wave-follow-up>rewards e2e</wave-follow-up>
+      <phase-follow-up>full e2e</phase-follow-up>
+    </V-M-REWARDS>
+
+    <V-M-STORIES MODULE="M-STORIES" PRIORITY="medium">
+      <test-files>
+        <file>backend/test/stories.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test:e2e -- stories.e2e-spec.ts</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Create, comment, and like mutate story records.</scenario-1>
+        <scenario-2 kind="failure">Unknown story id is not found.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Stories][create][BLOCK_CREATE_STORY]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>stories e2e</wave-follow-up>
+      <phase-follow-up>full e2e</phase-follow-up>
+    </V-M-STORIES>
+
+    <V-M-ASSISTANT-CHAT MODULE="M-ASSISTANT-CHAT" PRIORITY="medium">
+      <test-files>
+        <file>backend/test/assistant-chat.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test:e2e -- assistant-chat.e2e-spec.ts</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Posting a message stores history for the current user.</scenario-1>
+        <scenario-2 kind="failure">Unauthenticated post is rejected.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[AssistantChat][create][BLOCK_POST_MESSAGE]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>assistant-chat e2e</wave-follow-up>
+      <phase-follow-up>full e2e</phase-follow-up>
+    </V-M-ASSISTANT-CHAT>
+
+    <V-M-LEADERBOARD MODULE="M-LEADERBOARD" PRIORITY="medium">
+      <test-files>
+        <file>backend/src/leaderboard/leaderboard.service.spec.ts</file>
+        <file>backend/src/leaderboard/leaderboard.controller.spec.ts</file>
+        <file>backend/test/leaderboard.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test -- leaderboard</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Ranking returns ordered users for karma or hours.</scenario-1>
+        <scenario-2 kind="failure">Invalid query is rejected by validation.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Leaderboard][findAll][BLOCK_RANK_USERS]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>leaderboard e2e</wave-follow-up>
+      <phase-follow-up>backend unit plus e2e</phase-follow-up>
+    </V-M-LEADERBOARD>
+
+    <V-M-EVENT-CHATS MODULE="M-EVENT-CHATS" PRIORITY="medium">
+      <test-files>
+        <file>backend/src/event-chats/event-chats.service.spec.ts</file>
+        <file>backend/src/event-chats/event-chats.controller.spec.ts</file>
+        <file>backend/test/event-chats.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test -- event-chats</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">User can list chats and post an event message.</scenario-1>
+        <scenario-2 kind="failure">Unknown event chat is not found.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[EventChats][createMessage][BLOCK_POST_EVENT_MESSAGE]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>event-chats e2e</wave-follow-up>
+      <phase-follow-up>full e2e</phase-follow-up>
+    </V-M-EVENT-CHATS>
+
+    <V-M-FRIENDS MODULE="M-FRIENDS" PRIORITY="low">
+      <test-files>
+        <file>backend/src/friends/friends.service.spec.ts</file>
+        <file>backend/src/friends/friends.controller.spec.ts</file>
+        <file>backend/test/friends.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test -- friends</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Friends list returns related users.</scenario-1>
+        <scenario-2 kind="failure">Unauthenticated request is rejected.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Friends][findAll][BLOCK_LIST_FRIENDS]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>friends e2e</wave-follow-up>
+      <phase-follow-up>backend unit plus e2e</phase-follow-up>
+    </V-M-FRIENDS>
+
+    <V-M-CHALLENGES MODULE="M-CHALLENGES" PRIORITY="medium">
+      <test-files>
+        <file>backend/src/challenges/challenges.service.spec.ts</file>
+        <file>backend/src/challenges/challenges.controller.spec.ts</file>
+        <file>backend/test/challenges.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run test -- challenges</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Weekly challenge payload is returned.</scenario-1>
+        <scenario-2 kind="failure">Missing challenge yields a stable empty or not-found contract.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Challenges][getWeekly][BLOCK_WEEKLY_CHALLENGE]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>challenges e2e</wave-follow-up>
+      <phase-follow-up>backend unit plus e2e</phase-follow-up>
+    </V-M-CHALLENGES>
+
+    <V-M-MAP MODULE="M-MAP" PRIORITY="low">
+      <test-files>
+        <file>backend/test/events.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Map markers include events with coordinates.</scenario-1>
+        <scenario-2 kind="failure">Events without coordinates are omitted.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Map][findAll][BLOCK_LIST_MARKERS]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>events e2e</wave-follow-up>
+      <phase-follow-up>backend build</phase-follow-up>
+    </V-M-MAP>
+
+    <V-M-REVIEWS MODULE="M-REVIEWS" PRIORITY="low">
+      <test-files>
+        <file>backend/test/events.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Participant can create an event review.</scenario-1>
+        <scenario-2 kind="failure">Non-participant is forbidden.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Reviews][create][BLOCK_CREATE_REVIEW]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>events e2e</wave-follow-up>
+      <phase-follow-up>backend build</phase-follow-up>
+    </V-M-REVIEWS>
+
+    <V-M-WEBHOOKS MODULE="M-WEBHOOKS" PRIORITY="high">
+      <test-files>
+        <file>backend/test/auth.e2e-spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Valid webhook upserts a user.</scenario-1>
+        <scenario-2 kind="failure">Missing webhook secret is rejected.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Webhooks][handleSupabaseAuth][BLOCK_UPSERT_USER]</marker-1>
+      </required-log-markers>
+      <required-trace-assertions>
+        <assertion-1>Unauthorized webhook must not emit BLOCK_UPSERT_USER.</assertion-1>
+      </required-trace-assertions>
+      <wave-follow-up>auth e2e</wave-follow-up>
+      <phase-follow-up>full e2e</phase-follow-up>
+    </V-M-WEBHOOKS>
+
+    <V-M-TASKS MODULE="M-TASKS" PRIORITY="low">
+      <test-files>
+        <file>backend/src/app.controller.spec.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd backend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">TasksModule compiles in AppModule.</scenario-1>
+        <scenario-2 kind="failure">Job errors are logged and do not crash the process.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[Tasks][handleCron][BLOCK_RUN_SCHEDULED_JOB]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>backend build</wave-follow-up>
+      <phase-follow-up>backend build</phase-follow-up>
+    </V-M-TASKS>
+
+    <V-M-FRONTEND-ENTRY MODULE="M-FRONTEND-ENTRY" PRIORITY="medium">
+      <test-files>
+        <file>frontend/index.tsx</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd frontend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Vite build emits the mini-app bundle.</scenario-1>
+        <scenario-2 kind="failure">Missing #root throws at runtime.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[FrontendEntry][mount][BLOCK_MOUNT_APP]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>frontend build</wave-follow-up>
+      <phase-follow-up>frontend build</phase-follow-up>
+    </V-M-FRONTEND-ENTRY>
+
+    <V-M-FRONTEND-APP MODULE="M-FRONTEND-APP" PRIORITY="high">
+      <test-files>
+        <file>frontend/src/app/page.tsx</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd frontend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Hash routes compile and session gate remains in the tree.</scenario-1>
+        <scenario-2 kind="failure">Missing auth adapter export fails the build.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[FrontendApp][App][BLOCK_RESTORE_SESSION]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>frontend build plus mock-mode smoke of /auth and home</wave-follow-up>
+      <phase-follow-up>frontend build</phase-follow-up>
+    </V-M-FRONTEND-APP>
+
+    <V-M-FRONTEND-API MODULE="M-FRONTEND-API" PRIORITY="high">
+      <test-files>
+        <file>frontend/src/lib/api.ts</file>
+        <file>frontend/src/lib/api.real.ts</file>
+        <file>frontend/src/lib/api.mock.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd frontend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Mock and real adapters export the same public function names.</scenario-1>
+        <scenario-2 kind="failure">Real adapter surfaces HTTP errors instead of swallowing them.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[FrontendApi][selectAdapter][BLOCK_SELECT_ADAPTER]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>frontend build</wave-follow-up>
+      <phase-follow-up>mock then real QA per AGENTS.md</phase-follow-up>
+    </V-M-FRONTEND-API>
+
+    <V-M-FRONTEND-AUTH MODULE="M-FRONTEND-AUTH" PRIORITY="high">
+      <test-files>
+        <file>frontend/src/lib/auth.ts</file>
+        <file>frontend/src/lib/auth.real.ts</file>
+        <file>frontend/src/lib/auth.mock.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd frontend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Mock login returns a user; real adapter uses Supabase when configured.</scenario-1>
+        <scenario-2 kind="failure">Logout clears the stored session.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[FrontendAuth][selectAdapter][BLOCK_SELECT_AUTH_ADAPTER]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>frontend build</wave-follow-up>
+      <phase-follow-up>auth screen smoke in mock mode</phase-follow-up>
+    </V-M-FRONTEND-AUTH>
+
+    <V-M-FRONTEND-TYPES MODULE="M-FRONTEND-TYPES" PRIORITY="low">
+      <test-files>
+        <file>frontend/src/lib/types.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd frontend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Domain types compile across screens and adapters.</scenario-1>
+        <scenario-2 kind="failure">Breaking type rename fails the frontend build.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[FrontendTypes][types][BLOCK_DOMAIN_TYPES]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>frontend build</wave-follow-up>
+      <phase-follow-up>frontend build</phase-follow-up>
+    </V-M-FRONTEND-TYPES>
+
+    <V-M-FRONTEND-TELEGRAM MODULE="M-FRONTEND-TELEGRAM" PRIORITY="medium">
+      <test-files>
+        <file>frontend/src/lib/telegram-sdk.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd frontend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Helpers compile when Telegram WebApp is absent.</scenario-1>
+        <scenario-2 kind="failure">Missing init data does not crash the route shell.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[TelegramSdk][initTelegram][BLOCK_READ_INIT_DATA]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>frontend build</wave-follow-up>
+      <phase-follow-up>frontend build</phase-follow-up>
+    </V-M-FRONTEND-TELEGRAM>
+
+    <V-M-FRONTEND-MAX MODULE="M-FRONTEND-MAX" PRIORITY="low">
+      <test-files>
+        <file>frontend/src/lib/max-sdk.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd frontend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">getMaxInitData compiles and returns null outside MAX.</scenario-1>
+        <scenario-2 kind="failure">Missing bridge is treated as no init data.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[MaxSdk][getMaxInitData][BLOCK_READ_MAX_INIT]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>frontend build</wave-follow-up>
+      <phase-follow-up>frontend build</phase-follow-up>
+    </V-M-FRONTEND-MAX>
+
+    <V-M-FRONTEND-UI MODULE="M-FRONTEND-UI" PRIORITY="low">
+      <test-files>
+        <file>frontend/src/components/ui/EventCard.tsx</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd frontend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Shared UI compiles into the bundle.</scenario-1>
+        <scenario-2 kind="failure">Broken icon export fails the build.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[FrontendUi][EventCard][BLOCK_RENDER_SHARED_UI]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>frontend build</wave-follow-up>
+      <phase-follow-up>mock-mode visual smoke of home and event card</phase-follow-up>
+    </V-M-FRONTEND-UI>
+
+    <V-M-FRONTEND-SCREENS MODULE="M-FRONTEND-SCREENS" PRIORITY="medium">
+      <test-files>
+        <file>frontend/src/app/auth/page.tsx</file>
+        <file>frontend/src/app/tabs/page.tsx</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd frontend &amp;&amp; npm run build</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Auth, home, and organizer screens compile.</scenario-1>
+        <scenario-2 kind="failure">Missing API export fails the screen build.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[FrontendScreens][HomePage][BLOCK_LOAD_SCREEN_DATA]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>frontend build</wave-follow-up>
+      <phase-follow-up>VITE_API_MODE=mock route smoke</phase-follow-up>
+    </V-M-FRONTEND-SCREENS>
+
+    <V-M-BOT-MAX MODULE="M-BOT-MAX" PRIORITY="medium">
+      <test-files>
+        <file>bot-max/src/index.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd bot-max &amp;&amp; npx tsc --noEmit</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Typecheck passes; start handler compiles.</scenario-1>
+        <scenario-2 kind="failure">Missing MAX_BOT_TOKEN throws at process start.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[MaxBot][bot_started][BLOCK_HANDLE_BOT_STARTED]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>bot-max tsc</wave-follow-up>
+      <phase-follow-up>bot-max tsc</phase-follow-up>
+    </V-M-BOT-MAX>
+
+    <V-M-BOT-TELEGRAM MODULE="M-BOT-TELEGRAM" PRIORITY="medium">
+      <test-files>
+        <file>bot-telegram/src/index.ts</file>
+      </test-files>
+      <module-checks>
+        <check-1>cd bot-telegram &amp;&amp; npx tsc --noEmit</check-1>
+      </module-checks>
+      <scenarios>
+        <scenario-1 kind="success">Typecheck passes; web_app keyboard compiles.</scenario-1>
+        <scenario-2 kind="failure">Missing TG_BOT_TOKEN throws at process start.</scenario-2>
+      </scenarios>
+      <required-log-markers>
+        <marker-1>[TelegramBot][launch][BLOCK_LAUNCH_WEBAPP]</marker-1>
+      </required-log-markers>
+      <wave-follow-up>bot-telegram tsc</wave-follow-up>
+      <phase-follow-up>bot-telegram tsc</phase-follow-up>
+    </V-M-BOT-TELEGRAM>
+  </ModuleVerification>
+
+  <PhaseGates>
+    <Gate-Phase-1 PHASE="Phase-1">
+      <goal>Foundation modules compile and Prisma schema validates.</goal>
+      <commands>
+        <command-1>cd backend &amp;&amp; npx prisma validate</command-1>
+        <command-2>cd backend &amp;&amp; npm run build</command-2>
+      </commands>
+      <required-evidence>
+        <evidence-1>schema.prisma validates</evidence-1>
+        <evidence-2>Nest build succeeds</evidence-2>
+      </required-evidence>
+    </Gate-Phase-1>
+    <Gate-Phase-2 PHASE="Phase-2">
+      <goal>Auth, events, organizations, and learning e2e still pass when DB is available.</goal>
+      <commands>
+        <command-1>cd backend &amp;&amp; npm run test</command-1>
+        <command-2>cd backend &amp;&amp; npm run test:e2e</command-2>
+      </commands>
+      <required-evidence>
+        <evidence-1>auth, events, organizations, learning e2e green</evidence-1>
+      </required-evidence>
+    </Gate-Phase-2>
+    <Gate-Phase-4 PHASE="Phase-4">
+      <goal>GRACE markup is paired, docs exist, and builds still succeed.</goal>
+      <commands>
+        <command-1>cd backend &amp;&amp; npm run build</command-1>
+        <command-2>cd frontend &amp;&amp; npm run build</command-2>
+      </commands>
+      <required-evidence>
+        <evidence-1>START_MODULE_CONTRACT present on governed source files</evidence-1>
+        <evidence-2>No unpaired START_BLOCK / END_BLOCK</evidence-2>
+        <evidence-3>Builds succeed after markup-only edits</evidence-3>
+      </required-evidence>
+    </Gate-Phase-4>
+  </PhaseGates>
+
+  <FailurePackets>
+    <packet-template>
+      <expected-fields>scenario, expected-evidence, observed-evidence, first-divergent-block, next-action</expected-fields>
+    </packet-template>
+  </FailurePackets>
+</VerificationPlan>

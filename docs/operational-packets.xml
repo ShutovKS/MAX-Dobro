@@ -1,0 +1,140 @@
+<OperationalPackets VERSION="0.1.0">
+  <ExecutionPacketTemplate>
+    <ExecutionPacket>
+      <module-id>M-AUTH</module-id>
+      <module-name>Authentication</module-name>
+      <purpose>Implement or edit the approved auth module without architectural drift.</purpose>
+      <write-scope>
+        <file-1>backend/src/auth/</file-1>
+        <file-2>backend/src/auth/auth.service.spec.ts</file-2>
+        <file-3>backend/test/auth.e2e-spec.ts</file-3>
+        <file-4>backend/test/profile.e2e-spec.ts</file-4>
+      </write-scope>
+      <contract-excerpt><![CDATA[
+PURPOSE: Verify MAX, Telegram, and demo organizer credentials, issue internal JWTs, and expose the volunteer profile surface.
+SCOPE: login endpoints, auth guards, profile reads/writes, identity linking.
+      ]]></contract-excerpt>
+      <graph-entry-excerpt><![CDATA[
+M-AUTH depends on M-PRISMA and M-SUPABASE. Public exports: AuthService, AuthController, ProfileController, AuthGuard.
+      ]]></graph-entry-excerpt>
+      <dependency-contract-summaries>
+        <dependency-1 module="M-PRISMA">PrismaService is the only persistence client.</dependency-1>
+        <dependency-2 module="M-SUPABASE">Supabase client is used for email/password identity, not as a second user store.</dependency-2>
+      </dependency-contract-summaries>
+      <verification-excerpt><![CDATA[
+V-M-AUTH: cd backend && npm run test -- auth.service.spec.ts; e2e auth.e2e-spec.ts and profile.e2e-spec.ts.
+      ]]></verification-excerpt>
+      <assumptions>
+        <assumption-1>JWT_INTERNAL_SECRET and provider tokens stay in env, never in source.</assumption-1>
+      </assumptions>
+      <stop-conditions>
+        <condition-1>Stop if a new identity provider or a second user table is required.</condition-1>
+      </stop-conditions>
+      <retry-budget>2</retry-budget>
+      <checkpoint-fields>
+        <field-1>assumptions-kept</field-1>
+        <field-2>commands-run</field-2>
+        <field-3>evidence-captured</field-3>
+        <field-4>next-action</field-4>
+      </checkpoint-fields>
+      <expected-graph-delta-fields>
+        <field-1>imports</field-1>
+        <field-2>exports</field-2>
+        <field-3>annotations</field-3>
+        <field-4>CrossLinks</field-4>
+      </expected-graph-delta-fields>
+      <expected-verification-delta-fields>
+        <field-1>test-files</field-1>
+        <field-2>module-checks</field-2>
+        <field-3>required-log-markers</field-3>
+        <field-4>follow-up-checks</field-4>
+      </expected-verification-delta-fields>
+      <notes>
+        <note-1>Workers should only read more context when the packet is insufficient.</note-1>
+      </notes>
+    </ExecutionPacket>
+  </ExecutionPacketTemplate>
+
+  <GraphDeltaTemplate>
+    <GraphDelta module="M-AUTH">
+      <imports-added>
+        <import-1>M-PRISMA</import-1>
+      </imports-added>
+      <imports-removed />
+      <exports-added>
+        <export-1>loginWithMax</export-1>
+      </exports-added>
+      <exports-removed />
+      <annotations-added>
+        <annotation-1>&lt;fn-loginWithMax PURPOSE="Verify MAX init data and issue a session JWT" /&gt;</annotation-1>
+      </annotations-added>
+      <annotations-removed />
+      <cross-links-added>
+        <CrossLink from="M-AUTH" to="M-PRISMA" relation="queries-db" />
+      </cross-links-added>
+      <cross-links-removed />
+      <notes>
+        <note-1>Only list graph facts that really changed in the code.</note-1>
+      </notes>
+    </GraphDelta>
+  </GraphDeltaTemplate>
+
+  <VerificationDeltaTemplate>
+    <VerificationDelta module="M-AUTH">
+      <test-files-added>
+        <file-1>backend/src/auth/auth.service.spec.ts</file-1>
+      </test-files-added>
+      <test-files-removed />
+      <module-checks>
+        <command-1>cd backend &amp;&amp; npm run test -- auth.service.spec.ts</command-1>
+        <command-2>cd backend &amp;&amp; npm run build</command-2>
+      </module-checks>
+      <required-log-markers>
+        <marker-1>[Auth][loginWithMax][BLOCK_VALIDATE_INIT_DATA]</marker-1>
+      </required-log-markers>
+      <required-trace-assertions>
+        <assertion-1>Failure path must not emit BLOCK_ISSUE_JWT.</assertion-1>
+      </required-trace-assertions>
+      <wave-follow-up>
+        <item-1>Run backend/test/auth.e2e-spec.ts against the test database.</item-1>
+      </wave-follow-up>
+      <phase-follow-up>
+        <item-1>Run backend unit plus e2e suites before marking the phase done.</item-1>
+      </phase-follow-up>
+    </VerificationDelta>
+  </VerificationDeltaTemplate>
+
+  <FailurePacketTemplate>
+    <FailurePacket>
+      <scenario>Primary success path fails on valid input.</scenario>
+      <contract-ref>M-AUTH / V-M-AUTH / scenario-1</contract-ref>
+      <expected-evidence>
+        <marker-1>[Auth][loginWithMax][BLOCK_VALIDATE_INIT_DATA]</marker-1>
+        <assertion-1>Expected HTTP 201 with a session token field.</assertion-1>
+      </expected-evidence>
+      <observed-evidence>
+        <log-1>[Auth][loginWithMax][BLOCK_VALIDATE_INIT_DATA] emitted</log-1>
+        <trace-1>BLOCK_VALIDATE_INIT_DATA -&gt; threw UnauthorizedException</trace-1>
+      </observed-evidence>
+      <first-divergent-block>BLOCK_VALIDATE_INIT_DATA</first-divergent-block>
+      <suggested-next-action>Read the contract, inspect the divergent block, and apply the smallest safe fix.</suggested-next-action>
+    </FailurePacket>
+  </FailurePacketTemplate>
+
+  <CheckpointReportTemplate>
+    <CheckpointReport>
+      <scope>M-AUTH / step-1</scope>
+      <assumptions-kept>
+        <item-1>Dependency contracts matched the packet.</item-1>
+      </assumptions-kept>
+      <commands-run>
+        <command-1>cd backend &amp;&amp; npm run test -- auth.service.spec.ts</command-1>
+      </commands-run>
+      <evidence-captured>
+        <item-1>Auth unit tests passed after GRACE markup with no runtime edits.</item-1>
+      </evidence-captured>
+      <retry-budget-used>0</retry-budget-used>
+      <next-action>Ready for shared-artifact sync.</next-action>
+    </CheckpointReport>
+  </CheckpointReportTemplate>
+</OperationalPackets>

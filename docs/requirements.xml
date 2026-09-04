@@ -1,0 +1,131 @@
+<RequirementsAnalysis VERSION="1.0.0">
+  <Project>
+    <name>MAX Dobro</name>
+    <annotation>Volunteer and charity platform that gamifies good deeds: events, courses, karma, stories, and organizer tools, delivered as a NestJS API, React mini-app, and MAX/Telegram bots.</annotation>
+    <keywords>volunteer, charity, karma, events, courses, stories, organizer, NestJS, React, Prisma, Supabase, MAX, Telegram</keywords>
+  </Project>
+
+  <Actors>
+    <actor-Volunteer>Registered user who discovers events, learns, earns karma, and participates in the social feed.</actor-Volunteer>
+    <actor-Organizer>User bound to an organization who creates events, reviews participants, and reads dashboard stats.</actor-Organizer>
+    <actor-Guest>Unauthenticated visitor who can browse public surfaces until login is required.</actor-Guest>
+    <actor-System>Backend schedulers, Supabase webhooks, and bot processes that sync identity or send reminders.</actor-System>
+  </Actors>
+
+  <UseCases>
+    <UC-001>
+      <Actor>Volunteer</Actor>
+      <Action>Finds a first volunteer event from the feed or map</Action>
+      <Goal>Join a nearby or matching event and start earning hours and karma</Goal>
+      <Preconditions>App is reachable; events exist in the database</Preconditions>
+      <AcceptanceCriteria>Event list or map markers load; event detail shows organization, date, and participate action</AcceptanceCriteria>
+      <Priority>high</Priority>
+      <RelatedFlows>DF-EVENT-DISCOVERY, DF-EVENT-PARTICIPATE</RelatedFlows>
+    </UC-001>
+    <UC-002>
+      <Actor>Organizer</Actor>
+      <Action>Creates and publishes an event, then reviews volunteer applications</Action>
+      <Goal>Staff an event with approved participants</Goal>
+      <Preconditions>User has organizer role and organizationId</Preconditions>
+      <AcceptanceCriteria>Event is persisted; participant status can be approved or rejected</AcceptanceCriteria>
+      <Priority>high</Priority>
+      <RelatedFlows>DF-ORG-MANAGE-EVENT</RelatedFlows>
+    </UC-002>
+    <UC-003>
+      <Actor>Volunteer</Actor>
+      <Action>Signs in via MAX, Telegram, or email/password</Action>
+      <Goal>Obtain an app session and a backend user record</Goal>
+      <Preconditions>Matching auth secrets and provider init data are available</Preconditions>
+      <AcceptanceCriteria>Login returns a session user; subsequent profile requests are authorized</AcceptanceCriteria>
+      <Priority>high</Priority>
+      <RelatedFlows>DF-AUTH, DF-WEBHOOK-SYNC</RelatedFlows>
+    </UC-003>
+    <UC-004>
+      <Actor>Volunteer</Actor>
+      <Action>Completes a course lesson, quiz, and certificate path</Action>
+      <Goal>Learn required skills and keep progress on the server</Goal>
+      <Preconditions>Courses and lessons are seeded</Preconditions>
+      <AcceptanceCriteria>Lesson completion persists; course completion can issue a certificate</AcceptanceCriteria>
+      <Priority>high</Priority>
+      <RelatedFlows>DF-LEARNING</RelatedFlows>
+    </UC-004>
+    <UC-005>
+      <Actor>Volunteer</Actor>
+      <Action>Publishes a story, comments, and likes</Action>
+      <Goal>Share event impressions with the community</Goal>
+      <Preconditions>User is authenticated; optional event link exists</Preconditions>
+      <AcceptanceCriteria>Story appears in the feed; like and comment mutate the story record</AcceptanceCriteria>
+      <Priority>medium</Priority>
+      <RelatedFlows>DF-STORY</RelatedFlows>
+    </UC-005>
+    <UC-006>
+      <Actor>Volunteer</Actor>
+      <Action>Spends karma in the rewards shop</Action>
+      <Goal>Purchase a virtual reward without going negative</Goal>
+      <Preconditions>User has enough karmaPoints; reward is in catalog</Preconditions>
+      <AcceptanceCriteria>Purchase deducts karma and records UserReward</AcceptanceCriteria>
+      <Priority>medium</Priority>
+      <RelatedFlows>DF-REWARD</RelatedFlows>
+    </UC-006>
+    <UC-007>
+      <Actor>Volunteer</Actor>
+      <Action>Opens leaderboards and weekly challenge</Action>
+      <Goal>Compare activity and claim bonus challenge progress</Goal>
+      <Preconditions>Users have karma or hours; a weekly challenge is active</Preconditions>
+      <AcceptanceCriteria>Leaderboard ranks users; weekly challenge payload is returned</AcceptanceCriteria>
+      <Priority>medium</Priority>
+      <RelatedFlows>DF-LEADERBOARD</RelatedFlows>
+    </UC-007>
+    <UC-008>
+      <Actor>Volunteer</Actor>
+      <Action>Chats with the in-app assistant</Action>
+      <Goal>Get navigation help without leaving the mini-app</Goal>
+      <Preconditions>User is authenticated</Preconditions>
+      <AcceptanceCriteria>Message history loads; posting a message stores user and assistant replies</AcceptanceCriteria>
+      <Priority>medium</Priority>
+      <RelatedFlows>DF-ASSISTANT</RelatedFlows>
+    </UC-008>
+    <UC-009>
+      <Actor>Volunteer</Actor>
+      <Action>Views friends and event chat history</Action>
+      <Goal>Stay in contact around events</Goal>
+      <Preconditions>Friendships or event chats exist</Preconditions>
+      <AcceptanceCriteria>Friends list and event messages load for the current user</AcceptanceCriteria>
+      <Priority>low</Priority>
+      <RelatedFlows>DF-SOCIAL</RelatedFlows>
+    </UC-009>
+    <UC-010>
+      <Actor>Guest</Actor>
+      <Action>Opens the MAX or Telegram bot and launches the mini-app</Action>
+      <Goal>Reach the product from messenger without a separate install</Goal>
+      <Preconditions>Bot tokens and MINI_APP_URL are configured</Preconditions>
+      <AcceptanceCriteria>Bot answers start/help and exposes a link or web_app button to the mini-app</AcceptanceCriteria>
+      <Priority>high</Priority>
+      <RelatedFlows>DF-BOT-LAUNCH</RelatedFlows>
+    </UC-010>
+  </UseCases>
+
+  <NonGoals>
+    <item-1>No public marketplace or payments beyond in-app karma rewards.</item-1>
+    <item-2>No native iOS/Android apps; the client is a web mini-app.</item-2>
+    <item-3>No change to runtime behavior while applying GRACE markup.</item-3>
+  </NonGoals>
+
+  <Constraints>
+    <constraint-1>Primary database is PostgreSQL via Prisma, typically hosted on Supabase.</constraint-1>
+    <constraint-2>Frontend can run against mock or real APIs through VITE_API_MODE.</constraint-2>
+    <constraint-3>Secrets, tokens, and init data must never appear in logs.</constraint-3>
+    <constraint-4>Course progress is server-backed; localStorage is not the source of truth.</constraint-4>
+    <constraint-5>Organizer APIs require an authenticated user with organizer role and organization binding.</constraint-5>
+  </Constraints>
+
+  <Risks>
+    <risk-1>Auth spans MAX, Telegram, email/password, and Supabase webhooks; identity linking can drift if webhook and login paths disagree.</risk-1>
+    <risk-2>Mock API mode can hide backend contract mismatches until VITE_API_MODE=real.</risk-2>
+    <risk-3>Karma mutations (events, rewards, challenges) must stay consistent with User.karmaPoints.</risk-3>
+  </Risks>
+
+  <OpenQuestions>
+    <question-1>This GRACE overlay is retrospective on an already-shipped codebase; docs describe current public modules rather than a greenfield plan.</question-1>
+  </OpenQuestions>
+</RequirementsAnalysis>

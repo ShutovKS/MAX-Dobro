@@ -1,0 +1,76 @@
+<TechnologyStack VERSION="1.0.0">
+  <Runtime>Node.js 20+</Runtime>
+  <Language>TypeScript 5.7-5.8</Language>
+  <Framework>NestJS 11 (API), React 19 + Vite 6 (mini-app)</Framework>
+
+  <Dependencies>
+    <dep name="@nestjs/core" version="^11.0.1" purpose="HTTP API composition, modules, and DI" />
+    <dep name="@prisma/client" version="^6.19.0" purpose="Typed PostgreSQL access" />
+    <dep name="@supabase/supabase-js" version="^2.80.0" purpose="Auth client and webhook-aligned identity" />
+    <dep name="@nestjs/jwt" version="github:nestjs/jwt" purpose="Internal JWT issuance for API sessions" />
+    <dep name="class-validator" version="^0.14.2" purpose="DTO validation with ValidationPipe" />
+    <dep name="react" version="^19.2.0" purpose="Mini-app UI" />
+    <dep name="react-router" version="^7.9.5" purpose="Hash-routed screens" />
+    <dep name="leaflet" version="^1.9.4" purpose="Event map rendering" />
+    <dep name="@maxhub/max-bot-api" version="^0.2.1" purpose="MAX messenger bot entry" />
+    <dep name="telegraf" version="^4.15.3" purpose="Telegram bot entry" />
+  </Dependencies>
+
+  <VersionConstraints>
+    <constraint lib="react" min="19.0.0" max="19.x" reason="The mini-app uses React 19 APIs" />
+    <constraint lib="@nestjs/core" min="11.0.0" max="11.x" reason="Backend modules target NestJS 11" />
+    <constraint lib="prisma" min="6.0.0" max="6.x" reason="schema.prisma and seed assume Prisma 6" />
+  </VersionConstraints>
+
+  <Tooling>
+    <tool name="workspace" value="npm per package (backend, frontend, bot-max, bot-telegram)" version="10.x" />
+    <tool name="bundler" value="vite" version="6.x" />
+    <tool name="backend-build" value="nest build" version="11.x" />
+    <tool name="linter" value="eslint" version="9.x" />
+    <tool name="formatter" value="prettier" version="3.x" />
+    <tool name="test-runner" value="jest + ts-jest + supertest" version="30.x / 29.x / 7.x" />
+    <tool name="orm" value="prisma" version="6.x" />
+  </Tooling>
+
+  <PreferredAgentStack>
+    <preferred-runtime-library>@prisma/client plus NestJS modules already in backend/src</preferred-runtime-library>
+    <preferred-test-library>jest with existing *.spec.ts and backend/test/*.e2e-spec.ts</preferred-test-library>
+    <preferred-observability-library>NestJS Logger and existing console markers; GRACE log format [Module][function][BLOCK_NAME]</preferred-observability-library>
+    <discouraged-surface reason="Frontend already has mock and real adapters; do not add a third API client.">new fetch wrapper besides frontend/src/lib/api.ts</discouraged-surface>
+    <discouraged-surface reason="Course progress must stay on the server.">localStorage as source of truth for learning state</discouraged-surface>
+  </PreferredAgentStack>
+
+  <Testing>
+    <module-level>
+      <command>cd backend &amp;&amp; npm run test</command>
+      <focus>Fast deterministic NestJS unit tests next to services and controllers</focus>
+    </module-level>
+    <wave-level>
+      <command>cd backend &amp;&amp; npm run test:e2e</command>
+      <focus>HTTP flows already covered by backend/test e2e specs</focus>
+    </wave-level>
+    <phase-level>
+      <command>cd backend &amp;&amp; npm run build; cd frontend &amp;&amp; npm run build</command>
+      <focus>Typecheck and production build for API and mini-app</focus>
+    </phase-level>
+    <mocking-policy>Use VITE_API_MODE=mock for UI shape; use Nest testing module and Prisma test DB for API. Prefer existing fakes over new monkey-patches.</mocking-policy>
+  </Testing>
+
+  <Observability>
+    <logger>NestJS Logger in API; console in bots and bootstrap</logger>
+    <log-format>[Module][function][BLOCK_NAME] message</log-format>
+    <required-fields>correlationId when a request id exists; actorId as numeric user id; never raw tokens</required-fields>
+    <redaction>Never log JWT secrets, MAX/Telegram init data, passwords, or webhook secrets.</redaction>
+  </Observability>
+
+  <AutonomyPolicy>
+    <default-execution-profile>balanced</default-execution-profile>
+    <max-fix-attempts-per-step>2</max-fix-attempts-per-step>
+    <replan-trigger>Missing dependency, contradictory MODULE_CONTRACT, or a new third-party auth surface.</replan-trigger>
+    <checkpoint-requirement>Every completed step must emit assumptions, commands, evidence, and next action.</checkpoint-requirement>
+  </AutonomyPolicy>
+
+  <DeliveryShape>
+    <shape>Service-oriented: NestJS API, Vite React mini-app, MAX bot, Telegram bot, PostgreSQL/Supabase. Docker Compose for local and prod-shaped deploys.</shape>
+  </DeliveryShape>
+</TechnologyStack>

@@ -1,0 +1,1090 @@
+<DevelopmentPlan VERSION="1.0.0">
+  <ArchitectureNotes>
+    <objective>Make the existing MAX Dobro codebase navigable for agents via GRACE contracts, graph links, and verification refs without changing runtime behavior.</objective>
+    <non-goal>Do not redesign APIs, add features, or replace mock/real adapters while applying markup.</non-goal>
+    <risk-1>Auth identity linking across MAX, Telegram, and Supabase can drift if one path writes users the others cannot find.</risk-1>
+    <risk-2>Frontend mock mode can hide contract mismatches until real API mode is used.</risk-2>
+    <note-retroactive>This plan documents the shipped architecture. Phase status is done; remaining work is markup and graph hygiene.</note-retroactive>
+  </ArchitectureNotes>
+
+  <Modules>
+    <M-BACKEND-BOOTSTRAP NAME="BackendBootstrap" TYPE="ENTRY_POINT" LAYER="2" ORDER="1" STATUS="implemented">
+      <contract>
+        <purpose>Create the NestJS HTTP app, CORS, validation pipe, Swagger, and listen port.</purpose>
+        <inputs>
+          <param name="env.PORT" type="string" />
+        </inputs>
+        <outputs>
+          <param name="listeningServer" type="INestApplication" />
+        </outputs>
+        <errors>
+          <error code="BOOTSTRAP_FAILED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-bootstrap PURPOSE="Start the API process" />
+      </interface>
+      <depends>M-BACKEND-APP</depends>
+      <target>
+        <source>backend/src/main.ts</source>
+        <tests>backend/test/general.e2e-spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[BackendBootstrap]</log-prefix>
+        <critical-block>BLOCK_LISTEN</critical-block>
+      </observability>
+      <verification-ref>V-M-BACKEND-BOOTSTRAP</verification-ref>
+    </M-BACKEND-BOOTSTRAP>
+
+    <M-BACKEND-APP NAME="BackendApp" TYPE="CORE_LOGIC" LAYER="1" ORDER="1" STATUS="implemented">
+      <contract>
+        <purpose>Wire NestJS feature modules, global config, and the health controller.</purpose>
+        <inputs>
+          <param name="featureModules" type="NestModule[]" />
+        </inputs>
+        <outputs>
+          <param name="AppModule" type="DynamicModule" />
+        </outputs>
+        <errors>
+          <error code="MODULE_WIRE_FAILED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-AppModule PURPOSE="Root Nest module" />
+        <export-AppController PURPOSE="Root HTTP probe" />
+      </interface>
+      <depends>M-PRISMA, M-SUPABASE, M-AUTH, M-EVENTS, M-USERS</depends>
+      <target>
+        <source>backend/src/app.module.ts</source>
+        <tests>backend/src/app.controller.spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[BackendApp]</log-prefix>
+        <critical-block>BLOCK_WIRE_MODULES</critical-block>
+      </observability>
+      <verification-ref>V-M-BACKEND-APP</verification-ref>
+    </M-BACKEND-APP>
+
+    <M-PRISMA NAME="Prisma" TYPE="DATA_LAYER" LAYER="0" ORDER="1" STATUS="implemented">
+      <contract>
+        <purpose>Expose a singleton PrismaClient for Nest modules and disconnect on shutdown.</purpose>
+        <inputs>
+          <param name="DATABASE_URL" type="string" />
+        </inputs>
+        <outputs>
+          <param name="PrismaService" type="PrismaClient" />
+        </outputs>
+        <errors>
+          <error code="DB_UNAVAILABLE" />
+        </errors>
+      </contract>
+      <interface>
+        <export-PrismaService PURPOSE="Injectable Prisma client" />
+        <export-PrismaModule PURPOSE="Global data-access module" />
+      </interface>
+      <depends>none</depends>
+      <target>
+        <source>backend/src/prisma/prisma.service.ts</source>
+        <tests>backend/src/prisma/prisma.service.spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Prisma]</log-prefix>
+        <critical-block>BLOCK_CONNECT</critical-block>
+      </observability>
+      <verification-ref>V-M-PRISMA</verification-ref>
+    </M-PRISMA>
+
+    <M-SCHEMA NAME="DataModel" TYPE="DATA_LAYER" LAYER="0" ORDER="2" STATUS="implemented">
+      <contract>
+        <purpose>Define PostgreSQL models for users, orgs, events, learning, social, and gamification.</purpose>
+        <inputs>
+          <param name="prismaSchema" type="schema.prisma" />
+        </inputs>
+        <outputs>
+          <param name="generatedClient" type="PrismaClient types" />
+        </outputs>
+        <errors>
+          <error code="SCHEMA_DRIFT" />
+        </errors>
+      </contract>
+      <interface>
+        <type-User PURPOSE="Volunteer or organizer account" />
+        <type-Event PURPOSE="Volunteer event" />
+        <type-Organization PURPOSE="Charity organization" />
+      </interface>
+      <depends>none</depends>
+      <target>
+        <source>backend/prisma/schema.prisma</source>
+        <tests>backend/prisma/seed.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[DataModel]</log-prefix>
+        <critical-block>BLOCK_USER_ORG_BOUNDARY</critical-block>
+      </observability>
+      <verification-ref>V-M-SCHEMA</verification-ref>
+    </M-SCHEMA>
+
+    <M-SEED NAME="Seed" TYPE="UTILITY" LAYER="1" ORDER="2" STATUS="implemented">
+      <contract>
+        <purpose>Load demo users, organizations, events, courses, and catalog data for local and test databases.</purpose>
+        <inputs>
+          <param name="PrismaClient" type="PrismaClient" />
+        </inputs>
+        <outputs>
+          <param name="seededRows" type="void" />
+        </outputs>
+        <errors>
+          <error code="SEED_FAILED" />
+        </errors>
+      </contract>
+      <interface>
+        <fn-main PURPOSE="Run the Prisma seed script" />
+      </interface>
+      <depends>M-SCHEMA</depends>
+      <target>
+        <source>backend/prisma/seed.ts</source>
+        <tests>backend/test/global-setup.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Seed]</log-prefix>
+        <critical-block>BLOCK_SEED_CORE_DATA</critical-block>
+      </observability>
+      <verification-ref>V-M-SEED</verification-ref>
+    </M-SEED>
+
+    <M-SUPABASE NAME="Supabase" TYPE="INTEGRATION" LAYER="0" ORDER="3" STATUS="implemented">
+      <contract>
+        <purpose>Create the server-side Supabase client used by auth and webhooks.</purpose>
+        <inputs>
+          <param name="SUPABASE_URL" type="string" />
+          <param name="SUPABASE_ANON_KEY" type="string" />
+        </inputs>
+        <outputs>
+          <param name="SupabaseService" type="SupabaseClient wrapper" />
+        </outputs>
+        <errors>
+          <error code="SUPABASE_MISCONFIGURED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-SupabaseService PURPOSE="Injectable Supabase client" />
+      </interface>
+      <depends>none</depends>
+      <target>
+        <source>backend/src/supabase/supabase.service.ts</source>
+        <tests>backend/test/auth.e2e-spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Supabase]</log-prefix>
+        <critical-block>BLOCK_CREATE_CLIENT</critical-block>
+      </observability>
+      <verification-ref>V-M-SUPABASE</verification-ref>
+    </M-SUPABASE>
+
+    <M-AUTH NAME="Authentication" TYPE="CORE_LOGIC" LAYER="1" ORDER="3" STATUS="implemented">
+      <contract>
+        <purpose>Authenticate MAX, Telegram, and demo organizer users, issue JWTs, and serve volunteer profiles.</purpose>
+        <inputs>
+          <param name="providerPayload" type="MaxAuthDto | TelegramAuthDto" />
+        </inputs>
+        <outputs>
+          <param name="session" type="{ token, user }" />
+        </outputs>
+        <errors>
+          <error code="AUTH_FAILED" />
+          <error code="UNAUTHORIZED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-AuthService PURPOSE="Identity verification and profile aggregation" />
+        <export-AuthController PURPOSE="MAX, Telegram, and demo login HTTP" />
+        <export-ProfileController PURPOSE="Current-user profile reads and writes" />
+        <export-AuthGuard PURPOSE="Require Bearer JWT" />
+      </interface>
+      <depends>M-PRISMA, M-SUPABASE</depends>
+      <target>
+        <source>backend/src/auth/auth.service.ts</source>
+        <tests>backend/src/auth/auth.service.spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Auth]</log-prefix>
+        <critical-block>BLOCK_ISSUE_JWT</critical-block>
+      </observability>
+      <verification-ref>V-M-AUTH</verification-ref>
+    </M-AUTH>
+
+    <M-USERS NAME="Users" TYPE="CORE_LOGIC" LAYER="1" ORDER="4" STATUS="implemented">
+      <contract>
+        <purpose>Expose public user shapes used by other Nest modules.</purpose>
+        <inputs>
+          <param name="userId" type="number" />
+        </inputs>
+        <outputs>
+          <param name="PublicUser" type="entity" />
+        </outputs>
+        <errors>
+          <error code="USER_NOT_FOUND" />
+        </errors>
+      </contract>
+      <interface>
+        <type-PublicUser PURPOSE="Safe user projection" />
+      </interface>
+      <depends>M-PRISMA</depends>
+      <target>
+        <source>backend/src/users/users.module.ts</source>
+        <tests>backend/test/profile.e2e-spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Users]</log-prefix>
+        <critical-block>BLOCK_PUBLIC_USER</critical-block>
+      </observability>
+      <verification-ref>V-M-USERS</verification-ref>
+    </M-USERS>
+
+    <M-EVENTS NAME="Events" TYPE="CORE_LOGIC" LAYER="1" ORDER="5" STATUS="implemented">
+      <contract>
+        <purpose>CRUD volunteer events and manage participation status for volunteers and organizers.</purpose>
+        <inputs>
+          <param name="eventPayload" type="CreateEventDto | UpdateEventDto" />
+        </inputs>
+        <outputs>
+          <param name="event" type="Event" />
+        </outputs>
+        <errors>
+          <error code="EVENT_NOT_FOUND" />
+          <error code="FORBIDDEN" />
+        </errors>
+      </contract>
+      <interface>
+        <export-EventsService PURPOSE="Event queries and participation" />
+        <export-EventsController PURPOSE="REST /events" />
+      </interface>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <target>
+        <source>backend/src/events/events.service.ts</source>
+        <tests>backend/test/events.e2e-spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Events]</log-prefix>
+        <critical-block>BLOCK_PARTICIPATE</critical-block>
+      </observability>
+      <verification-ref>V-M-EVENTS</verification-ref>
+    </M-EVENTS>
+
+    <M-ORGANIZATIONS NAME="Organizations" TYPE="CORE_LOGIC" LAYER="1" ORDER="6" STATUS="implemented">
+      <contract>
+        <purpose>List organizations, subscriptions, and organizer dashboard surfaces.</purpose>
+        <inputs>
+          <param name="organizationId" type="number" />
+        </inputs>
+        <outputs>
+          <param name="organization" type="Organization" />
+        </outputs>
+        <errors>
+          <error code="ORG_NOT_FOUND" />
+        </errors>
+      </contract>
+      <interface>
+        <export-OrganizationsService PURPOSE="Org catalog and dashboard stats" />
+        <export-OrganizationsController PURPOSE="REST organizations and organizer routes" />
+      </interface>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <target>
+        <source>backend/src/organizations/organizations.service.ts</source>
+        <tests>backend/src/organizations/organizations.service.spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Organizations]</log-prefix>
+        <critical-block>BLOCK_DASHBOARD_STATS</critical-block>
+      </observability>
+      <verification-ref>V-M-ORGANIZATIONS</verification-ref>
+    </M-ORGANIZATIONS>
+
+    <M-LEARNING NAME="Learning" TYPE="CORE_LOGIC" LAYER="1" ORDER="7" STATUS="implemented">
+      <contract>
+        <purpose>Serve courses and persist lesson and course completion on the server.</purpose>
+        <inputs>
+          <param name="courseId" type="number" />
+        </inputs>
+        <outputs>
+          <param name="course" type="Course" />
+        </outputs>
+        <errors>
+          <error code="COURSE_NOT_FOUND" />
+        </errors>
+      </contract>
+      <interface>
+        <export-LearningService PURPOSE="Courses, lessons, certificates" />
+        <export-LearningController PURPOSE="REST /courses" />
+      </interface>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <target>
+        <source>backend/src/learning/learning.service.ts</source>
+        <tests>backend/test/learning.e2e-spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Learning]</log-prefix>
+        <critical-block>BLOCK_COMPLETE_LESSON</critical-block>
+      </observability>
+      <verification-ref>V-M-LEARNING</verification-ref>
+    </M-LEARNING>
+
+    <M-ACHIEVEMENTS NAME="Achievements" TYPE="CORE_LOGIC" LAYER="1" ORDER="8" STATUS="implemented">
+      <contract>
+        <purpose>List achievement catalog entries for the volunteer profile.</purpose>
+        <inputs>
+          <param name="none" type="void" />
+        </inputs>
+        <outputs>
+          <param name="achievements" type="Achievement[]" />
+        </outputs>
+        <errors>
+          <error code="ACHIEVEMENT_NOT_FOUND" />
+        </errors>
+      </contract>
+      <interface>
+        <export-AchievementsService PURPOSE="Achievement catalog" />
+      </interface>
+      <depends>M-PRISMA</depends>
+      <target>
+        <source>backend/src/achievements/achievements.service.ts</source>
+        <tests>backend/src/achievements/achievements.service.spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Achievements]</log-prefix>
+        <critical-block>BLOCK_LIST_ACHIEVEMENTS</critical-block>
+      </observability>
+      <verification-ref>V-M-ACHIEVEMENTS</verification-ref>
+    </M-ACHIEVEMENTS>
+
+    <M-REWARDS NAME="Rewards" TYPE="CORE_LOGIC" LAYER="1" ORDER="9" STATUS="implemented">
+      <contract>
+        <purpose>List shop rewards and spend karma on a purchase.</purpose>
+        <inputs>
+          <param name="rewardId" type="number" />
+        </inputs>
+        <outputs>
+          <param name="purchase" type="UserReward" />
+        </outputs>
+        <errors>
+          <error code="INSUFFICIENT_KARMA" />
+        </errors>
+      </contract>
+      <interface>
+        <export-RewardsService PURPOSE="Catalog and purchase" />
+      </interface>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <target>
+        <source>backend/src/rewards/rewards.service.ts</source>
+        <tests>backend/test/rewards.e2e-spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Rewards]</log-prefix>
+        <critical-block>BLOCK_PURCHASE_REWARD</critical-block>
+      </observability>
+      <verification-ref>V-M-REWARDS</verification-ref>
+    </M-REWARDS>
+
+    <M-STORIES NAME="Stories" TYPE="CORE_LOGIC" LAYER="1" ORDER="10" STATUS="implemented">
+      <contract>
+        <purpose>Publish stories, comments, and likes for the social feed.</purpose>
+        <inputs>
+          <param name="storyPayload" type="create story DTO" />
+        </inputs>
+        <outputs>
+          <param name="story" type="Story" />
+        </outputs>
+        <errors>
+          <error code="STORY_NOT_FOUND" />
+        </errors>
+      </contract>
+      <interface>
+        <export-StoriesService PURPOSE="Feed, comments, likes" />
+      </interface>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <target>
+        <source>backend/src/stories/stories.service.ts</source>
+        <tests>backend/test/stories.e2e-spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Stories]</log-prefix>
+        <critical-block>BLOCK_CREATE_STORY</critical-block>
+      </observability>
+      <verification-ref>V-M-STORIES</verification-ref>
+    </M-STORIES>
+
+    <M-ASSISTANT-CHAT NAME="AssistantChat" TYPE="CORE_LOGIC" LAYER="1" ORDER="11" STATUS="implemented">
+      <contract>
+        <purpose>Store volunteer assistant messages and return conversation history.</purpose>
+        <inputs>
+          <param name="text" type="string" />
+        </inputs>
+        <outputs>
+          <param name="messages" type="AssistantChatMessage[]" />
+        </outputs>
+        <errors>
+          <error code="CHAT_UNAUTHORIZED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-AssistantChatService PURPOSE="Assistant history and replies" />
+      </interface>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <target>
+        <source>backend/src/assistant-chat/assistant-chat.service.ts</source>
+        <tests>backend/test/assistant-chat.e2e-spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[AssistantChat]</log-prefix>
+        <critical-block>BLOCK_POST_MESSAGE</critical-block>
+      </observability>
+      <verification-ref>V-M-ASSISTANT-CHAT</verification-ref>
+    </M-ASSISTANT-CHAT>
+
+    <M-LEADERBOARD NAME="Leaderboard" TYPE="CORE_LOGIC" LAYER="1" ORDER="12" STATUS="implemented">
+      <contract>
+        <purpose>Rank volunteers by karma or hours for leaderboard screens.</purpose>
+        <inputs>
+          <param name="query" type="LeaderboardQueryDto" />
+        </inputs>
+        <outputs>
+          <param name="leaderboard" type="LeaderboardResponse" />
+        </outputs>
+        <errors>
+          <error code="LEADERBOARD_QUERY_INVALID" />
+        </errors>
+      </contract>
+      <interface>
+        <export-LeaderboardService PURPOSE="Ranked volunteer lists" />
+      </interface>
+      <depends>M-PRISMA</depends>
+      <target>
+        <source>backend/src/leaderboard/leaderboard.service.ts</source>
+        <tests>backend/src/leaderboard/leaderboard.service.spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Leaderboard]</log-prefix>
+        <critical-block>BLOCK_RANK_USERS</critical-block>
+      </observability>
+      <verification-ref>V-M-LEADERBOARD</verification-ref>
+    </M-LEADERBOARD>
+
+    <M-EVENT-CHATS NAME="EventChats" TYPE="CORE_LOGIC" LAYER="1" ORDER="13" STATUS="implemented">
+      <contract>
+        <purpose>List a volunteer's event chats and exchange event-scoped messages.</purpose>
+        <inputs>
+          <param name="eventId" type="number" />
+        </inputs>
+        <outputs>
+          <param name="messages" type="EventChatMessage[]" />
+        </outputs>
+        <errors>
+          <error code="CHAT_NOT_FOUND" />
+        </errors>
+      </contract>
+      <interface>
+        <export-EventChatsService PURPOSE="Event chat rooms and messages" />
+      </interface>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <target>
+        <source>backend/src/event-chats/event-chats.service.ts</source>
+        <tests>backend/src/event-chats/event-chats.service.spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[EventChats]</log-prefix>
+        <critical-block>BLOCK_POST_EVENT_MESSAGE</critical-block>
+      </observability>
+      <verification-ref>V-M-EVENT-CHATS</verification-ref>
+    </M-EVENT-CHATS>
+
+    <M-FRIENDS NAME="Friends" TYPE="CORE_LOGIC" LAYER="1" ORDER="14" STATUS="implemented">
+      <contract>
+        <purpose>Return the current user's friend list.</purpose>
+        <inputs>
+          <param name="userId" type="number" />
+        </inputs>
+        <outputs>
+          <param name="friends" type="PublicUser[]" />
+        </outputs>
+        <errors>
+          <error code="FRIENDS_UNAUTHORIZED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-FriendsService PURPOSE="Friendship listing" />
+      </interface>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <target>
+        <source>backend/src/friends/friends.service.ts</source>
+        <tests>backend/src/friends/friends.service.spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Friends]</log-prefix>
+        <critical-block>BLOCK_LIST_FRIENDS</critical-block>
+      </observability>
+      <verification-ref>V-M-FRIENDS</verification-ref>
+    </M-FRIENDS>
+
+    <M-CHALLENGES NAME="Challenges" TYPE="CORE_LOGIC" LAYER="1" ORDER="15" STATUS="implemented">
+      <contract>
+        <purpose>Return the active weekly challenge for the volunteer home surface.</purpose>
+        <inputs>
+          <param name="userId" type="number" />
+        </inputs>
+        <outputs>
+          <param name="challenge" type="Challenge" />
+        </outputs>
+        <errors>
+          <error code="CHALLENGE_NOT_FOUND" />
+        </errors>
+      </contract>
+      <interface>
+        <export-ChallengesService PURPOSE="Weekly challenge payload" />
+      </interface>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <target>
+        <source>backend/src/challenges/challenges.service.ts</source>
+        <tests>backend/src/challenges/challenges.service.spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Challenges]</log-prefix>
+        <critical-block>BLOCK_WEEKLY_CHALLENGE</critical-block>
+      </observability>
+      <verification-ref>V-M-CHALLENGES</verification-ref>
+    </M-CHALLENGES>
+
+    <M-MAP NAME="Map" TYPE="CORE_LOGIC" LAYER="1" ORDER="16" STATUS="implemented">
+      <contract>
+        <purpose>Return map markers for events with coordinates.</purpose>
+        <inputs>
+          <param name="none" type="void" />
+        </inputs>
+        <outputs>
+          <param name="markers" type="MapMarker[]" />
+        </outputs>
+        <errors>
+          <error code="MAP_QUERY_FAILED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-MapService PURPOSE="Event coordinate markers" />
+      </interface>
+      <depends>M-PRISMA</depends>
+      <target>
+        <source>backend/src/map/map.service.ts</source>
+        <tests>backend/test/events.e2e-spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Map]</log-prefix>
+        <critical-block>BLOCK_LIST_MARKERS</critical-block>
+      </observability>
+      <verification-ref>V-M-MAP</verification-ref>
+    </M-MAP>
+
+    <M-REVIEWS NAME="Reviews" TYPE="CORE_LOGIC" LAYER="1" ORDER="17" STATUS="implemented">
+      <contract>
+        <purpose>List and create event reviews that feed organization ratings.</purpose>
+        <inputs>
+          <param name="eventId" type="number" />
+        </inputs>
+        <outputs>
+          <param name="review" type="Review" />
+        </outputs>
+        <errors>
+          <error code="REVIEW_FORBIDDEN" />
+        </errors>
+      </contract>
+      <interface>
+        <export-ReviewsService PURPOSE="Event reviews" />
+      </interface>
+      <depends>M-PRISMA, M-AUTH</depends>
+      <target>
+        <source>backend/src/reviews/reviews.service.ts</source>
+        <tests>backend/test/events.e2e-spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Reviews]</log-prefix>
+        <critical-block>BLOCK_CREATE_REVIEW</critical-block>
+      </observability>
+      <verification-ref>V-M-REVIEWS</verification-ref>
+    </M-REVIEWS>
+
+    <M-WEBHOOKS NAME="Webhooks" TYPE="INTEGRATION" LAYER="1" ORDER="18" STATUS="implemented">
+      <contract>
+        <purpose>Ingest Supabase auth webhooks and upsert the matching User row.</purpose>
+        <inputs>
+          <param name="payload" type="SupabasePayloadDto" />
+        </inputs>
+        <outputs>
+          <param name="ack" type="void" />
+        </outputs>
+        <errors>
+          <error code="WEBHOOK_UNAUTHORIZED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-WebhooksController PURPOSE="POST /webhooks/supabase-auth" />
+      </interface>
+      <depends>M-PRISMA, M-SUPABASE</depends>
+      <target>
+        <source>backend/src/webhooks/webhooks.controller.ts</source>
+        <tests>backend/test/auth.e2e-spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Webhooks]</log-prefix>
+        <critical-block>BLOCK_UPSERT_USER</critical-block>
+      </observability>
+      <verification-ref>V-M-WEBHOOKS</verification-ref>
+    </M-WEBHOOKS>
+
+    <M-TASKS NAME="Tasks" TYPE="CORE_LOGIC" LAYER="1" ORDER="19" STATUS="implemented">
+      <contract>
+        <purpose>Run scheduled backend jobs such as reminders.</purpose>
+        <inputs>
+          <param name="cronTick" type="Date" />
+        </inputs>
+        <outputs>
+          <param name="jobResult" type="void" />
+        </outputs>
+        <errors>
+          <error code="TASK_FAILED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-TasksService PURPOSE="Scheduled Nest jobs" />
+      </interface>
+      <depends>M-PRISMA</depends>
+      <target>
+        <source>backend/src/tasks/tasks.service.ts</source>
+        <tests>backend/src/app.controller.spec.ts</tests>
+      </target>
+      <observability>
+        <log-prefix>[Tasks]</log-prefix>
+        <critical-block>BLOCK_RUN_SCHEDULED_JOB</critical-block>
+      </observability>
+      <verification-ref>V-M-TASKS</verification-ref>
+    </M-TASKS>
+
+    <M-FRONTEND-ENTRY NAME="FrontendEntry" TYPE="ENTRY_POINT" LAYER="2" ORDER="1" STATUS="implemented">
+      <contract>
+        <purpose>Mount the React mini-app inside HashRouter.</purpose>
+        <inputs>
+          <param name="rootElement" type="HTMLElement" />
+        </inputs>
+        <outputs>
+          <param name="mountedApp" type="void" />
+        </outputs>
+        <errors>
+          <error code="ROOT_MISSING" />
+        </errors>
+      </contract>
+      <interface>
+        <export-root PURPOSE="Vite HTML bootstrap" />
+      </interface>
+      <depends>M-FRONTEND-APP</depends>
+      <target>
+        <source>frontend/index.tsx</source>
+        <tests>none</tests>
+      </target>
+      <observability>
+        <log-prefix>[FrontendEntry]</log-prefix>
+        <critical-block>BLOCK_MOUNT_APP</critical-block>
+      </observability>
+      <verification-ref>V-M-FRONTEND-ENTRY</verification-ref>
+    </M-FRONTEND-ENTRY>
+
+    <M-FRONTEND-APP NAME="FrontendApp" TYPE="ENTRY_POINT" LAYER="2" ORDER="2" STATUS="implemented">
+      <contract>
+        <purpose>Compose routes, session restore, onboarding, and tab navigation for the mini-app.</purpose>
+        <inputs>
+          <param name="location" type="Hash location" />
+        </inputs>
+        <outputs>
+          <param name="screen" type="ReactElement" />
+        </outputs>
+        <errors>
+          <error code="SESSION_INIT_FAILED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-App PURPOSE="Route shell and session gate" />
+      </interface>
+      <depends>M-FRONTEND-API, M-FRONTEND-AUTH, M-FRONTEND-TELEGRAM</depends>
+      <target>
+        <source>frontend/src/app/page.tsx</source>
+        <tests>none</tests>
+      </target>
+      <observability>
+        <log-prefix>[FrontendApp]</log-prefix>
+        <critical-block>BLOCK_RESTORE_SESSION</critical-block>
+      </observability>
+      <verification-ref>V-M-FRONTEND-APP</verification-ref>
+    </M-FRONTEND-APP>
+
+    <M-FRONTEND-API NAME="FrontendApi" TYPE="INTEGRATION" LAYER="1" ORDER="1" STATUS="implemented">
+      <contract>
+        <purpose>Select mock or real HTTP adapters so screens share one API surface.</purpose>
+        <inputs>
+          <param name="VITE_API_MODE" type="'mock' | 'real'" />
+        </inputs>
+        <outputs>
+          <param name="apiFns" type="fetch* functions" />
+        </outputs>
+        <errors>
+          <error code="API_REQUEST_FAILED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-fetchAllEvents PURPOSE="Event catalog" />
+        <export-participateInEvent PURPOSE="Join an event" />
+        <export-completeCourse PURPOSE="Finish a course" />
+      </interface>
+      <depends>M-FRONTEND-AUTH, M-FRONTEND-TYPES</depends>
+      <target>
+        <source>frontend/src/lib/api.ts</source>
+        <tests>none</tests>
+      </target>
+      <observability>
+        <log-prefix>[FrontendApi]</log-prefix>
+        <critical-block>BLOCK_SELECT_ADAPTER</critical-block>
+      </observability>
+      <verification-ref>V-M-FRONTEND-API</verification-ref>
+    </M-FRONTEND-API>
+
+    <M-FRONTEND-AUTH NAME="FrontendAuth" TYPE="INTEGRATION" LAYER="1" ORDER="2" STATUS="implemented">
+      <contract>
+        <purpose>Switch mock session helpers and real Supabase-backed login/register/logout.</purpose>
+        <inputs>
+          <param name="credentials" type="{ email, password }" />
+        </inputs>
+        <outputs>
+          <param name="session" type="{ user, token }" />
+        </outputs>
+        <errors>
+          <error code="LOGIN_FAILED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-login PURPOSE="Email login" />
+        <export-getCurrentSession PURPOSE="Restore stored session" />
+        <export-logout PURPOSE="Clear session" />
+      </interface>
+      <depends>M-FRONTEND-TYPES</depends>
+      <target>
+        <source>frontend/src/lib/auth.ts</source>
+        <tests>none</tests>
+      </target>
+      <observability>
+        <log-prefix>[FrontendAuth]</log-prefix>
+        <critical-block>BLOCK_SELECT_AUTH_ADAPTER</critical-block>
+      </observability>
+      <verification-ref>V-M-FRONTEND-AUTH</verification-ref>
+    </M-FRONTEND-AUTH>
+
+    <M-FRONTEND-TYPES NAME="FrontendTypes" TYPE="UTILITY" LAYER="0" ORDER="1" STATUS="implemented">
+      <contract>
+        <purpose>Share TypeScript models used by screens and API adapters.</purpose>
+        <inputs>
+          <param name="none" type="void" />
+        </inputs>
+        <outputs>
+          <param name="domainTypes" type="User | AppEvent | Course | ..." />
+        </outputs>
+        <errors>
+          <error code="none" />
+        </errors>
+      </contract>
+      <interface>
+        <type-User PURPOSE="Client user model" />
+        <type-AppEvent PURPOSE="Client event model" />
+      </interface>
+      <depends>none</depends>
+      <target>
+        <source>frontend/src/lib/types.ts</source>
+        <tests>none</tests>
+      </target>
+      <observability>
+        <log-prefix>[FrontendTypes]</log-prefix>
+        <critical-block>BLOCK_DOMAIN_TYPES</critical-block>
+      </observability>
+      <verification-ref>V-M-FRONTEND-TYPES</verification-ref>
+    </M-FRONTEND-TYPES>
+
+    <M-FRONTEND-TELEGRAM NAME="TelegramSdk" TYPE="INTEGRATION" LAYER="0" ORDER="2" STATUS="implemented">
+      <contract>
+        <purpose>Wrap Telegram Mini App init data, deep links, and native UI helpers.</purpose>
+        <inputs>
+          <param name="TelegramWebApp" type="window.Telegram" />
+        </inputs>
+        <outputs>
+          <param name="initData" type="string | null" />
+        </outputs>
+        <errors>
+          <error code="TELEGRAM_UNAVAILABLE" />
+        </errors>
+      </contract>
+      <interface>
+        <fn-initTelegram PURPOSE="Initialize Telegram WebApp" />
+        <fn-telegramLogin PURPOSE="Exchange Telegram init data for a session" />
+      </interface>
+      <depends>M-FRONTEND-AUTH</depends>
+      <target>
+        <source>frontend/src/lib/telegram-sdk.ts</source>
+        <tests>none</tests>
+      </target>
+      <observability>
+        <log-prefix>[TelegramSdk]</log-prefix>
+        <critical-block>BLOCK_READ_INIT_DATA</critical-block>
+      </observability>
+      <verification-ref>V-M-FRONTEND-TELEGRAM</verification-ref>
+    </M-FRONTEND-TELEGRAM>
+
+    <M-FRONTEND-MAX NAME="MaxSdk" TYPE="INTEGRATION" LAYER="0" ORDER="3" STATUS="implemented">
+      <contract>
+        <purpose>Read MAX mini-app init data for MAX login.</purpose>
+        <inputs>
+          <param name="maxBridge" type="window MAX SDK" />
+        </inputs>
+        <outputs>
+          <param name="initData" type="string | null" />
+        </outputs>
+        <errors>
+          <error code="MAX_UNAVAILABLE" />
+        </errors>
+      </contract>
+      <interface>
+        <fn-getMaxInitData PURPOSE="Read MAX init payload" />
+      </interface>
+      <depends>none</depends>
+      <target>
+        <source>frontend/src/lib/max-sdk.ts</source>
+        <tests>none</tests>
+      </target>
+      <observability>
+        <log-prefix>[MaxSdk]</log-prefix>
+        <critical-block>BLOCK_READ_MAX_INIT</critical-block>
+      </observability>
+      <verification-ref>V-M-FRONTEND-MAX</verification-ref>
+    </M-FRONTEND-MAX>
+
+    <M-FRONTEND-UI NAME="FrontendUi" TYPE="UI_COMPONENT" LAYER="2" ORDER="3" STATUS="implemented">
+      <contract>
+        <purpose>Shared cards, modals, map, toasts, and illustration icons used across screens.</purpose>
+        <inputs>
+          <param name="props" type="component props" />
+        </inputs>
+        <outputs>
+          <param name="element" type="ReactElement" />
+        </outputs>
+        <errors>
+          <error code="none" />
+        </errors>
+      </contract>
+      <interface>
+        <export-EventCard PURPOSE="Event summary card" />
+        <export-Toast PURPOSE="Transient user feedback" />
+        <export-InteractiveMap PURPOSE="Leaflet event map" />
+      </interface>
+      <depends>M-FRONTEND-TYPES</depends>
+      <target>
+        <source>frontend/src/components/ui/</source>
+        <tests>none</tests>
+      </target>
+      <observability>
+        <log-prefix>[FrontendUi]</log-prefix>
+        <critical-block>BLOCK_RENDER_SHARED_UI</critical-block>
+      </observability>
+      <verification-ref>V-M-FRONTEND-UI</verification-ref>
+    </M-FRONTEND-UI>
+
+    <M-FRONTEND-SCREENS NAME="FrontendScreens" TYPE="UI_COMPONENT" LAYER="2" ORDER="4" STATUS="implemented">
+      <contract>
+        <purpose>Volunteer and organizer screens: tabs, profile, events, courses, stories, and org dashboard.</purpose>
+        <inputs>
+          <param name="routeParams" type="object" />
+        </inputs>
+        <outputs>
+          <param name="page" type="ReactElement" />
+        </outputs>
+        <errors>
+          <error code="SCREEN_LOAD_FAILED" />
+        </errors>
+      </contract>
+      <interface>
+        <export-HomePage PURPOSE="Event feed tab" />
+        <export-AuthPage PURPOSE="Login and register" />
+      </interface>
+      <depends>M-FRONTEND-API, M-FRONTEND-AUTH, M-FRONTEND-UI</depends>
+      <target>
+        <source>frontend/src/app/</source>
+        <tests>none</tests>
+      </target>
+      <observability>
+        <log-prefix>[FrontendScreens]</log-prefix>
+        <critical-block>BLOCK_LOAD_SCREEN_DATA</critical-block>
+      </observability>
+      <verification-ref>V-M-FRONTEND-SCREENS</verification-ref>
+    </M-FRONTEND-SCREENS>
+
+    <M-BOT-MAX NAME="MaxBot" TYPE="ENTRY_POINT" LAYER="0" ORDER="4" STATUS="implemented">
+      <contract>
+        <purpose>Greet MAX users, share daily deeds, and deep-link into the mini-app.</purpose>
+        <inputs>
+          <param name="MAX_BOT_TOKEN" type="string" />
+        </inputs>
+        <outputs>
+          <param name="botMessages" type="void" />
+        </outputs>
+        <errors>
+          <error code="BOT_TOKEN_MISSING" />
+        </errors>
+      </contract>
+      <interface>
+        <export-bot PURPOSE="MAX bot process" />
+      </interface>
+      <depends>none</depends>
+      <target>
+        <source>bot-max/src/index.ts</source>
+        <tests>none</tests>
+      </target>
+      <observability>
+        <log-prefix>[MaxBot]</log-prefix>
+        <critical-block>BLOCK_HANDLE_BOT_STARTED</critical-block>
+      </observability>
+      <verification-ref>V-M-BOT-MAX</verification-ref>
+    </M-BOT-MAX>
+
+    <M-BOT-TELEGRAM NAME="TelegramBot" TYPE="ENTRY_POINT" LAYER="0" ORDER="5" STATUS="implemented">
+      <contract>
+        <purpose>Launch the Telegram web app, daily deeds, and help text.</purpose>
+        <inputs>
+          <param name="TG_BOT_TOKEN" type="string" />
+        </inputs>
+        <outputs>
+          <param name="botMessages" type="void" />
+        </outputs>
+        <errors>
+          <error code="TG_BOT_TOKEN_MISSING" />
+        </errors>
+      </contract>
+      <interface>
+        <export-bot PURPOSE="Telegram bot process" />
+      </interface>
+      <depends>none</depends>
+      <target>
+        <source>bot-telegram/src/index.ts</source>
+        <tests>none</tests>
+      </target>
+      <observability>
+        <log-prefix>[TelegramBot]</log-prefix>
+        <critical-block>BLOCK_LAUNCH_WEBAPP</critical-block>
+      </observability>
+      <verification-ref>V-M-BOT-TELEGRAM</verification-ref>
+    </M-BOT-TELEGRAM>
+  </Modules>
+
+  <DataFlow>
+    <DF-AUTH NAME="AuthenticateSession" TRIGGER="Login screen or messenger init data">
+      <step-1>M-FRONTEND-AUTH or M-FRONTEND-TELEGRAM / M-FRONTEND-MAX collects credentials or init data</step-1>
+      <step-2>M-AUTH verifies provider payload and upserts User via M-PRISMA</step-2>
+      <step-3>M-AUTH issues an internal JWT; M-FRONTEND-APP restores the session</step-3>
+      <evidence>[Auth][loginWithMax][BLOCK_ISSUE_JWT] or auth e2e success</evidence>
+    </DF-AUTH>
+    <DF-EVENT-DISCOVERY NAME="DiscoverEvents" TRIGGER="Home tab or map">
+      <step-1>M-FRONTEND-SCREENS calls M-FRONTEND-API fetchAllEvents or fetchMapMarkers</step-1>
+      <step-2>M-EVENTS or M-MAP query M-PRISMA</step-2>
+      <step-3>UI renders EventCard or InteractiveMap</step-3>
+      <evidence>events e2e GET /events returns seeded events</evidence>
+    </DF-EVENT-DISCOVERY>
+    <DF-EVENT-PARTICIPATE NAME="JoinEvent" TRIGGER="Event detail participate">
+      <step-1>M-FRONTEND-API participateInEvent</step-1>
+      <step-2>M-EVENTS writes EventParticipant through M-PRISMA</step-2>
+      <evidence>[Events][participate][BLOCK_PARTICIPATE]</evidence>
+    </DF-EVENT-PARTICIPATE>
+    <DF-ORG-MANAGE-EVENT NAME="OrganizerManagesEvent" TRIGGER="Organizer dashboard">
+      <step-1>M-FRONTEND-SCREENS organizer pages call organizer API helpers</step-1>
+      <step-2>M-EVENTS and M-ORGANIZATIONS enforce organizer role</step-2>
+      <step-3>Participant status updates persist</step-3>
+      <evidence>organizations e2e dashboard and events e2e participant patch</evidence>
+    </DF-ORG-MANAGE-EVENT>
+    <DF-LEARNING NAME="CompleteCourse" TRIGGER="Lesson or course complete">
+      <step-1>M-FRONTEND-API markLessonComplete or completeCourse</step-1>
+      <step-2>M-LEARNING updates UserCourseProgress and may issue UserCertificate</step-2>
+      <evidence>learning e2e complete endpoints</evidence>
+    </DF-LEARNING>
+    <DF-STORY NAME="PublishStory" TRIGGER="Create story screen">
+      <step-1>M-FRONTEND-API createStory</step-1>
+      <step-2>M-STORIES inserts Story via M-PRISMA</step-2>
+      <evidence>stories e2e POST /stories</evidence>
+    </DF-STORY>
+    <DF-REWARD NAME="PurchaseReward" TRIGGER="Rewards shop">
+      <step-1>M-FRONTEND-API purchaseReward</step-1>
+      <step-2>M-REWARDS deducts karma and writes UserReward</step-2>
+      <evidence>rewards e2e purchase</evidence>
+    </DF-REWARD>
+    <DF-ASSISTANT NAME="AssistantMessage" TRIGGER="Assistant chat screen">
+      <step-1>M-FRONTEND-API postAssistantMessage</step-1>
+      <step-2>M-ASSISTANT-CHAT stores user and assistant rows</step-2>
+      <evidence>assistant-chat e2e</evidence>
+    </DF-ASSISTANT>
+    <DF-WEBHOOK-SYNC NAME="SupabaseUserSync" TRIGGER="Supabase auth webhook">
+      <step-1>M-WEBHOOKS validates secret</step-1>
+      <step-2>User upsert through M-PRISMA</step-2>
+      <evidence>[Webhooks][handleSupabaseAuth][BLOCK_UPSERT_USER]</evidence>
+    </DF-WEBHOOK-SYNC>
+    <DF-BOT-LAUNCH NAME="MessengerLaunch" TRIGGER="Bot start command">
+      <step-1>M-BOT-MAX or M-BOT-TELEGRAM answers start</step-1>
+      <step-2>User opens mini-app URL or web_app button</step-2>
+      <evidence>Bot process stays alive and answers /start without throwing on missing tokens in production config</evidence>
+    </DF-BOT-LAUNCH>
+    <DF-LEADERBOARD NAME="ViewLeaderboard" TRIGGER="Leaderboard screen">
+      <step-1>M-FRONTEND-API fetchLeaderboardData</step-1>
+      <step-2>M-LEADERBOARD ranks users</step-2>
+      <evidence>leaderboard unit and e2e</evidence>
+    </DF-LEADERBOARD>
+    <DF-SOCIAL NAME="FriendsAndEventChat" TRIGGER="Friends or event chat screens">
+      <step-1>M-FRONTEND-API fetchFriends or event chat calls</step-1>
+      <step-2>M-FRIENDS or M-EVENT-CHATS query M-PRISMA</step-2>
+      <evidence>friends and event-chats specs</evidence>
+    </DF-SOCIAL>
+  </DataFlow>
+
+  <ImplementationOrder>
+    <Phase-1 name="Foundation" status="done">
+      <goal>Data model, Prisma client, Nest bootstrap, and frontend mount exist.</goal>
+      <step-1 module="M-SCHEMA" status="done" verification="V-M-SCHEMA">Prisma schema</step-1>
+      <step-2 module="M-PRISMA" status="done" verification="V-M-PRISMA">Prisma service</step-2>
+      <step-3 module="M-BACKEND-BOOTSTRAP" status="done" verification="V-M-BACKEND-BOOTSTRAP">API listen</step-3>
+      <step-4 module="M-FRONTEND-ENTRY" status="done" verification="V-M-FRONTEND-ENTRY">Mini-app mount</step-4>
+    </Phase-1>
+    <Phase-2 name="IdentityAndCatalog" status="done">
+      <goal>Auth, events, orgs, and learning are live.</goal>
+      <step-1 module="M-AUTH" status="done" verification="V-M-AUTH">Auth and profile</step-1>
+      <step-2 module="M-EVENTS" status="done" verification="V-M-EVENTS">Events</step-2>
+      <step-3 module="M-ORGANIZATIONS" status="done" verification="V-M-ORGANIZATIONS">Organizations</step-3>
+      <step-4 module="M-LEARNING" status="done" verification="V-M-LEARNING">Courses</step-4>
+    </Phase-2>
+    <Phase-3 name="Engagement" status="done">
+      <goal>Gamification and social surfaces are live.</goal>
+      <step-1 module="M-ACHIEVEMENTS" status="done" verification="V-M-ACHIEVEMENTS">Achievements</step-1>
+      <step-2 module="M-REWARDS" status="done" verification="V-M-REWARDS">Rewards</step-2>
+      <step-3 module="M-STORIES" status="done" verification="V-M-STORIES">Stories</step-3>
+      <step-4 module="M-LEADERBOARD" status="done" verification="V-M-LEADERBOARD">Leaderboard</step-4>
+    </Phase-3>
+    <Phase-4 name="GraceOverlay" status="in-progress">
+      <goal>Apply GRACE docs and semantic markup across governed source files without runtime changes.</goal>
+      <step-1 module="M-BACKEND-APP" status="in-progress" verification="V-M-BACKEND-APP">Markup backend modules</step-1>
+      <step-2 module="M-FRONTEND-APP" status="in-progress" verification="V-M-FRONTEND-APP">Markup frontend modules</step-2>
+      <step-3 module="M-BOT-MAX" status="in-progress" verification="V-M-BOT-MAX">Markup bots</step-3>
+    </Phase-4>
+  </ImplementationOrder>
+
+  <ExecutionPolicy>
+    <default-profile>balanced</default-profile>
+    <controller-owns>docs/development-plan.xml, docs/knowledge-graph.xml, docs/verification-plan.xml</controller-owns>
+    <worker-owns>Only module source files and module-local tests inside the approved write scope. Markup must not change runtime behavior.</worker-owns>
+    <max-fix-attempts-per-step>2</max-fix-attempts-per-step>
+    <replan-trigger>Missing dependency, contradictory contract, or a new third-party auth surface.</replan-trigger>
+    <checkpoint-requirement>Every step must leave assumptions, commands run, evidence, and next action.</checkpoint-requirement>
+  </ExecutionPolicy>
+</DevelopmentPlan>
