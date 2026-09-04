@@ -1,3 +1,24 @@
+// FILE: backend/test/friends.e2e-spec.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: E2E coverage for listing a user's friends.
+//   SCOPE: GET /friends with friends and with an empty list
+//   DEPENDS: M-FRIENDS, M-AUTH
+//   LINKS: V-M-FRIENDS
+//   ROLE: TEST
+//   MAP_MODE: LOCALS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   beforeAll - boot Nest app with AuthGuard override
+//   GET /friends - returns related users
+//   GET /friends empty - returns []
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaClient, User } from '@prisma/client';
@@ -16,6 +37,7 @@ describe('Friends (e2e)', () => {
   let friendUser: User;
   const authToken = 'Bearer test-token';
 
+  // START_BLOCK_SETUP_APP
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
@@ -54,7 +76,9 @@ describe('Friends (e2e)', () => {
     await prisma.$disconnect();
     if (app) await app.close();
   });
+  // END_BLOCK_SETUP_APP
 
+  // START_BLOCK_SCENARIOS
   it('GET /friends - should return a list of friends', async () => {
     await prisma.friendship.create({
       data: { userId: mockUser.id, friendId: friendUser.id },
@@ -78,4 +102,5 @@ describe('Friends (e2e)', () => {
 
     expect(body).toEqual([]);
   });
+  // END_BLOCK_SCENARIOS
 });

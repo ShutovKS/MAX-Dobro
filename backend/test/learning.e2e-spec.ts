@@ -1,3 +1,23 @@
+// FILE: backend/test/learning.e2e-spec.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: E2E coverage for completing a course and issuing a certificate.
+//   SCOPE: POST /courses/:id/complete with correct quiz answers
+//   DEPENDS: M-LEARNING, M-AUTH
+//   LINKS: V-M-LEARNING
+//   ROLE: TEST
+//   MAP_MODE: LOCALS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   mockAuthGuard - injects mockUser onto the request
+//   POST /courses/:id/complete - issues a user certificate
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaClient, User } from '@prisma/client';
@@ -15,6 +35,13 @@ describe('Learning (e2e)', () => {
   let mockUser: User;
   const authToken = 'Bearer test-token';
 
+  // START_CONTRACT: mockAuthGuard
+  //   PURPOSE: Inject mockUser as request.user for protected routes
+  //   INPUTS: { context: ExecutionContext }
+  //   OUTPUTS: { true }
+  //   SIDE_EFFECTS: mutates request.user
+  //   LINKS: V-M-LEARNING
+  // END_CONTRACT: mockAuthGuard
   const mockAuthGuard = {
     canActivate: (context: any) => {
       const request = context.switchToHttp().getRequest();
@@ -23,6 +50,7 @@ describe('Learning (e2e)', () => {
     },
   };
 
+  // START_BLOCK_SETUP_APP
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
@@ -50,7 +78,9 @@ describe('Learning (e2e)', () => {
     await prisma.$disconnect();
     if (app) await app.close();
   });
+  // END_BLOCK_SETUP_APP
 
+  // START_BLOCK_SCENARIOS
   it('POST /courses/:id/complete - should successfully complete a course', async () => {
     const course = await prisma.course.create({
       data: {
@@ -89,4 +119,5 @@ describe('Learning (e2e)', () => {
     expect(certificate).not.toBeNull();
     expect(certificate?.userId).toBe(mockUser.id);
   });
+  // END_BLOCK_SCENARIOS
 });

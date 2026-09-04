@@ -1,3 +1,24 @@
+// FILE: backend/test/events.e2e-spec.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: E2E coverage for listing events by organization.
+//   SCOPE: GET /organizations/:id/events
+//   DEPENDS: M-EVENTS, M-ORGANIZATIONS
+//   LINKS: V-M-EVENTS
+//   ROLE: TEST
+//   MAP_MODE: LOCALS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   mockAuthGuard - injects mockUser onto the request
+//   beforeAll - boot Nest app with AuthGuard override
+//   GET /organizations/:id/events - returns org events
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaClient, User } from '@prisma/client';
@@ -14,6 +35,13 @@ describe('Events (e2e)', () => {
 
   let mockUser: User;
 
+  // START_CONTRACT: mockAuthGuard
+  //   PURPOSE: Inject mockUser as request.user for protected routes
+  //   INPUTS: { context: ExecutionContext }
+  //   OUTPUTS: { true }
+  //   SIDE_EFFECTS: mutates request.user
+  //   LINKS: V-M-EVENTS
+  // END_CONTRACT: mockAuthGuard
   const mockAuthGuard = {
     canActivate: (context: any) => {
       const request = context.switchToHttp().getRequest();
@@ -22,6 +50,7 @@ describe('Events (e2e)', () => {
     },
   };
 
+  // START_BLOCK_SETUP_APP
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
@@ -49,7 +78,9 @@ describe('Events (e2e)', () => {
     await prisma.$disconnect();
     if (app) await app.close();
   });
+  // END_BLOCK_SETUP_APP
 
+  // START_BLOCK_SCENARIOS
   it('GET /organizations/:id/events', async () => {
     const org1 = await prisma.organization.create({
       data: { name: 'Org With Events' },
@@ -70,4 +101,5 @@ describe('Events (e2e)', () => {
     expect(response.body).toHaveLength(1);
     expect(response.body[0].title).toBe(event1.title);
   });
+  // END_BLOCK_SCENARIOS
 });

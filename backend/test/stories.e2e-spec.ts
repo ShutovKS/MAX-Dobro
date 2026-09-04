@@ -1,3 +1,23 @@
+// FILE: backend/test/stories.e2e-spec.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: E2E coverage for liking and unliking a story.
+//   SCOPE: POST and DELETE /stories/:id/like
+//   DEPENDS: M-STORIES, M-AUTH
+//   LINKS: V-M-STORIES
+//   ROLE: TEST
+//   MAP_MODE: LOCALS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   mockAuthGuard - injects mockUser onto the request
+//   POST/DELETE /stories/:id/like - like count 1 then 0
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaClient, User } from '@prisma/client';
@@ -15,6 +35,13 @@ describe('Stories (e2e)', () => {
   let mockUser: User;
   const authToken = 'Bearer test-token';
 
+  // START_CONTRACT: mockAuthGuard
+  //   PURPOSE: Inject mockUser as request.user for protected routes
+  //   INPUTS: { context: ExecutionContext }
+  //   OUTPUTS: { true }
+  //   SIDE_EFFECTS: mutates request.user
+  //   LINKS: V-M-STORIES
+  // END_CONTRACT: mockAuthGuard
   const mockAuthGuard = {
     canActivate: (context: any) => {
       const request = context.switchToHttp().getRequest();
@@ -23,6 +50,7 @@ describe('Stories (e2e)', () => {
     },
   };
 
+  // START_BLOCK_SETUP_APP
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
@@ -52,7 +80,9 @@ describe('Stories (e2e)', () => {
     await prisma.$disconnect();
     if (app) await app.close();
   });
+  // END_BLOCK_SETUP_APP
 
+  // START_BLOCK_SCENARIOS
   it('POST & DELETE /stories/:id/like - should allow a user to like and unlike a story', async () => {
     const org = await prisma.organization.create({ data: { name: 'Like Org' } });
     const event = await prisma.event.create({
@@ -94,4 +124,5 @@ describe('Stories (e2e)', () => {
     });
     expect(storyInDb?._count.likes).toBe(0);
   });
+  // END_BLOCK_SCENARIOS
 });

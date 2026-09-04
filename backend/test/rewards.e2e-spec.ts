@@ -1,3 +1,24 @@
+// FILE: backend/test/rewards.e2e-spec.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: E2E coverage for reward catalog flags and karma purchase.
+//   SCOPE: GET /rewards isPurchased, POST purchase success and 403
+//   DEPENDS: M-REWARDS, M-AUTH
+//   LINKS: V-M-REWARDS
+//   ROLE: TEST
+//   MAP_MODE: LOCALS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   beforeAll - boot Nest app with AuthGuard and OptionalAuthGuard overrides
+//   GET /rewards - isPurchased flags
+//   POST /rewards/:id/purchase - deducts karma then rejects a second buy
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaClient, User } from '@prisma/client';
@@ -16,6 +37,7 @@ describe('Rewards (e2e)', () => {
   let mockUser: User;
   const authToken = 'Bearer test-token';
 
+  // START_BLOCK_SETUP_APP
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
@@ -60,7 +82,9 @@ describe('Rewards (e2e)', () => {
     await prisma.$disconnect();
     if (app) await app.close();
   });
+  // END_BLOCK_SETUP_APP
 
+  // START_BLOCK_SCENARIOS
   it('GET /rewards - should return isPurchased flag correctly', async () => {
     const reward1 = await prisma.reward.create({
       data: { name: 'Reward 1', description: 'd', price: 10 },
@@ -102,4 +126,5 @@ describe('Rewards (e2e)', () => {
       .set('Authorization', authToken)
       .expect(403);
   });
+  // END_BLOCK_SCENARIOS
 });

@@ -1,3 +1,24 @@
+// FILE: backend/test/profile.e2e-spec.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: E2E coverage for the authenticated current-user profile.
+//   SCOPE: GET /profile/me with AuthGuard override
+//   DEPENDS: M-AUTH, M-USERS
+//   LINKS: V-M-AUTH
+//   ROLE: TEST
+//   MAP_MODE: LOCALS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   mockAuthGuard - injects mockUser onto the request
+//   beforeAll - boot Nest app with AuthGuard override
+//   GET /profile/me - returns current user profile
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaClient, User } from '@prisma/client';
@@ -19,6 +40,13 @@ describe('Profile (e2e)', () => {
   let mockUser: User;
   const authToken = 'Bearer test-token';
 
+  // START_CONTRACT: mockAuthGuard
+  //   PURPOSE: Inject mockUser as request.user for protected routes
+  //   INPUTS: { context: ExecutionContext }
+  //   OUTPUTS: { true }
+  //   SIDE_EFFECTS: mutates request.user
+  //   LINKS: V-M-AUTH
+  // END_CONTRACT: mockAuthGuard
   const mockAuthGuard = {
     canActivate: (context: any) => {
       const request = context.switchToHttp().getRequest();
@@ -27,6 +55,7 @@ describe('Profile (e2e)', () => {
     },
   };
 
+  // START_BLOCK_SETUP_APP
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
@@ -59,7 +88,9 @@ describe('Profile (e2e)', () => {
       await app.close();
     }
   });
+  // END_BLOCK_SETUP_APP
 
+  // START_BLOCK_SCENARIOS
   it('/profile/me (GET) - should return current user profile', async () => {
     const { body } = await request(app.getHttpServer())
       .get('/profile/me')
@@ -70,4 +101,5 @@ describe('Profile (e2e)', () => {
     expect(body.name).toBe('Test User');
     expect(body.level).toBe('Активист');
   });
+  // END_BLOCK_SCENARIOS
 });

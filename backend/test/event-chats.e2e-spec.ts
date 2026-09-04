@@ -1,3 +1,24 @@
+// FILE: backend/test/event-chats.e2e-spec.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: E2E coverage for listing event chats and fetching messages.
+//   SCOPE: GET /chats and GET /chats/:id/messages for an approved participant
+//   DEPENDS: M-EVENT-CHATS, M-AUTH
+//   LINKS: V-M-EVENT-CHATS
+//   ROLE: TEST
+//   MAP_MODE: LOCALS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   beforeAll - boot Nest app with AuthGuard override
+//   GET /chats - lists chats for events that have a chat
+//   GET /chats/:id/messages - returns chat messages
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaClient, User } from '@prisma/client';
@@ -16,6 +37,7 @@ describe('Event Chats (e2e)', () => {
   let otherUser: User;
   const authToken = 'Bearer test-token';
 
+  // START_BLOCK_SETUP_APP
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
@@ -55,7 +77,9 @@ describe('Event Chats (e2e)', () => {
     await prisma.$disconnect();
     if (app) await app.close();
   });
+  // END_BLOCK_SETUP_APP
 
+  // START_BLOCK_SCENARIOS
   it('GET /chats & /chats/:id/messages - should manage event chats correctly', async () => {
     const org = await prisma.organization.create({ data: { name: 'Test Org' } });
     const event = await prisma.event.create({
@@ -99,4 +123,5 @@ describe('Event Chats (e2e)', () => {
     expect(messages[0].text).toBe('Hello from other user!');
     expect(messages[0].author.id).toBe(otherUser.id);
   });
+  // END_BLOCK_SCENARIOS
 });

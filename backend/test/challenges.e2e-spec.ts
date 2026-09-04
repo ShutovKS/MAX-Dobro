@@ -1,3 +1,24 @@
+// FILE: backend/test/challenges.e2e-spec.ts
+// VERSION: 1.0.0
+// START_MODULE_CONTRACT
+//   PURPOSE: E2E coverage for weekly challenge payload and empty contract.
+//   SCOPE: GET /challenges/weekly with and without an active challenge
+//   DEPENDS: M-CHALLENGES, M-AUTH
+//   LINKS: V-M-CHALLENGES
+//   ROLE: TEST
+//   MAP_MODE: LOCALS
+// END_MODULE_CONTRACT
+//
+// START_MODULE_MAP
+//   beforeAll - boot Nest app with AuthGuard override
+//   GET /challenges/weekly empty - {}
+//   GET /challenges/weekly - title, progress, target, isCompleted
+// END_MODULE_MAP
+//
+// START_CHANGE_SUMMARY
+//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+// END_CHANGE_SUMMARY
+
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaClient, User } from '@prisma/client';
@@ -15,6 +36,7 @@ describe('Challenges (e2e)', () => {
   let mockUser: User;
   const authToken = 'Bearer test-token';
 
+  // START_BLOCK_SETUP_APP
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
@@ -50,7 +72,9 @@ describe('Challenges (e2e)', () => {
     await prisma.$disconnect();
     if (app) await app.close();
   });
+  // END_BLOCK_SETUP_APP
 
+  // START_BLOCK_SCENARIOS
   it('GET /challenges/weekly - should return an empty object if no active weekly challenge', async () => {
     await request(app.getHttpServer())
       .get('/challenges/weekly')
@@ -91,4 +115,5 @@ describe('Challenges (e2e)', () => {
     expect(body.target).toBe(3);
     expect(body.isCompleted).toBe(false);
   });
+  // END_BLOCK_SCENARIOS
 });
