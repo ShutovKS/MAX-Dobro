@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 //
 // START_CHANGE_SUMMARY
-//   LAST_CHANGE: [v1.1.0 - Platform-aware login: Telegram/MAX messenger buttons plus demo volunteer and organizer entries]
+//   LAST_CHANGE: [v1.2.0 - Restored register and forgot-password entry links on the login view]
 // END_CHANGE_SUMMARY
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -54,7 +54,7 @@ const LoginView: React.FC<{
   onAuthSuccess: (session: { user: User; token: string }) => void;
   onSwitchToRegister: () => void;
   onSwitchToForgotPassword: () => void;
-}> = ({ onAuthSuccess }) => {
+}> = ({ onAuthSuccess, onSwitchToRegister, onSwitchToForgotPassword }) => {
   const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   // Вариант входа по платформе запуска: Telegram — кнопка Telegram,
@@ -218,6 +218,23 @@ const LoginView: React.FC<{
               className="w-full flex items-center justify-center bg-white text-[#007AFF] font-semibold py-3 px-4 rounded-xl border border-[#007AFF] hover:bg-blue-50 transition-all duration-200 disabled:opacity-50"
             >
               {isLoading ? <Spinner /> : 'Войти как организация'}
+            </button>
+            <p className="text-sm pt-2">
+              <span className="text-[rgb(12,13,14,0.52)]">Нет аккаунта? </span>
+              <button
+                onClick={onSwitchToRegister}
+                disabled={isLoading}
+                className="font-semibold text-[#007AFF] hover:underline disabled:opacity-50"
+              >
+                Создать
+              </button>
+            </p>
+            <button
+              onClick={onSwitchToForgotPassword}
+              disabled={isLoading}
+              className="text-sm text-[rgb(12,13,14,0.52)] hover:underline disabled:opacity-50"
+            >
+              Забыли пароль?
             </button>
           </div>
         )}
