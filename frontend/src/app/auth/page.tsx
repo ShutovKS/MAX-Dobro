@@ -1,9 +1,9 @@
 // FILE: frontend/src/app/auth/page.tsx
-// VERSION: 1.0.0
+// VERSION: 1.1.0
 // START_MODULE_CONTRACT
-//   PURPOSE: Login, register, and forgot-password entry for mock and Telegram sessions.
-//   SCOPE: Telegram auto-login, demo login, email register, password-reset UI
-//   DEPENDS: M-FRONTEND-AUTH, M-FRONTEND-TELEGRAM, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   PURPOSE: Platform-aware login entry with messenger and organization demo variants.
+//   SCOPE: Telegram/MAX/web login variants, demo volunteer and organizer login, register, password-reset UI
+//   DEPENDS: M-FRONTEND-AUTH, M-FRONTEND-TELEGRAM, M-FRONTEND-MAX, M-FRONTEND-UI, M-FRONTEND-TYPES
 //   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS
 //   ROLE: RUNTIME
 //   MAP_MODE: EXPORTS
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 //
 // START_CHANGE_SUMMARY
-//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+//   LAST_CHANGE: [v1.1.0 - Platform-aware login: Telegram/MAX messenger buttons plus demo volunteer and organizer entries]
 // END_CHANGE_SUMMARY
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -26,55 +26,60 @@ import {
   Lock,
   Mail,
   RefreshCw,
-  Send,
   User as UserIcon,
 } from 'lucide-react';
 import { HeartHandIcon } from '../../components/ui/icons';
-import { login, register, getCurrentSession, logout } from '../../lib/auth';
+import { login, loginAsDemoOrganizer, register, getCurrentSession } from '../../lib/auth';
 import type { User } from '../../lib/types';
-import { MESSAGES, PASSWORD_MIN_LENGTH, TELEGRAM_APP_LINK } from '../../lib/constants';
+import { MESSAGES, PASSWORD_MIN_LENGTH } from '../../lib/constants';
+import { getAppPlatform, type AppPlatform } from '../../lib/platform';
 import {
   getTelegramInitData,
   isTelegramClient,
   telegramLogin,
   waitForTelegramInitData,
 } from '../../lib/telegram-sdk';
+import {
+  getMaxInitData,
+  isMaxClient,
+  maxLogin,
+  waitForMaxInitData,
+} from '../../lib/max-sdk';
 
 const Spinner: React.FC = () => (
-  <RefreshCw className="w-5 h-5 text-white animate-spin" />
+  <RefreshCw className="w-5 h-5 animate-spin" />
 );
 
 const LoginView: React.FC<{
   onAuthSuccess: (session: { user: User; token: string }) => void;
   onSwitchToRegister: () => void;
   onSwitchToForgotPassword: () => void;
-}> = ({ onAuthSuccess, onSwitchToRegister, onSwitchToForgotPassword }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+}> = ({ onAuthSuccess }) => {
   const [loginError, setLoginError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  // Вариант входа по платформе запуска: Telegram — кнопка Telegram,
+  // MAX — кнопка MAX, web — только демо-вход. Вход организации — везде.
+  // В демо (mock) платформа берётся из ?platform=telegram|max|web.
+  type EntryMode = 'checking' | AppPlatform;
+  const [entryMode, setEntryMode] = useState<EntryMode>('checking');
 
-  const isMock = import.meta.env.VITE_API_MODE === 'mock';
-  // Режим входа определяем по НАЛИЧИЮ initData, а не по объекту SDK:
-  // telegram-web-app.js создаёт window.Telegram.WebApp и в обычном браузере
-  // (с пустым initData). 'checking' — ждём initData, 'telegram' — реальный
-  // клиент, 'browser' — открыто вне Telegram (показываем deep-link).
-  type EntryMode = 'checking' | 'telegram' | 'browser' | 'demo';
-  const [entryMode, setEntryMode] = useState<EntryMode>(
-    isMock ? 'demo' : 'checking',
-  );
-
-  // START_BLOCK_TELEGRAM_LOGIN
-  const handleTelegramLogin = async () => {
+  // START_BLOCK_MESSENGER_LOGIN
+  const handleMessengerLogin = async (mode: AppPlatform = entryMode) => {
     setLoginError('');
     setIsLoading(true);
     try {
-      const initData = getTelegramInitData();
-      if (!initData) {
-        if (isMock) {
+      if (mode === 'max') {
+        if (!getMaxInitData()) {
+          console.warn('MAX initData not found. Using mock volunteer login.');
+          const session = await login('volunteer@test.com', 'password');
+          onAuthSuccess(session);
+          return;
+        }
+        if (!(await maxLogin())) {
+          throw new Error('Не удалось войти через MAX');
+        }
+      } else {
+        if (!getTelegramInitData()) {
           console.warn(
             'Telegram initData not found. Using mock volunteer login.',
           );
@@ -82,12 +87,9 @@ const LoginView: React.FC<{
           onAuthSuccess(session);
           return;
         }
-        throw new Error('Откройте приложение внутри Telegram');
-      }
-
-      const ok = await telegramLogin();
-      if (!ok) {
-        throw new Error('Не удалось войти через Telegram');
+        if (!(await telegramLogin())) {
+          throw new Error('Не удалось войти через Telegram');
+        }
       }
 
       const session = await getCurrentSession();
@@ -102,70 +104,60 @@ const LoginView: React.FC<{
       setIsLoading(false);
     }
   };
-  // END_BLOCK_TELEGRAM_LOGIN
+  // END_BLOCK_MESSENGER_LOGIN
 
-  // START_BLOCK_EMAIL_LOGIN
-  const handleFormSubmit = async () => {
-    let isValid = true;
-    if (!email) {
-      setEmailError(MESSAGES.AUTH.EMAIL_REQUIRED);
-      isValid = false;
-    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setEmailError(MESSAGES.AUTH.EMAIL_INVALID);
-      isValid = false;
-    } else {
-      setEmailError('');
-    }
-
-    if (!password) {
-      setPasswordError(MESSAGES.AUTH.PASSWORD_REQUIRED);
-      isValid = false;
-    } else {
-      setPasswordError('');
-    }
-
-    if (isValid) {
-      setLoginError('');
-      setIsLoading(true);
-      try {
-        const session = await login(email, password);
-        onAuthSuccess(session);
-      } catch (err) {
-        setLoginError(MESSAGES.AUTH.LOGIN_ERROR);
-      } finally {
-        setIsLoading(false);
-      }
+  // START_BLOCK_DEMO_LOGIN
+  const handleDemoLogin = async () => {
+    setLoginError('');
+    setIsLoading(true);
+    try {
+      const session = await login('volunteer@test.com', 'password');
+      onAuthSuccess(session);
+    } catch {
+      setLoginError(MESSAGES.AUTH.LOGIN_ERROR);
+      setIsLoading(false);
     }
   };
-  // END_BLOCK_EMAIL_LOGIN
+  // END_BLOCK_DEMO_LOGIN
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    if (emailError) setEmailError('');
-    if (loginError) setLoginError('');
+  // START_BLOCK_ORG_LOGIN
+  const handleOrgLogin = async () => {
+    setLoginError('');
+    setIsLoading(true);
+    try {
+      const session = await loginAsDemoOrganizer();
+      onAuthSuccess(session);
+    } catch {
+      setLoginError(MESSAGES.AUTH.LOGIN_ERROR);
+      setIsLoading(false);
+    }
   };
+  // END_BLOCK_ORG_LOGIN
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
-    if (passwordError) setPasswordError('');
-    if (loginError) setLoginError('');
-  };
-
-  // Внутри Telegram входим автоматически — без формы. В браузере (SDK есть,
-  // но initData пустой) показываем кнопку «Открыть в Telegram».
+  // Платформу определяем по НАЛИЧИЮ initData, а не по объекту SDK:
+  // оба скрипта (telegram-web-app.js, max-web-app.js) создают window-объекты
+  // и в обычном браузере (с пустым initData). Внутри мессенджера с initData
+  // входим автоматически — без формы.
   useEffect(() => {
-    if (isMock) return;
     let cancelled = false;
     (async () => {
-      const initData = isTelegramClient()
-        ? await waitForTelegramInitData()
-        : null;
+      if (import.meta.env.VITE_API_MODE !== 'real') {
+        if (!cancelled) setEntryMode(getAppPlatform());
+        return;
+      }
+      const [tgData, maxData] = await Promise.all([
+        isTelegramClient() ? waitForTelegramInitData() : Promise.resolve(null),
+        isMaxClient() ? waitForMaxInitData() : Promise.resolve(null),
+      ]);
       if (cancelled) return;
-      if (initData) {
+      if (tgData) {
         setEntryMode('telegram');
-        handleTelegramLogin();
+        handleMessengerLogin('telegram');
+      } else if (maxData) {
+        setEntryMode('max');
+        handleMessengerLogin('max');
       } else {
-        setEntryMode('browser');
+        setEntryMode(getAppPlatform());
       }
     })();
     return () => {
@@ -173,11 +165,6 @@ const LoginView: React.FC<{
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Подавляем неиспользуемые предупреждения для оставшегося email/демо-пути.
-  void email; void password; void showPassword; void emailError; void passwordError;
-  void handleFormSubmit; void handleEmailChange; void handlePasswordChange;
-  void onSwitchToRegister; void onSwitchToForgotPassword;
 
   // START_BLOCK_RENDER_LOGIN
   return (
@@ -193,46 +180,45 @@ const LoginView: React.FC<{
           </p>
         )}
 
-        {entryMode === 'demo' ? (
-          <button
-            onClick={handleTelegramLogin}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-all duration-200 disabled:opacity-50"
-          >
-            {isLoading ? <Spinner /> : 'Войти (демо)'}
-          </button>
-        ) : entryMode === 'telegram' ? (
-          <div className="w-full flex flex-col items-center space-y-4">
-            <p className="text-[rgb(12,13,14,0.52)]">Входим…</p>
-            <button
-              onClick={handleTelegramLogin}
-              disabled={isLoading}
-              className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-all duration-200 disabled:opacity-50"
-            >
-              {isLoading ? <Spinner /> : 'Войти через Telegram'}
-            </button>
-          </div>
-        ) : entryMode === 'browser' ? (
-          <div className="w-full flex flex-col items-center space-y-4">
-            <p className="text-[rgb(12,13,14,0.52)]">
-              Это приложение работает внутри Telegram.
-            </p>
-            <a
-              href={TELEGRAM_APP_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full"
-            >
-              <button className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-all duration-200">
-                <Send className="w-5 h-5 mr-3" />
-                Открыть в Telegram
-              </button>
-            </a>
-          </div>
-        ) : (
+        {entryMode === 'checking' ? (
           <div className="w-full flex flex-col items-center space-y-4">
             <RefreshCw className="w-6 h-6 text-[#007AFF] animate-spin" />
             <p className="text-[rgb(12,13,14,0.52)]">Проверяем вход…</p>
+          </div>
+        ) : (
+          <div className="w-full flex flex-col items-center space-y-3">
+            {entryMode === 'telegram' && (
+              <button
+                onClick={() => handleMessengerLogin('telegram')}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-all duration-200 disabled:opacity-50"
+              >
+                {isLoading ? <Spinner /> : 'Войти через Telegram'}
+              </button>
+            )}
+            {entryMode === 'max' && (
+              <button
+                onClick={() => handleMessengerLogin('max')}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center bg-[#007AFF] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:bg-blue-600 transition-all duration-200 disabled:opacity-50"
+              >
+                {isLoading ? <Spinner /> : 'Войти через MAX'}
+              </button>
+            )}
+            <button
+              onClick={handleDemoLogin}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center bg-gray-100 text-[#0C0D0E] font-semibold py-3 px-4 rounded-xl hover:bg-gray-200 transition-all duration-200 disabled:opacity-50"
+            >
+              {isLoading ? <Spinner /> : entryMode === 'web' ? 'Войти' : 'Войти (демо)'}
+            </button>
+            <button
+              onClick={handleOrgLogin}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center bg-white text-[#007AFF] font-semibold py-3 px-4 rounded-xl border border-[#007AFF] hover:bg-blue-50 transition-all duration-200 disabled:opacity-50"
+            >
+              {isLoading ? <Spinner /> : 'Войти как организация'}
+            </button>
           </div>
         )}
       </div>
@@ -573,7 +559,7 @@ interface AuthPageProps {
 //   INPUTS: { onAuthSuccess: (session: { user: User; token: string }) => void }
 //   OUTPUTS: { ReactElement - active auth view }
 //   SIDE_EFFECTS: none
-//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-login, fn-telegramLogin
+//   LINKS: M-FRONTEND-SCREENS, V-M-FRONTEND-SCREENS, fn-login, fn-telegramLogin, fn-maxLogin, fn-loginAsDemoOrganizer
 // END_CONTRACT: AuthPage
 const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   const [authMode, setAuthMode] = useState<AuthMode>('login');

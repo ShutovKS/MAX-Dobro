@@ -11,13 +11,14 @@
 // START_MODULE_MAP
 //   login - store a volunteer or organizer mock session
 //   register - create a volunteer mock session
+//   loginAsDemoOrganizer - store the mock organizer session
 //   logout - clear mock session and onboarding keys
 //   getCurrentSession - restore a stored mock session
 //   isOnboardingComplete - read onboardingComplete flag
 //   setOnboardingComplete - persist onboardingComplete flag
 // END_MODULE_MAP
 // START_CHANGE_SUMMARY
-//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+//   LAST_CHANGE: [v1.1.0 - Added loginAsDemoOrganizer for the organization demo entry]
 // END_CHANGE_SUMMARY
 
 import {defaultUserData, organizationUserData} from './mockData';
@@ -72,6 +73,17 @@ export const register = (data: { firstName: string; lastName: string; email: str
       resolve(session);
     }, SIMULATED_DELAY);
   });
+};
+
+// START_CONTRACT: loginAsDemoOrganizer
+//   PURPOSE: Authenticate the mock organizer demo entry and persist the session
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<{ user: User; token: string }> - stored mock organizer session }
+//   SIDE_EFFECTS: writes userSession to localStorage
+//   LINKS: M-FRONTEND-AUTH export-loginAsDemoOrganizer
+// END_CONTRACT: loginAsDemoOrganizer
+export const loginAsDemoOrganizer = (): Promise<{ user: User; token: string }> => {
+  return login('organizer@test.com', 'password');
 };
 
 // START_CONTRACT: logout

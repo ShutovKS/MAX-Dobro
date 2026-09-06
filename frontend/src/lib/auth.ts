@@ -10,11 +10,11 @@
 // END_MODULE_CONTRACT
 // START_MODULE_MAP
 //   adapter selection - picks auth.real or auth.mock from VITE_API_MODE
-//   session surface - re-exports login, register, logout, and onboarding helpers
+//   session surface - re-exports login, register, logout, demo organizer, and onboarding helpers
 //   supabase - real client when VITE_API_MODE is real, otherwise null
 // END_MODULE_MAP
 // START_CHANGE_SUMMARY
-//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+//   LAST_CHANGE: [v1.1.0 - Re-export loginAsDemoOrganizer for the organization demo entry]
 // END_CHANGE_SUMMARY
 
 import * as realAuth from './auth.real';
@@ -29,6 +29,7 @@ const auth = isReal ? realAuth : mockAuth;
 export const {
   login,
   register,
+  loginAsDemoOrganizer,
   logout,
   getCurrentSession,
   isOnboardingComplete,

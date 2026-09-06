@@ -2,8 +2,8 @@
 // VERSION: 1.0.0
 // START_MODULE_CONTRACT
 //   PURPOSE: Compose routes, session restore, onboarding, and tab navigation for the mini-app.
-//   SCOPE: Session restore, Telegram auto-login, startapp deep-links, guest and authenticated route tables, toast shell
-//   DEPENDS: M-FRONTEND-API, M-FRONTEND-AUTH, M-FRONTEND-TELEGRAM, M-FRONTEND-SCREENS, M-FRONTEND-UI, M-FRONTEND-TYPES
+//   SCOPE: Session restore, Telegram/MAX auto-login, startapp deep-links, guest and authenticated route tables, toast shell
+//   DEPENDS: M-FRONTEND-API, M-FRONTEND-AUTH, M-FRONTEND-TELEGRAM, M-FRONTEND-MAX, M-FRONTEND-SCREENS, M-FRONTEND-UI, M-FRONTEND-TYPES
 //   LINKS: M-FRONTEND-APP, V-M-FRONTEND-APP
 //   ROLE: RUNTIME
 //   MAP_MODE: EXPORTS
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 //
 // START_CHANGE_SUMMARY
-//   LAST_CHANGE: [v1.0.0 - Added GRACE semantic markup]
+//   LAST_CHANGE: [v1.1.0 - Added MAX auto-login alongside Telegram in session restore]
 // END_CHANGE_SUMMARY
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -71,6 +71,7 @@ import {
 } from '../lib/auth';
 import { MESSAGES, ROUTES } from '../lib/constants';
 import { initTelegram, isTelegramClient, telegramLogin, tgGetStartParam, waitForTelegramInitData } from '../lib/telegram-sdk';
+import { initMax, isMaxClient, maxLogin, waitForMaxInitData } from '../lib/max-sdk';
 
 // START_BLOCK_PARSE_START_PARAM
 // Telegram deep-link `?startapp=kind_id` -> маршрут сущности (или null).
@@ -130,20 +131,20 @@ const App: React.FC = () => {
   const initializeApp = async () => {
     setError(null);
     initTelegram();
+    initMax();
     let sessionFound = false;
     try {
       let session = await getCurrentSession();
 
-      // Авто-логин через Telegram: если активной сессии нет, но приложение
-      // открыто из Telegram-клиента — дожидаемся initData и входим без формы.
+      // Авто-логин через мессенджер: если активной сессии нет, но приложение
+      // открыто из Telegram/MAX-клиента — дожидаемся initData и входим без формы.
       if (
         !session &&
         import.meta.env.VITE_API_MODE === 'real' &&
-        isTelegramClient()
+        (isTelegramClient() || isMaxClient())
       ) {
-        await waitForTelegramInitData();
-        const ok = await telegramLogin();
-        if (ok) {
+        await Promise.all([waitForTelegramInitData(), waitForMaxInitData()]);
+        if ((await telegramLogin()) || (await maxLogin())) {
           session = await getCurrentSession();
         }
       }

@@ -12,6 +12,7 @@
 //   supabase - Supabase browser client
 //   login - email/password sign-in plus /profile/me mapping
 //   register - email sign-up plus /profile/me mapping
+//   loginAsDemoOrganizer - demo organizer JWT plus /profile/me mapping
 //   logout - clear JWT and sign out of Supabase
 //   getCurrentSession - restore JWT or Supabase session via /profile/me
 //   isOnboardingComplete - read onboardingComplete flag
@@ -186,6 +187,49 @@ export const register = async (userData: {
     token: data.session.access_token,
   };
   // END_BLOCK_REGISTER
+};
+
+// START_CONTRACT: loginAsDemoOrganizer
+//   PURPOSE: Sign in as the seeded demo organizer and load the backend profile
+//   INPUTS: { none }
+//   OUTPUTS: { Promise<{ user: User; token: string }> - mapped profile and access token }
+//   SIDE_EFFECTS: writes internal_jwt to localStorage
+//   LINKS: M-FRONTEND-AUTH export-loginAsDemoOrganizer
+// END_CONTRACT: loginAsDemoOrganizer
+export const loginAsDemoOrganizer = async (): Promise<{
+  user: User;
+  token: string;
+}> => {
+  // START_BLOCK_DEMO_ORGANIZER_LOGIN
+  const loginResponse = await fetch(`${API_BASE_URL}/auth/demo-organizer-login`, {
+    method: 'POST',
+  });
+
+  if (!loginResponse.ok) {
+    throw new Error('Demo organizer login failed');
+  }
+
+  const { accessToken } = await loginResponse.json();
+  if (!accessToken) {
+    throw new Error('Demo organizer login failed');
+  }
+  localStorage.setItem('internal_jwt', accessToken);
+
+  const profileResponse = await fetch(`${API_BASE_URL}/profile/me`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!profileResponse.ok) {
+    throw new Error('Demo organizer profile not found.');
+  }
+
+  const backendProfile = await profileResponse.json();
+
+  return {
+    user: mapBackendProfileToAppUser(backendProfile),
+    token: accessToken,
+  };
+  // END_BLOCK_DEMO_ORGANIZER_LOGIN
 };
 
 // START_CONTRACT: logout

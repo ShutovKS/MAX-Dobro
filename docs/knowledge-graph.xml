@@ -327,6 +327,7 @@
       <annotations>
         <export-login PURPOSE="Email login" />
         <export-register PURPOSE="Email register" />
+        <export-loginAsDemoOrganizer PURPOSE="Demo organizer entry for all platforms" />
         <export-getCurrentSession PURPOSE="Restore session" />
         <export-logout PURPOSE="Clear session" />
       </annotations>
@@ -365,6 +366,8 @@
       <verification-ref>V-M-FRONTEND-MAX</verification-ref>
       <annotations>
         <fn-getMaxInitData PURPOSE="Read MAX init payload" />
+        <fn-maxLogin PURPOSE="Exchange MAX init data for a session" />
+        <fn-initMax PURPOSE="Initialize MAX WebApp" />
       </annotations>
     </M-FRONTEND-MAX>
 
